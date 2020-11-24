@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "vpp_learning", "vpp_learning.pyproj", "{03201A23-22E9-4074-AC62-F6ACE9DD9B07}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{03201A23-22E9-4074-AC62-F6ACE9DD9B07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03201A23-22E9-4074-AC62-F6ACE9DD9B07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {697C37B9-CAAD-42EC-BDC0-F1EEB6381A54}
+	EndGlobalSection
+EndGlobal

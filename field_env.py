@@ -5,18 +5,19 @@ import os
 import numpy as np
 import pygame as pg
 import cv2
-from pygame import surfarray
 
 class Field:
     def __init__(self, shape, target_count, scale):
         size = np.product(shape)
-        self.field = np.zeros(size, dtype=np.int)
+        self.field = np.zeros(size, dtype=np.uint32)
         self.target_count = target_count
         self.scale = scale
         i = np.random.choice(np.arange(size), target_count)
-        self.field[i] = 0xFFFFFFFF
+        self.field[i] = 1
         self.field = self.field.reshape(shape)
         self.ROTATION_LIST = ((1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1))
+        self.TARGET_COLOR = 0x008800
+        self.ROBOT_COLOR = 0xFFA500
         self.robot_pos = np.random.randint(63, size=2)
         self.robot_rotind = np.random.randint(len(self.ROTATION_LIST))
         sfield = np.kron(self.field, np.ones((scale, scale)))
@@ -25,10 +26,11 @@ class Field:
     def draw_field(self):
         s = self.scale
         sfield = np.kron(self.field, np.ones((s, s)))
+        sfield = np.where(sfield == 1, self.TARGET_COLOR, sfield)
         spos = self.robot_pos * s
         rot = self.ROTATION_LIST[self.robot_rotind]
-        cv2.arrowedLine(sfield, (spos[1] + s//2 * (-rot[1] + 1) , spos[0] + s//2 * (-rot[0] + 1)), (spos[1] + s//2 * (rot[1] + 1), spos[0] + s//2 * (rot[0] + 1)), 0xFFA500)
-        surfarray.blit_array(self.screen, sfield)
+        cv2.arrowedLine(sfield, (spos[1] + s//2 * (-rot[1] + 1) , spos[0] + s//2 * (-rot[0] + 1)), (spos[1] + s//2 * (rot[1] + 1), spos[0] + s//2 * (rot[0] + 1)), self.ROBOT_COLOR)
+        pg.surfarray.blit_array(self.screen, sfield)
         pg.display.flip()
 
     def move_robot(self, direction):
