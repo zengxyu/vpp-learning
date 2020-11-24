@@ -4,6 +4,7 @@ import os
 
 import numpy as np
 import pygame as pg
+from scipy import ndimage
 from shapely import geometry
 import cv2
 
@@ -16,8 +17,8 @@ class Field:
         i = np.random.choice(np.arange(size), target_count)
         self.field[i] = 1
         self.field = self.field.reshape(shape)
-        self.ROTATION_LIST = ((1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0))
-        #self.ROTATION_LIST = ((1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1))
+        self.ROTATION_LIST = ((0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1))
+        self.ROTATION_ANGLES = range(0, -360, -45)
         self.TARGET_COLOR = 0x008800
         self.ROBOT_COLOR = 0xFFA500
         self.SENSOR_RANGE = 5
@@ -26,7 +27,12 @@ class Field:
         self.fovarray = np.zeros(self.field.shape, dtype=bool)
         self.obsarea = np.zeros(self.field.shape, dtype=bool)
         sfield = np.kron(self.field, np.ones((scale, scale)))
-        self.screen = pg.display.set_mode(sfield.shape[:2], 0, 32)
+        self.screen = pg.display.set_mode((sfield.shape[0]*2, sfield.shape[1]), 0, 32)
+        self.global_mat = pg.Surface(sfield.shape, 0, 32)
+        self.pov_mat = pg.Surface(sfield.shape, 0, 32)
+        self.screen.blit(self.global_mat, (0, 0))
+        self.screen.blit(self.pov_mat, (sfield.shape[0], 0))
+        pg.display.update()
 
     def apply_mask(self, image, mask, color, alpha=0.2):
         image = np.where(mask, (1 - alpha) * image + alpha * mask * color, image)
@@ -38,6 +44,11 @@ class Field:
     #        image[y1:y2, x1:x2, c] = np.where(mask == 1, (1 - alpha) * image[y1:y2, x1:x2, c] + alpha * mask * color[c], image[y1:y2, x1:x2, c])
     #    return image
 
+    def transform_to_pov(self, field):
+        shifted = ndimage.shift(field, (np.asarray(self.field.shape) / 2 - self.robot_pos) * self.scale, order=0)
+        rotated = ndimage.rotate(shifted, self.ROTATION_ANGLES[self.robot_rotind], reshape=False, order=0)
+        return rotated
+        #return ndimage.affine_transform(field, self.ROTATION_MATRICES[self.robot_rotind], (np.asarray(self.field.shape) / 2 - self.robot_pos), order=0)
     
     def draw_field(self):
         s = self.scale
@@ -49,8 +60,12 @@ class Field:
         spos = self.robot_pos * s
         rot = self.ROTATION_LIST[self.robot_rotind]
         cv2.arrowedLine(sfield, (spos[1] + s//2 * (-rot[1] + 1) , spos[0] + s//2 * (-rot[0] + 1)), (spos[1] + s//2 * (rot[1] + 1), spos[0] + s//2 * (rot[0] + 1)), self.ROBOT_COLOR)
-        pg.surfarray.blit_array(self.screen, sfield)
-        pg.display.flip()
+        pg.surfarray.blit_array(self.global_mat, sfield)
+        self.screen.blit(self.global_mat, (0, 0))
+        rotated_screen = self.transform_to_pov(sfield) #ndimage.rotate(sfield, 45, reshape=False, order=0)
+        pg.surfarray.blit_array(self.pov_mat, rotated_screen)
+        self.screen.blit(self.pov_mat, (sfield.shape[0], 0))
+        pg.display.update()
 
     #def point_in_triangle(self, p, v1, v2, v3):
     #    c1 = (v2[0] - v1[0]) * (p[1] - v1[1]) - (v2[1] - v1[1]) * (p[0] - v1[0])
@@ -110,13 +125,13 @@ class Field:
         e = pg.event.wait()
         if e.type == pg.KEYDOWN:
             if e.key == pg.K_LEFT:
-                self.move_robot((-1, 0))
+                self.move_robot(self.ROTATION_LIST[(self.robot_rotind - 2) % len(self.ROTATION_LIST)])
             elif e.key == pg.K_RIGHT:
-                self.move_robot((1, 0))
+                self.move_robot(self.ROTATION_LIST[(self.robot_rotind + 2) % len(self.ROTATION_LIST)])
             elif e.key == pg.K_UP:
-                self.move_robot((0, -1))
+                self.move_robot(self.ROTATION_LIST[self.robot_rotind])
             elif e.key == pg.K_DOWN:
-                self.move_robot((0, 1))
+                self.move_robot(self.ROTATION_LIST[(self.robot_rotind + 4) % len(self.ROTATION_LIST)])
             elif e.key == pg.K_e:
                 self.rotate_robot(1)
             elif e.key == pg.K_q:
