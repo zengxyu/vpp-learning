@@ -8,9 +8,9 @@ from scipy import ndimage
 from shapely import geometry
 import cv2
 import imutils
-from enum import Enum
+from enum import IntEnum
 
-class Action(Enum):
+class Action(IntEnum):
     DO_NOTHING = 0,
     MOVE_FORWARD = 1,
     MOVE_BACKWARD = 2,
@@ -19,39 +19,34 @@ class Action(Enum):
     ROTATE_LEFT = 5,
     ROTATE_RIGHT = 6
 
+class FieldValues(IntEnum):
+    UNKNOWN = 0,
+    FREE = 1,
+    OCCUPIED = 2,
+    TARGET = 3
+
 class Field:
-    def __init__(self, shape, target_count, sensor_range, scale):
-        self.field = np.zeros(shape, dtype=np.uint32)
+    def __init__(self, shape, target_count, sensor_range, scale, headless = False):
         self.target_count = target_count
         self.found_targets = 0
         self.sensor_range = sensor_range
+        self.shape = shape
         self.scale = scale
-        i = np.random.random_integers(0, shape[0] - 1, target_count)
-        j = np.random.random_integers(0, shape[1] - 1, target_count)
-        self.field[i, j] = 1
+        self.headless = headless
         self.ROTATION_LIST = ((0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1))
         self.ROTATION_ANGLES = range(0, 360, 45)
         self.ROTATION_MATRICES = [[[np.cos(i), -np.sin(i)], [np.sin(i), np.cos(i)]] for i in np.deg2rad(self.ROTATION_ANGLES)]
+        self.UNKNOWN_COLOR = 0x000000
+        self.FREE_COLOR = 0x696969
+        self.OCCUPIED_COLOR = 0xD3D3D3
         self.TARGET_COLOR = 0x008800
         self.ROBOT_COLOR = 0xFFA500
-        self.robot_pos = np.random.randint(63, size=2)
-        self.robot_rotind = np.random.randint(len(self.ROTATION_LIST))
-        self.fovarray = np.zeros(self.field.shape, dtype=bool)
-        self.obsarea = np.zeros(self.field.shape, dtype=bool)
-        self.observerd_field = np.zeros(self.field.shape, dtype=np.uint32)
-        sfield = np.kron(self.field, np.ones((scale, scale)))
-        self.screen = pg.display.set_mode((sfield.shape[0]*2, sfield.shape[1]), 0, 32)
-        self.global_mat = pg.Surface(sfield.shape, 0, 32)
-        self.pov_mat = pg.Surface(sfield.shape, 0, 32)
-        self.screen.blit(self.global_mat, (0, 0))
-        self.screen.blit(self.pov_mat, (sfield.shape[0], 0))
-        self.font = pg.font.SysFont(pg.font.get_default_font(), 30)
-        score = self.font.render('{} / {} targets found'.format(self.found_targets, self.target_count), True, (255, 255, 255))
-        self.screen.blit(score, (5, 5))
-        pg.display.update()
-
-    def compute_observerd_field(self):
-        return
+        self.COLOR_DICT = {FieldValues.UNKNOWN: self.UNKNOWN_COLOR, FieldValues.FREE: self.FREE_COLOR, FieldValues.OCCUPIED: self.OCCUPIED_COLOR, FieldValues.TARGET: self.TARGET_COLOR}
+        if not headless:
+            self.screen = pg.display.set_mode((shape[0]*scale*2, shape[1]*scale), 0, 32)
+            self.global_mat = pg.Surface((shape[0]*scale, shape[1]*scale), 0, 32)
+            self.pov_mat = pg.Surface((shape[0]*scale, shape[1]*scale), 0, 32)
+            self.font = pg.font.SysFont(pg.font.get_default_font(), 30)
 
     def apply_mask(self, image, mask, color, alpha=0.2):
         image = np.where(mask, (1 - alpha) * image + alpha * mask * color, image)
@@ -70,10 +65,13 @@ class Field:
         #rotated = ndimage.affine_transform(shifted, self.ROTATION_MATRICES[self.robot_rotind], order=0)
         return rotated
 
-    def colorize_and_upscale(self, field, scale, obsarea, fovarray):
-        sfield = np.where(field == 1, self.TARGET_COLOR, field)
-        sfield = self.apply_mask(sfield, obsarea, self.ROBOT_COLOR)
-        sfield = self.apply_mask(sfield, fovarray, self.ROBOT_COLOR)
+    def colorize_and_upscale(self, field, scale, obsarea = None, fovarray = None):
+        sfield = np.vectorize(self.COLOR_DICT.__getitem__)(field)
+        if obsarea is not None:
+            sfield = self.apply_mask(sfield, obsarea, self.ROBOT_COLOR)
+        if fovarray is not None:
+            sfield = self.apply_mask(sfield, fovarray, self.ROBOT_COLOR)
+
         sfield = np.kron(sfield, np.ones((scale, scale)))
         return sfield
 
@@ -82,12 +80,12 @@ class Field:
     
     def draw_field(self):
         sfield = self.colorize_and_upscale(self.field, self.scale, self.obsarea, self.fovarray)
-        pov_field, pov_obsarea, pov_fovarray = self.transform_to_pov(self.field), self.transform_to_pov(self.obsarea), self.transform_to_pov(self.fovarray)
-        s_pov_field = self.colorize_and_upscale(pov_field, self.scale, pov_obsarea, pov_fovarray)
+        #pov_field, pov_obsarea, pov_fovarray = self.transform_to_pov(self.field), self.transform_to_pov(self.obsarea), self.transform_to_pov(self.fovarray)
+        s_pov_field = self.colorize_and_upscale(self.observed_field, self.scale)
         spos = self.robot_pos * self.scale
         rot = self.ROTATION_LIST[self.robot_rotind]
         self.draw_arrow(sfield, self.scale, spos, rot)
-        self.draw_arrow(s_pov_field, self.scale, np.asarray(s_pov_field.shape) // 2, (0, -1))
+        self.draw_arrow(s_pov_field, self.scale, spos, rot) #np.asarray(s_pov_field.shape) // 2, (0, -1)
         pg.surfarray.blit_array(self.global_mat, sfield)
         self.screen.blit(self.global_mat, (0, 0))
         #rotated_screen = self.transform_to_pov(sfield, self.scale) #ndimage.rotate(sfield, 45, reshape=False, order=0)
@@ -129,8 +127,12 @@ class Field:
                 if fovpoly.intersects(geometry.Point([x, y])):
                     self.fovarray[x, y] = True
                     self.obsarea[x, y] = True
+                    if self.observed_field[x, y] == FieldValues.UNKNOWN and self.field[x, y] == FieldValues.TARGET:
+                        self.found_targets += 1
 
-        self.found_targets = np.count_nonzero(np.logical_and(self.obsarea, self.field))
+                    self.observed_field[x, y] = self.field[x, y]
+
+        #self.found_targets = np.count_nonzero(np.logical_and(self.obsarea, self.field))
 
         #barr = fovpoly.contains(points)
         #print(barr)
@@ -146,8 +148,6 @@ class Field:
                 self.robot_pos[i] = 0
             elif self.robot_pos[i] >= self.field.shape[i]:
                 self.robot_pos[i] = self.field.shape[i] - 1
-
-    #def rotate_clockwise(self, rot_ind):
 
     def rotate_robot(self, direction):
         self.robot_rotind = (self.robot_rotind + direction) % len(self.ROTATION_LIST)
@@ -168,5 +168,26 @@ class Field:
 
         targets_before = self.found_targets
         self.compute_fov()
+        if not self.headless:
+            self.draw_field()
+
         reward = self.found_targets - targets_before
-        return reward
+        return self.observed_field, [self.robot_pos[0], self.robot_pos[1], np.deg2rad(self.ROTATION_ANGLES[self.robot_rotind])], reward
+
+    def reset(self):
+        self.field = np.full(self.shape, FieldValues.FREE, dtype=FieldValues)
+        i = np.random.random_integers(0, self.shape[0] - 1, self.target_count)
+        j = np.random.random_integers(0, self.shape[1] - 1, self.target_count)
+        self.field[i, j] = FieldValues.TARGET
+        self.robot_pos = np.array([np.random.randint(self.shape[0]), np.random.randint(self.shape[1])])
+        self.robot_rotind = np.random.randint(len(self.ROTATION_LIST))
+        self.fovarray = np.zeros(self.field.shape, dtype=bool)
+        self.obsarea = np.zeros(self.field.shape, dtype=bool)
+        self.observed_field = np.zeros(self.field.shape, dtype=np.uint32)
+
+        self.compute_fov()
+
+        if not self.headless:
+            self.draw_field()
+
+        return self.observed_field, [self.robot_pos[0], self.robot_pos[1], np.deg2rad(self.ROTATION_ANGLES[self.robot_rotind])]

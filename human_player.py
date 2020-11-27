@@ -7,7 +7,7 @@ class HumanPlayer:
             raise TypeError("Environment should be of type Field.")
         self.env = env
 
-    def get_action(self, ob=None):
+    def get_action(self, observed_map, robot_pose):
         e = pg.event.wait()
         if e.type == pg.KEYDOWN:
             if e.key == pg.K_LEFT:
