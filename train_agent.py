@@ -38,6 +38,9 @@ for i in range(0,episodes):
 
         ts += 1
 
+        if not args.headless:
+            pg.event.get()
+
         if done:
             total_rewards.append(rew_sum)
             smoothed_rewards.append(np.mean(total_rewards[max(0, i-200):]))
@@ -64,7 +67,8 @@ plt.plot(smoothed_rewards)
 plt.title("Total reward per episode")
 plt.savefig("rewards.png")
 
-pg.quit()
+if not args.headless:
+    pg.quit()
 
 
 

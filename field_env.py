@@ -194,6 +194,7 @@ class Field:
         self.obsarea = np.zeros(self.field.shape, dtype=bool)
         self.observed_field = np.zeros(self.field.shape, dtype=np.uint32)
         self.step_count = 0
+        self.found_targets = 0
 
         self.compute_fov()
 
