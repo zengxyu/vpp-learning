@@ -26,12 +26,13 @@ class FieldValues(IntEnum):
     TARGET = 3
 
 class Field:
-    def __init__(self, shape, target_count, sensor_range, scale, headless = False):
+    def __init__(self, shape, target_count, sensor_range, scale, max_steps, headless = False):
         self.target_count = target_count
         self.found_targets = 0
         self.sensor_range = sensor_range
         self.shape = shape
         self.scale = scale
+        self.max_steps = max_steps
         self.headless = headless
         self.ROTATION_LIST = ((0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1))
         self.ROTATION_ANGLES = range(0, 360, 45)
@@ -91,8 +92,8 @@ class Field:
         #rotated_screen = self.transform_to_pov(sfield, self.scale) #ndimage.rotate(sfield, 45, reshape=False, order=0)
         pg.surfarray.blit_array(self.pov_mat, s_pov_field)
         self.screen.blit(self.pov_mat, (sfield.shape[0], 0))
-        score = self.font.render('{} / {} targets found'.format(self.found_targets, self.target_count), False, (255, 255, 255))
-        self.screen.blit(score, (5, 5))
+        top_text = self.font.render('Step {} / {}, {} / {} targets found'.format(self.step_count, self.max_steps, self.found_targets, self.target_count), False, (255, 255, 255))
+        self.screen.blit(top_text, (5, 5))
         pg.display.update()
 
     #def point_in_triangle(self, p, v1, v2, v3):
@@ -171,19 +172,28 @@ class Field:
         if not self.headless:
             self.draw_field()
 
+        robot_pose = [self.robot_pos[0], self.robot_pos[1], np.deg2rad(self.ROTATION_ANGLES[self.robot_rotind])]
         reward = self.found_targets - targets_before
-        return self.observed_field, [self.robot_pos[0], self.robot_pos[1], np.deg2rad(self.ROTATION_ANGLES[self.robot_rotind])], reward
+        self.step_count += 1
+        done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
+        return self.observed_field, robot_pose, reward, done
 
     def reset(self):
-        self.field = np.full(self.shape, FieldValues.FREE, dtype=FieldValues)
-        i = np.random.random_integers(0, self.shape[0] - 1, self.target_count)
-        j = np.random.random_integers(0, self.shape[1] - 1, self.target_count)
-        self.field[i, j] = FieldValues.TARGET
+        #self.field = np.full(self.shape, FieldValues.FREE, dtype=FieldValues)
+        #i = np.random.random_integers(0, self.shape[0] - 1, self.target_count)
+        #j = np.random.random_integers(0, self.shape[1] - 1, self.target_count)
+        #self.field[i, j] = FieldValues.TARGET
+        size = np.product(self.shape)
+        self.field = np.full(size, FieldValues.FREE, dtype=FieldValues)
+        i = np.random.choice(size, self.target_count)
+        self.field[i] = FieldValues.TARGET
+        self.field = self.field.reshape(self.shape)
         self.robot_pos = np.array([np.random.randint(self.shape[0]), np.random.randint(self.shape[1])])
         self.robot_rotind = np.random.randint(len(self.ROTATION_LIST))
         self.fovarray = np.zeros(self.field.shape, dtype=bool)
         self.obsarea = np.zeros(self.field.shape, dtype=bool)
         self.observed_field = np.zeros(self.field.shape, dtype=np.uint32)
+        self.step_count = 0
 
         self.compute_fov()
 

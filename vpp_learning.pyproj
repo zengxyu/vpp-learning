@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>03201a23-22e9-4074-ac62-f6ace9dd9b07</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>vpp_learning.py</StartupFile>
+    <StartupFile>train_agent.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,10 +22,13 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="agent_ppo.py" />
     <Compile Include="human_player.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="field_env.py" />
+    <Compile Include="random_agent.py" />
+    <Compile Include="train_agent.py" />
     <Compile Include="vpp_learning.py" />
   </ItemGroup>
   <ItemGroup>
