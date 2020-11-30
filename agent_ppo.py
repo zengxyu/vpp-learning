@@ -43,6 +43,7 @@ class PPOPolicy(torch.nn.Module):
         out = F.relu(out)
 
         out_pose = self.fc_pose(robot_pose)
+        out_pose = F.relu(out_pose)
         out = torch.cat((out, out_pose), dim=1)
 
         val = self.fc_val(out)

@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>03201a23-22e9-4074-ac62-f6ace9dd9b07</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>train_agent.py</StartupFile>
+    <StartupFile>vpp_learning.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
