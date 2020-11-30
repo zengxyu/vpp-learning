@@ -7,9 +7,8 @@ import pickle
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-import agents.agent as agent
 import torch.nn.functional as F
-import utils.replay_buffers as mem
+import replay_buffers as mem
 #import torchvision.transforms as T
 
 
@@ -106,7 +105,7 @@ class DuelingNN(nn.Module):
 		return V, A
 
 
-class Agent(agent.IAgent):
+class Agent():
 	# A Deep-Q Network
 	#	Double DQN: Use 2 networks to decouple the action selection from the target Q value generation (Reduces the overestimation of q values, more stable learning)
 	#		Implemented in DQN.update
