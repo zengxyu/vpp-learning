@@ -1,0 +1,28 @@
+//Cg
+
+void vshader(
+    uniform float4x4 mat_modelproj,
+    uniform float4 mspos_light,
+    in float4 vtx_position : POSITION,
+    in float3 vtx_normal : NORMAL,
+    in float4 vtx_color : COLOR,
+    out float4 l_color : COLOR,
+    out float4 l_position : POSITION)
+{
+    l_position = mul(mat_modelproj, vtx_position);
+
+    float3 lightposition = mspos_light.xyz;
+    float3 modelposition = vtx_position.xyz;
+    float3 normal = normalize(vtx_normal);
+    float3 direction = normalize(lightposition - modelposition);
+    float brightness = saturate(dot(normal, direction));
+
+    l_color = vtx_color * brightness;
+}
+
+void fshader(
+    in float4 l_color : COLOR,
+    out float4 o_color : COLOR)
+{
+    o_color = l_color;
+}

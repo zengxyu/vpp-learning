@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>03201a23-22e9-4074-ac62-f6ace9dd9b07</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>vpp_learning.py</StartupFile>
+    <StartupFile>example_3d.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -23,6 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="agent_ppo.py" />
+    <Compile Include="binvox_rw.py" />
     <Compile Include="data_structures.py" />
     <Compile Include="dqn.py" />
     <Compile Include="example_3d.py" />
