@@ -4,7 +4,9 @@ from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from direct.actor.Actor import Actor
 from direct.interval.IntervalGlobal import Sequence
-from panda3d.core import Point3, GeomNode, Geom, GeomPrimitive, GeomVertexData, GeomTriangles, GeomTristrips, GeomVertexWriter, GeomVertexFormat, DirectionalLight, AmbientLight
+from panda3d.core import Point3, GeomNode, Geom, GeomPrimitive, GeomVertexData, GeomTriangles, GeomTristrips, GeomVertexWriter, GeomVertexFormat, DirectionalLight, AmbientLight, LVecBase3i, LVecBase4, BitArray
+
+import p3d_voxgrid
 
 import numpy as np
 import binvox_rw
@@ -34,17 +36,17 @@ def createCube(min, max, visible_faces = [1, 1, 1, 1, 1, 1]):
     geom = Geom(vertices)
     triangles = [
         [0, 2, 1],
-	    [0, 3, 2],
-	    [2, 3, 4],
-	    [2, 4, 5],
-	    [1, 2, 5],
-	    [1, 5, 6],
-	    [0, 7, 4],
-	    [0, 4, 3],
-	    [5, 4, 7],
-	    [5, 7, 6],
-	    [0, 6, 7],
-	    [0, 1, 6]
+        [0, 3, 2],
+        [2, 3, 4],
+        [2, 4, 5],
+        [1, 2, 5],
+        [1, 5, 6],
+        [0, 7, 4],
+        [0, 4, 3],
+        [5, 4, 7],
+        [5, 7, 6],
+        [0, 6, 7],
+        [0, 1, 6]
         ]
     tri_prim = GeomTriangles(Geom.UHStatic)
     for tri in triangles:
@@ -160,23 +162,39 @@ class MyApp(ShowBase):
             model = binvox_rw.read_as_3d_array(f)
 
         print(model.data.shape)
-        voxgrid.addGeom(createVoxelGrid(model.data, 0.01, (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)))
-
-
-        nodePath = self.render.attachNewNode(voxgrid)
-
-        alight = AmbientLight('alight')
-        alight.setColor((0.2, 0.2, 0.2, 1))
-        alnp = render.attachNewNode(alight)
-        self.render.setLight(alnp)
         
-        dlight = DirectionalLight('vg_light')
-        dlight.setColor((1, 1, 1, 1))
-        dlight.setDirection((0, 0, -1))
-        dlight.setShadowCaster(True, 512, 512)
-        dlnp = render.attachNewNode(dlight)
+        model_flat = model.data.flatten()
+        
+        print('Converting numpy array to BitArray')
+        
+        barr = BitArray()
+        for i in range(len(model_flat)):
+            barr.set_bit_to(i, model_flat[i])
+            
+        print('Done')
+        
+        #geom = createVoxelGrid(model.data, 0.01, (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0))
+        shape = LVecBase3i(model.data.shape[0], model.data.shape[1], model.data.shape[2])
+        print('Types: {}, {}, {}, {}, {}'.format(type(barr), type(shape), type(0.01), type(LVecBase4(0.0, 1.0, 0.0, 1.0)), type(LVecBase4(0.0, 0.0, 1.0, 1.0))))
+        geom = p3d_voxgrid.create_voxel_grid(barr, shape, 0.1, LVecBase4(0.0, 1.0, 0.0, 1.0), LVecBase4(0.0, 0.0, 1.0, 1.0))
+        print('Geom: {}'.format(type(geom)))
+        voxgrid.addGeom(geom)
+
+
+        self.render.attachNewNode(voxgrid)
+
+        #alight = AmbientLight('alight')
+        #alight.setColor((0.2, 0.2, 0.2, 1))
+        #alnp = render.attachNewNode(alight)
+        #self.render.setLight(alnp)
+        
+        #dlight = DirectionalLight('vg_light')
+        #dlight.setColor((1, 1, 1, 1))
+        #dlight.setDirection((0, 0, -1))
+        #dlight.setShadowCaster(True, 512, 512)
+        #dlnp = render.attachNewNode(dlight)
         #dlnp.setHpr(0, -60, 0)
-        self.render.setLight(dlnp)
+        #self.render.setLight(dlnp)
         #self.render.setShaderAuto()
 
         #shader = self.loader.loadShader("test_shader.sha")

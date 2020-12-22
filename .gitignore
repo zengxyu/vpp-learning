@@ -1,3 +1,13 @@
-env
+# local project files
 .vs
+.vscode
+
+# virtualenv
+env
+
+# generated files
+out
+*.pyd
+*.pdb
+*.so
 __pycache__
