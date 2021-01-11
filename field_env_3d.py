@@ -9,6 +9,7 @@ import cv2
 import imutils
 from enum import IntEnum
 from scipy.spatial.transform import Rotation
+from PIL import ImageColor
 from panda3d.core import Point3, GeomNode, Geom, GeomPrimitive, GeomVertexData, GeomTriangles, GeomTristrips, GeomVertexWriter, GeomVertexFormat, DirectionalLight, AmbientLight, LVecBase3i, LVecBase4, BitArray
 
 class Action(IntEnum):
@@ -48,31 +49,27 @@ class Field:
 
         self.MOVE_STEP = 1.0
         self.ROT_STEP = 45.0
-        self.UNKNOWN_COLOR = 0x000000
-        self.FREE_COLOR = 0x696969
-        self.OCCUPIED_COLOR = 0xD3D3D3
-        self.TARGET_COLOR = 0x008800
-        self.ROBOT_COLOR = 0xFFA500
+        self.UNKNOWN_COLOR = (0, 0, 0, 1)
+        self.FREE_COLOR = (105/255, 105/255, 105/255, 1)
+        self.OCCUPIED_COLOR = (211/255, 211/255, 211/255, 1)
+        self.TARGET_COLOR = (0, 136/255, 0, 1)
+        self.ROBOT_COLOR = (1, 165/255, 0, 1)
+        self.FOV_ALPHA = 1 # not working
+        self.FOV_UP_COLOR = (220/255, 20/255, 60/255, self.FOV_ALPHA) # Crimson red
+        self.FOV_DOWN_COLOR = (199/255, 21/255, 133/255, self.FOV_ALPHA) # MediumVioletRed
+        self.FOV_LEFT_COLOR = (255/255, 69/255, 0/255, self.FOV_ALPHA) # OrangeRed
+        self.FOV_RIGHT_COLOR = (255/255, 215/255, 0/255, self.FOV_ALPHA) # Gold
+        self.FOV_FRONT_COLOR = (218/255, 112/255, 214/255, self.FOV_ALPHA) # Orchid
         self.COLOR_DICT = {FieldValues.UNKNOWN: self.UNKNOWN_COLOR, FieldValues.FREE: self.FREE_COLOR, FieldValues.OCCUPIED: self.OCCUPIED_COLOR, FieldValues.TARGET: self.TARGET_COLOR}
-
-
-
-    def get_bb_points(self, v1, v2, v3):
-        clip = lambda x, l, u: max(l, min(u, x))
-        minx = clip(min(v1[0], v2[0], v3[0]), 0, self.field.shape[0] - 1)
-        maxx = clip(max(v1[0], v2[0], v3[0]), 0, self.field.shape[0] - 1)
-        miny = clip(min(v1[1], v2[1], v3[1]), 0, self.field.shape[1] - 1)
-        maxy = clip(max(v1[1], v2[1], v3[1]), 0, self.field.shape[1] - 1)
-        return [minx, miny], [maxx, maxy]
 
     def compute_fov(self):
         axes = self.robot_rot.as_matrix().transpose()
         rh = np.radians(self.hfov/2)
         rv = np.radians(self.vfov/2)
-        vec_left_down = (Rotation.from_rotvec(rh * axes[2]) * Rotation.from_rotvec(-rv * axes[1])).apply(axes[0])
-        vec_left_up = (Rotation.from_rotvec(rh * axes[2]) * Rotation.from_rotvec(rv * axes[1])).apply(axes[0])
-        vec_right_down = (Rotation.from_rotvec(-rh * axes[2]) * Rotation.from_rotvec(-rv * axes[1])).apply(axes[0])
-        vec_right_up = (Rotation.from_rotvec(-rh * axes[2]) * Rotation.from_rotvec(rv * axes[1])).apply(axes[0])
+        vec_left_down = (Rotation.from_rotvec(rh * axes[2]) * Rotation.from_rotvec(rv * axes[1])).apply(axes[0])
+        vec_left_up = (Rotation.from_rotvec(rh * axes[2]) * Rotation.from_rotvec(-rv * axes[1])).apply(axes[0])
+        vec_right_down = (Rotation.from_rotvec(-rh * axes[2]) * Rotation.from_rotvec(rv * axes[1])).apply(axes[0])
+        vec_right_up = (Rotation.from_rotvec(-rh * axes[2]) * Rotation.from_rotvec(-rv * axes[1])).apply(axes[0])
         ep_left_down = self.robot_pos + vec_left_down * self.sensor_range
         ep_left_up = self.robot_pos + vec_left_up * self.sensor_range
         ep_right_down = self.robot_pos + vec_right_down * self.sensor_range
@@ -84,36 +81,61 @@ class Field:
         vertices.setNumRows(5)
         vertex = GeomVertexWriter(vertices, 'vertex')
         color = GeomVertexWriter(vertices, 'color')
+
+        # left (0-2)
         vertex.addData3(cam_pos[0], cam_pos[1], cam_pos[2])
-        color.addData4(0, 0, 1, 1)
-        vertex.addData3(ep_left_down[0], ep_left_down[1], ep_left_down[2])
-        color.addData4(0, 0, 1, 1)
+        color.addData4(self.FOV_LEFT_COLOR)
         vertex.addData3(ep_left_up[0], ep_left_up[1], ep_left_up[2])
-        color.addData4(0, 0, 1, 1)
-        vertex.addData3(ep_right_down[0], ep_right_down[1], ep_right_down[2])
-        color.addData4(0, 0, 1, 1)
+        color.addData4(self.FOV_LEFT_COLOR)
+        vertex.addData3(ep_left_down[0], ep_left_down[1], ep_left_down[2])
+        color.addData4(self.FOV_LEFT_COLOR)
+
+        # up (3-5)
+        vertex.addData3(cam_pos[0], cam_pos[1], cam_pos[2])
+        color.addData4(self.FOV_UP_COLOR)
         vertex.addData3(ep_right_up[0], ep_right_up[1], ep_right_up[2])
-        color.addData4(0, 0, 1, 1)
+        color.addData4(self.FOV_UP_COLOR)
+        vertex.addData3(ep_left_up[0], ep_left_up[1], ep_left_up[2])
+        color.addData4(self.FOV_UP_COLOR)
+
+        #right (6-8)
+        vertex.addData3(cam_pos[0], cam_pos[1], cam_pos[2])
+        color.addData4(self.FOV_RIGHT_COLOR)
+        vertex.addData3(ep_right_down[0], ep_right_down[1], ep_right_down[2])
+        color.addData4(self.FOV_RIGHT_COLOR)
+        vertex.addData3(ep_right_up[0], ep_right_up[1], ep_right_up[2])
+        color.addData4(self.FOV_RIGHT_COLOR)
+
+        # down (9-11)
+        vertex.addData3(cam_pos[0], cam_pos[1], cam_pos[2])
+        color.addData4(self.FOV_DOWN_COLOR)
+        vertex.addData3(ep_left_down[0], ep_left_down[1], ep_left_down[2])
+        color.addData4(self.FOV_DOWN_COLOR)
+        vertex.addData3(ep_right_down[0], ep_right_down[1], ep_right_down[2])
+        color.addData4(self.FOV_DOWN_COLOR)
+
+        #front (12-15)
+        vertex.addData3(ep_left_down[0], ep_left_down[1], ep_left_down[2])
+        color.addData4(self.FOV_FRONT_COLOR)
+        vertex.addData3(ep_left_up[0], ep_left_up[1], ep_left_up[2])
+        color.addData4(self.FOV_FRONT_COLOR)
+        vertex.addData3(ep_right_down[0], ep_right_down[1], ep_right_down[2])
+        color.addData4(self.FOV_FRONT_COLOR)
+        vertex.addData3(ep_right_up[0], ep_right_up[1], ep_right_up[2])
+        color.addData4(self.FOV_FRONT_COLOR)
 
         geom = Geom(vertices)
-        triangles = [
-            [0, 1, 2],
-            [0, 2, 4],
-            [0, 4, 3],
-            [0, 3, 1],
-            [2, 1, 4],
-            [3, 4, 1]
-            ]
         tri_prim = GeomTriangles(Geom.UHStatic)
-        for tri in triangles:
-            tri_prim.addVertices(tri[0], tri[1], tri[2])
+        tri_prim.add_consecutive_vertices(0, 12)
+        tri_prim.add_vertices(13, 15, 12)
+        tri_prim.add_vertices(14, 12, 15)
 
-        geom.addPrimitive(tri_prim)
+        geom.add_primitive(tri_prim)
         return geom
 
     def move_robot(self, direction):
         self.robot_pos += direction
-        np.clip(self.robot_pos, [0, 0, 0], self.shape)
+        self.robot_pos = np.clip(self.robot_pos, [0, 0, 0], self.shape)
 
     def rotate_robot(self, axis, angle):
         rot = Rotation.from_rotvec(np.radians(angle) * axis)
@@ -142,9 +164,9 @@ class Field:
             self.rotate_robot(axes[1], self.ROT_STEP)
         elif action == Action.ROTATE_PITCH_N:
             self.rotate_robot(axes[1], -self.ROT_STEP)
-        elif action == Action.ROTATE_YAW_P:
-            self.rotate_robot(axes[2], self.ROT_STEP)
         elif action == Action.ROTATE_YAW_N:
+            self.rotate_robot(axes[2], self.ROT_STEP)
+        elif action == Action.ROTATE_YAW_P:
             self.rotate_robot(axes[2], -self.ROT_STEP)
 
     def reset(self):
