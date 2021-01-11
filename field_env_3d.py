@@ -1,16 +1,10 @@
 #!/usr/bin/env python
 
-import os
-
 import numpy as np
-from scipy import ndimage
-from shapely import geometry
-import cv2
-import imutils
 from enum import IntEnum
 from scipy.spatial.transform import Rotation
-from PIL import ImageColor
-from panda3d.core import Point3, GeomNode, Geom, GeomPrimitive, GeomVertexData, GeomTriangles, GeomTristrips, GeomVertexWriter, GeomVertexFormat, DirectionalLight, AmbientLight, LVecBase3i, LVecBase4, BitArray
+from panda3d.core import Geom, GeomVertexData, GeomTriangles, GeomVertexWriter, GeomVertexFormat
+
 
 class Action(IntEnum):
     DO_NOTHING = 0,
@@ -27,14 +21,16 @@ class Action(IntEnum):
     ROTATE_YAW_P = 11,
     ROTATE_YAW_N = 12
 
+
 class FieldValues(IntEnum):
     UNKNOWN = 0,
     FREE = 1,
     OCCUPIED = 2,
     TARGET = 3
 
+
 class Field:
-    def __init__(self, shape, target_count, sensor_range, hfov, vfov, scale, max_steps, headless = False):
+    def __init__(self, shape, target_count, sensor_range, hfov, vfov, scale, max_steps, headless=False):
         self.target_count = target_count
         self.found_targets = 0
         self.sensor_range = sensor_range
@@ -48,7 +44,7 @@ class Field:
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
         self.MOVE_STEP = 1.0
-        self.ROT_STEP = 45.0
+        self.ROT_STEP = 15.0
         self.UNKNOWN_COLOR = (0, 0, 0, 1)
         self.FREE_COLOR = (105/255, 105/255, 105/255, 1)
         self.OCCUPIED_COLOR = (211/255, 211/255, 211/255, 1)
@@ -82,46 +78,52 @@ class Field:
         vertex = GeomVertexWriter(vertices, 'vertex')
         color = GeomVertexWriter(vertices, 'color')
 
+        cam_pos_scaled = np.asarray(cam_pos) * self.scale
+        ep_left_up_scaled = np.asarray(ep_left_up) * self.scale
+        ep_left_down_scaled = np.asarray(ep_left_down) * self.scale
+        ep_right_up_scaled = np.asarray(ep_right_up) * self.scale
+        ep_right_down_scaled = np.asarray(ep_right_down) * self.scale
+
         # left (0-2)
-        vertex.addData3(cam_pos[0], cam_pos[1], cam_pos[2])
+        vertex.addData3(tuple(cam_pos_scaled))
         color.addData4(self.FOV_LEFT_COLOR)
-        vertex.addData3(ep_left_up[0], ep_left_up[1], ep_left_up[2])
+        vertex.addData3(tuple(ep_left_up_scaled))
         color.addData4(self.FOV_LEFT_COLOR)
-        vertex.addData3(ep_left_down[0], ep_left_down[1], ep_left_down[2])
+        vertex.addData3(tuple(ep_left_down_scaled))
         color.addData4(self.FOV_LEFT_COLOR)
 
         # up (3-5)
-        vertex.addData3(cam_pos[0], cam_pos[1], cam_pos[2])
+        vertex.addData3(tuple(cam_pos_scaled))
         color.addData4(self.FOV_UP_COLOR)
-        vertex.addData3(ep_right_up[0], ep_right_up[1], ep_right_up[2])
+        vertex.addData3(tuple(ep_right_up_scaled))
         color.addData4(self.FOV_UP_COLOR)
-        vertex.addData3(ep_left_up[0], ep_left_up[1], ep_left_up[2])
+        vertex.addData3(tuple(ep_left_up_scaled))
         color.addData4(self.FOV_UP_COLOR)
 
-        #right (6-8)
-        vertex.addData3(cam_pos[0], cam_pos[1], cam_pos[2])
+        # right (6-8)
+        vertex.addData3(tuple(cam_pos_scaled))
         color.addData4(self.FOV_RIGHT_COLOR)
-        vertex.addData3(ep_right_down[0], ep_right_down[1], ep_right_down[2])
+        vertex.addData3(tuple(ep_right_down_scaled))
         color.addData4(self.FOV_RIGHT_COLOR)
-        vertex.addData3(ep_right_up[0], ep_right_up[1], ep_right_up[2])
+        vertex.addData3(tuple(ep_right_up_scaled))
         color.addData4(self.FOV_RIGHT_COLOR)
 
         # down (9-11)
-        vertex.addData3(cam_pos[0], cam_pos[1], cam_pos[2])
+        vertex.addData3(tuple(cam_pos_scaled))
         color.addData4(self.FOV_DOWN_COLOR)
-        vertex.addData3(ep_left_down[0], ep_left_down[1], ep_left_down[2])
+        vertex.addData3(tuple(ep_left_down_scaled))
         color.addData4(self.FOV_DOWN_COLOR)
-        vertex.addData3(ep_right_down[0], ep_right_down[1], ep_right_down[2])
+        vertex.addData3(tuple(ep_right_down_scaled))
         color.addData4(self.FOV_DOWN_COLOR)
 
-        #front (12-15)
-        vertex.addData3(ep_left_down[0], ep_left_down[1], ep_left_down[2])
+        # front (12-15)
+        vertex.addData3(tuple(ep_left_down_scaled))
         color.addData4(self.FOV_FRONT_COLOR)
-        vertex.addData3(ep_left_up[0], ep_left_up[1], ep_left_up[2])
+        vertex.addData3(tuple(ep_left_up_scaled))
         color.addData4(self.FOV_FRONT_COLOR)
-        vertex.addData3(ep_right_down[0], ep_right_down[1], ep_right_down[2])
+        vertex.addData3(tuple(ep_right_down_scaled))
         color.addData4(self.FOV_FRONT_COLOR)
-        vertex.addData3(ep_right_up[0], ep_right_up[1], ep_right_up[2])
+        vertex.addData3(tuple(ep_right_up_scaled))
         color.addData4(self.FOV_FRONT_COLOR)
 
         geom = Geom(vertices)
@@ -170,10 +172,10 @@ class Field:
             self.rotate_robot(axes[2], -self.ROT_STEP)
 
     def reset(self):
-        #self.field = np.full(self.shape, FieldValues.FREE, dtype=FieldValues)
-        #i = np.random.random_integers(0, self.shape[0] - 1, self.target_count)
-        #j = np.random.random_integers(0, self.shape[1] - 1, self.target_count)
-        #self.field[i, j] = FieldValues.TARGET
+        # self.field = np.full(self.shape, FieldValues.FREE, dtype=FieldValues)
+        # i = np.random.random_integers(0, self.shape[0] - 1, self.target_count)
+        # j = np.random.random_integers(0, self.shape[1] - 1, self.target_count)
+        # self.field[i, j] = FieldValues.TARGET
         size = np.product(self.shape)
         self.field = np.full(size, FieldValues.FREE, dtype=FieldValues)
         i = np.random.choice(size, self.target_count)

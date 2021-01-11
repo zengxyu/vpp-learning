@@ -2,9 +2,10 @@ from math import pi, sin, cos
 
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
-from direct.actor.Actor import Actor
-from direct.interval.IntervalGlobal import Sequence
-from panda3d.core import Point3, GeomNode, Geom, GeomPrimitive, GeomVertexData, GeomTriangles, GeomTristrips, GeomVertexWriter, GeomVertexFormat, DirectionalLight, AmbientLight, LVecBase3i, LVecBase4, BitArray, LineSegs
+# from direct.actor.Actor import Actor
+# from direct.interval.IntervalGlobal import Sequence
+from panda3d.core import GeomNode, Geom, GeomVertexData, GeomTriangles, GeomVertexWriter, GeomVertexFormat  # , Point3, GeomPrimitive, GeomTristrips
+from panda3d.core import LVecBase3i, LVecBase4, BitArray, LineSegs, TextNode  # ,DirectionalLight, AmbientLight
 
 import p3d_voxgrid
 from field_env_3d import Field, Action
@@ -12,6 +13,7 @@ from human_player_3d import HumanPlayer
 
 import numpy as np
 import binvox_rw
+
 
 def createEdgedCube(min, max):
     lines = LineSegs()
@@ -39,7 +41,8 @@ def createEdgedCube(min, max):
     node = lines.create()
     return node
 
-def createCube(min, max, visible_faces = [1, 1, 1, 1, 1, 1]):
+
+def createCube(min, max, visible_faces=[1, 1, 1, 1, 1, 1]):
     vertices = GeomVertexData('vertices', GeomVertexFormat.get_v3c4(), Geom.UHStatic)
     vertices.setNumRows(8)
     vertex = GeomVertexWriter(vertices, 'vertex')
@@ -83,6 +86,7 @@ def createCube(min, max, visible_faces = [1, 1, 1, 1, 1, 1]):
     geom.addPrimitive(tri_prim)
     return geom
 
+
 def createVoxelGrid(arr, scale, min_col, max_col):
     arr_shape = np.shape(arr)
     vertex_shape = (arr_shape[0] + 1, arr_shape[1] + 1, arr_shape[2] + 1)
@@ -99,7 +103,7 @@ def createVoxelGrid(arr, scale, min_col, max_col):
     for z in range(vertex_shape[2]):
         for y in range(vertex_shape[1]):
             for x in range(vertex_shape[0]):
-                prog = z / vertex_shape[2] #(x / vertex_shape[0] + y / vertex_shape[1] + z / vertex_shape[2]) / 3
+                prog = z / vertex_shape[2]  # (x / vertex_shape[0] + y / vertex_shape[1] + z / vertex_shape[2]) / 3
                 col = np.asarray(min_col) * (1 - prog) + np.asarray(max_col) * prog
                 vertex.addData3(x * scale, y * scale, z * scale)
                 color.addData4(col[0], col[1], col[2], col[3])
@@ -125,43 +129,45 @@ def createVoxelGrid(arr, scale, min_col, max_col):
                         ]
                     triangles = [
                         [coord[0], coord[2], coord[1]],
-	                    [coord[0], coord[3], coord[2]],
-	                    [coord[2], coord[3], coord[4]],
-	                    [coord[2], coord[4], coord[5]],
-	                    [coord[1], coord[2], coord[5]],
-	                    [coord[1], coord[5], coord[6]],
-	                    [coord[0], coord[7], coord[4]],
-	                    [coord[0], coord[4], coord[3]],
-	                    [coord[5], coord[4], coord[7]],
-	                    [coord[5], coord[7], coord[6]],
-	                    [coord[0], coord[6], coord[7]],
-	                    [coord[0], coord[1], coord[6]]
+                        [coord[0], coord[3], coord[2]],
+                        [coord[2], coord[3], coord[4]],
+                        [coord[2], coord[4], coord[5]],
+                        [coord[1], coord[2], coord[5]],
+                        [coord[1], coord[5], coord[6]],
+                        [coord[0], coord[7], coord[4]],
+                        [coord[0], coord[4], coord[3]],
+                        [coord[5], coord[4], coord[7]],
+                        [coord[5], coord[7], coord[6]],
+                        [coord[0], coord[6], coord[7]],
+                        [coord[0], coord[1], coord[6]]
                         ]
-                    
+
                     for tri in triangles:
                         tri_prim.addVertices(tri[0], tri[1], tri[2])
-    
+
     geom.addPrimitive(tri_prim)
     return geom
 
-def line_plane_intersection(p0, n, l0, l):
+
+def line_plane_intersection(p0, nv, l0, lv):
     """ return intersection of a line with a plane
 
     Parameters:
         p0: Point in plane
-        n: Normal vector of plane
+        nv: Normal vector of plane
         l0: Point on line
-        l: Direction vector of line
+        lv: Direction vector of line
 
     Returns:
         The intersection point
     """
-    denom = np.dot(l, n)
-    if denom == 0: # No intersection or line contained in plane
+    denom = np.dot(lv, nv)
+    if denom == 0:  # No intersection or line contained in plane
         return None
 
-    d = np.dot((p0 - l0), n) / denom
-    return l0 + l * d
+    d = np.dot((p0 - l0), nv) / denom
+    return l0 + lv * d
+
 
 def point_in_rectangle(p, p0, v1, v2):
     """ check if point is within reactangle
@@ -181,12 +187,14 @@ def point_in_rectangle(p, p0, v1, v2):
     v2_proj_length = np.dot((p - p0), v2 / v2_len)
     return (v1_proj_length >= 0 and v1_proj_length <= v1_len and v2_proj_length >= 0 and v2_proj_length <= v2_len)
 
+
 def get_bb_points(points):
     return np.amin(points, axis=0), np.amax(points, axis=0)
 
+
 def get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, shape):
-    clip = lambda x, l, u: max(l, min(u, x))
-    bb_min, bb_max = get_bb_points(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+    def clip(x, lower, upper): return max(lower, min(upper, x))
+    bb_min, bb_max = get_bb_points([cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up])
     bb_min, bb_max = clip(np.rint(bb_min), [0, 0, 0], shape), clip(np.rint(bb_max), [0, 0, 0], shape)
     v1 = ep_right_up - ep_right_down
     v2 = ep_left_down - ep_right_down
@@ -197,48 +205,50 @@ def get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_r
                 point = np.array([x, y, z])
                 p_proj = line_plane_intersection(ep_right_down, plane_normal, cam_pos, (point - cam_pos))
                 if point_in_rectangle(p_proj, ep_right_down, v1, v2):
-                    continue # TODO add index
+                    continue  # TODO add index
+
 
 class MyApp(ShowBase):
 
     def __init__(self):
         ShowBase.__init__(self)
+        self.scale = 0.05
 
         # Load the environment model.
-        #self.scene = self.loader.loadModel("models/environment")
+        # self.scene = self.loader.loadModel("models/environment")
         # Reparent the model to render.
-        #self.scene.reparentTo(self.render)
+        # self.scene.reparentTo(self.render)
         # Apply scale and position transforms on the model.
-        #self.scene.setScale(0.25, 0.25, 0.25)
-        #self.scene.setPos(-8, 42, -10)
+        # self.scene.setScale(0.25, 0.25, 0.25)
+        # self.scene.setPos(-8, 42, -10)
 
         # Add the spinCameraTask procedure to the task manager.
-        #self.taskMgr.add(self.spinCameraTask, "SpinCameraTask")
+        # self.taskMgr.add(self.spinCameraTask, "SpinCameraTask")
 
         # Load and transform the panda actor.
-        #self.pandaActor = Actor("models/panda-model", {"walk": "models/panda-walk4"})
-        #self.pandaActor.setScale(0.005, 0.005, 0.005)
-        #self.pandaActor.reparentTo(self.render)
+        # self.pandaActor = Actor("models/panda-model", {"walk": "models/panda-walk4"})
+        # self.pandaActor.setScale(0.005, 0.005, 0.005)
+        # self.pandaActor.reparentTo(self.render)
         # Loop its animation.
-        #self.pandaActor.loop("walk")
+        # self.pandaActor.loop("walk")
 
         # Create the four lerp intervals needed for the panda to
         # walk back and forth.
-        #posInterval1 = self.pandaActor.posInterval(13, Point3(0, -10, 0), startPos=Point3(0, 10, 0))
-        #posInterval2 = self.pandaActor.posInterval(13, Point3(0, 10, 0), startPos=Point3(0, -10, 0))
-        #hprInterval1 = self.pandaActor.hprInterval(3, Point3(180, 0, 0), startHpr=Point3(0, 0, 0))
-        #hprInterval2 = self.pandaActor.hprInterval(3, Point3(0, 0, 0), startHpr=Point3(180, 0, 0))
+        # posInterval1 = self.pandaActor.posInterval(13, Point3(0, -10, 0), startPos=Point3(0, 10, 0))
+        # posInterval2 = self.pandaActor.posInterval(13, Point3(0, 10, 0), startPos=Point3(0, -10, 0))
+        # hprInterval1 = self.pandaActor.hprInterval(3, Point3(180, 0, 0), startHpr=Point3(0, 0, 0))
+        # hprInterval2 = self.pandaActor.hprInterval(3, Point3(0, 0, 0), startHpr=Point3(180, 0, 0))
 
         # Create and play the sequence that coordinates the intervals.
-        #self.pandaPace = Sequence(posInterval1, hprInterval1, posInterval2, hprInterval2, name="pandaPace")
-        #self.pandaPace.loop()
+        # self.pandaPace = Sequence(posInterval1, hprInterval1, posInterval2, hprInterval2, name="pandaPace")
+        # self.pandaPace.loop()
 
-        #cube = GeomNode("cube")
-        #cube.addGeom(createCube([0, 0, 0], [1, 1, 1]))
+        # cube = GeomNode("cube")
+        # cube.addGeom(createCube([0, 0, 0], [1, 1, 1]))
 
         self.voxgrid = GeomNode("voxgrid")
         self.fov_node = GeomNode("fov")
-        #voxgrid.addGeom(createVoxelGrid(
+        # voxgrid.addGeom(createVoxelGrid(
         #    np.array([[[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 0, 0], [1, 1, 1]]]),
         #    (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)))
 
@@ -249,12 +259,31 @@ class MyApp(ShowBase):
 
         print(grid_array.shape)
 
-        self.test_cube = createEdgedCube([0, 0, 0], np.asarray(grid_array.shape) * 0.05)
+        self.test_cube = createEdgedCube([0, 0, 0], np.asarray(grid_array.shape) * self.scale)
         self.render.attachNewNode(self.test_cube)
 
-        self.env = Field(shape=grid_array.shape, target_count=100, sensor_range=5.0, hfov=90.0, vfov = 60.0, scale=1.0, max_steps=1000, headless=False)
+        self.env = Field(shape=grid_array.shape, target_count=100, sensor_range=100.0, hfov=90.0, vfov=60.0, scale=self.scale, max_steps=1000, headless=False)
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
+
+        # debug vec positions
+        # ld_text = TextNode('ld text')
+        # ld_text.setText("Left-Down")
+        # lu_text = TextNode('ld text')
+        # lu_text.setText("Left-Up")
+        # rd_text = TextNode('ld text')
+        # rd_text.setText("Right-Down")
+        # ru_text = TextNode('ld text')
+        # ru_text.setText("Right-Up")
+        # ldTextNodePath = self.render.attachNewNode(ld_text)
+        # ldTextNodePath.setPos(tuple(ep_left_down * self.scale))
+        # luTextNodePath = self.render.attachNewNode(lu_text)
+        # luTextNodePath.setPos(tuple(ep_left_up * self.scale))
+        # rdTextNodePath = self.render.attachNewNode(rd_text)
+        # rdTextNodePath.setPos(tuple(ep_right_down * self.scale))
+        # ruTextNodePath = self.render.attachNewNode(ru_text)
+        # ruTextNodePath.setPos(tuple(ep_right_up * self.scale))
+
         self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
         self.fov_node.addGeom(self.fov_geom)
 
@@ -272,46 +301,46 @@ class MyApp(ShowBase):
         self.accept('k', self.keyboardInput, ['k'])
         self.accept('l', self.keyboardInput, ['l'])
 
-        #self.taskMgr.add(self.moveCameraTask, "MoveCameraTask")
-        
+        # self.taskMgr.add(self.moveCameraTask, "MoveCameraTask")
+
         model_flat = grid_array.flatten()
-        
+
         print('Converting numpy array to BitArray')
-        
+
         barr = BitArray()
         for i in range(len(model_flat)):
             barr.set_bit_to(i, model_flat[i])
-            
-        print('Done')
-        
-        #geom = createVoxelGrid(model.data, 0.01, (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0))
-        shape = LVecBase3i(model.data.shape[0], model.data.shape[1], model.data.shape[2])
-        #print('Types: {}, {}, {}, {}, {}'.format(type(barr), type(shape), type(0.01), type(LVecBase4(0.0, 1.0, 0.0, 1.0)), type(LVecBase4(0.0, 0.0, 1.0, 1.0))))
-        geom = p3d_voxgrid.create_voxel_grid(barr, shape, 0.05, LVecBase4(0.0, 1.0, 0.0, 1.0), LVecBase4(0.0, 0.0, 1.0, 1.0))
-        #print('Geom: {}'.format(type(geom)))
-        self.voxgrid.addGeom(geom)
 
+        print('Done')
+
+        # geom = createVoxelGrid(model.data, 0.01, (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0))
+        shape = LVecBase3i(model.data.shape[0], model.data.shape[1], model.data.shape[2])
+        # print('Types: {}, {}, {}, {}, {}'.format(type(barr), type(shape), type(0.01),
+        # type(LVecBase4(0.0, 1.0, 0.0, 1.0)), type(LVecBase4(0.0, 0.0, 1.0, 1.0))))
+        geom = p3d_voxgrid.create_voxel_grid(barr, shape, self.scale, LVecBase4(0.0, 1.0, 0.0, 1.0), LVecBase4(0.0, 0.0, 1.0, 1.0))
+        # print('Geom: {}'.format(type(geom)))
+        self.voxgrid.addGeom(geom)
 
         self.render.attachNewNode(self.voxgrid)
         self.render.attachNewNode(self.fov_node)
 
-        #alight = AmbientLight('alight')
-        #alight.setColor((0.2, 0.2, 0.2, 1))
-        #alnp = render.attachNewNode(alight)
-        #self.render.setLight(alnp)
-        
-        #dlight = DirectionalLight('vg_light')
-        #dlight.setColor((1, 1, 1, 1))
-        #dlight.setDirection((0, 0, -1))
-        #dlight.setShadowCaster(True, 512, 512)
-        #dlnp = render.attachNewNode(dlight)
-        #dlnp.setHpr(0, -60, 0)
-        #self.render.setLight(dlnp)
-        #self.render.setShaderAuto()
+        # alight = AmbientLight('alight')
+        # alight.setColor((0.2, 0.2, 0.2, 1))
+        # alnp = render.attachNewNode(alight)
+        # self.render.setLight(alnp)
 
-        #shader = self.loader.loadShader("test_shader.sha")
-        #self.render.setShader(shader)
-        #self.render.setShaderInput("light", dlnp)
+        # dlight = DirectionalLight('vg_light')
+        # dlight.setColor((1, 1, 1, 1))
+        # dlight.setDirection((0, 0, -1))
+        # dlight.setShadowCaster(True, 512, 512)
+        # dlnp = render.attachNewNode(dlight)
+        # dlnp.setHpr(0, -60, 0)
+        # self.render.setLight(dlnp)
+        # self.render.setShaderAuto()
+
+        # shader = self.loader.loadShader("test_shader.sha")
+        # self.render.setShader(shader)
+        # self.render.setShaderInput("light", dlnp)
 
     def keyboardInput(self, char):
         if char == 'a':
@@ -355,7 +384,7 @@ class MyApp(ShowBase):
         self.camera.setHpr(angleDegrees, 0, 0)
         return Task.cont
 
-    #def moveCameraTask(self, task):
+    # def moveCameraTask(self, task):
     #    action = self.player.get_action(None, None)
     #    if action == Action.DO_NOTHING:
     #        return Task.cont
@@ -365,7 +394,6 @@ class MyApp(ShowBase):
     #    cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
     #    self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
     #    self.fov_node.addGeom(self.fov_geom)
-
 
 
 app = MyApp()
