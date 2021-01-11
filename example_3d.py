@@ -7,6 +7,8 @@ from direct.interval.IntervalGlobal import Sequence
 from panda3d.core import Point3, GeomNode, Geom, GeomPrimitive, GeomVertexData, GeomTriangles, GeomTristrips, GeomVertexWriter, GeomVertexFormat, DirectionalLight, AmbientLight, LVecBase3i, LVecBase4, BitArray
 
 import p3d_voxgrid
+from field_env_3d import Field, Action
+from human_player_3d import HumanPlayer
 
 import numpy as np
 import binvox_rw
@@ -122,12 +124,12 @@ class MyApp(ShowBase):
         ShowBase.__init__(self)
 
         # Load the environment model.
-        #self.scene = self.loader.loadModel("models/environment")
+        self.scene = self.loader.loadModel("models/environment")
         # Reparent the model to render.
-        #self.scene.reparentTo(self.render)
+        self.scene.reparentTo(self.render)
         # Apply scale and position transforms on the model.
-        #self.scene.setScale(0.25, 0.25, 0.25)
-        #self.scene.setPos(-8, 42, 0)
+        self.scene.setScale(0.25, 0.25, 0.25)
+        self.scene.setPos(-8, 42, -10)
 
         # Add the spinCameraTask procedure to the task manager.
         #self.taskMgr.add(self.spinCameraTask, "SpinCameraTask")
@@ -153,35 +155,59 @@ class MyApp(ShowBase):
         #cube = GeomNode("cube")
         #cube.addGeom(createCube([0, 0, 0], [1, 1, 1]))
 
-        voxgrid = GeomNode("voxgrid")
+        #voxgrid = GeomNode("voxgrid")
+        self.fov_node = GeomNode("fov")
         #voxgrid.addGeom(createVoxelGrid(
         #    np.array([[[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 0, 0], [1, 1, 1]]]),
         #    (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)))
 
-        with open('VG07_6_fruits.binvox', 'rb') as f:
+        with open('VG07_6.binvox', 'rb') as f:
             model = binvox_rw.read_as_3d_array(f)
 
         print(model.data.shape)
+
+        self.env = Field(shape=model.data.shape, target_count=100, sensor_range=5.0, hfov=90.0, vfov = 60.0, scale=1.0, max_steps=1000, headless=False)
+
+        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
+        self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        self.fov_node.addGeom(self.fov_geom)
+
+        self.player = HumanPlayer(self.env)
+        self.accept('q', self.keyboardInput, ['q'])
+        self.accept('w', self.keyboardInput, ['w'])
+        self.accept('e', self.keyboardInput, ['e'])
+        self.accept('a', self.keyboardInput, ['a'])
+        self.accept('s', self.keyboardInput, ['s'])
+        self.accept('d', self.keyboardInput, ['d'])
+        self.accept('u', self.keyboardInput, ['u'])
+        self.accept('i', self.keyboardInput, ['i'])
+        self.accept('o', self.keyboardInput, ['o'])
+        self.accept('j', self.keyboardInput, ['j'])
+        self.accept('k', self.keyboardInput, ['k'])
+        self.accept('l', self.keyboardInput, ['l'])
+
+        #self.taskMgr.add(self.moveCameraTask, "MoveCameraTask")
         
         model_flat = model.data.flatten()
         
         print('Converting numpy array to BitArray')
         
-        barr = BitArray()
-        for i in range(len(model_flat)):
-            barr.set_bit_to(i, model_flat[i])
+        #barr = BitArray()
+        #for i in range(len(model_flat)):
+        #    barr.set_bit_to(i, model_flat[i])
             
         print('Done')
         
         #geom = createVoxelGrid(model.data, 0.01, (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0))
         shape = LVecBase3i(model.data.shape[0], model.data.shape[1], model.data.shape[2])
-        print('Types: {}, {}, {}, {}, {}'.format(type(barr), type(shape), type(0.01), type(LVecBase4(0.0, 1.0, 0.0, 1.0)), type(LVecBase4(0.0, 0.0, 1.0, 1.0))))
-        geom = p3d_voxgrid.create_voxel_grid(barr, shape, 0.1, LVecBase4(0.0, 1.0, 0.0, 1.0), LVecBase4(0.0, 0.0, 1.0, 1.0))
-        print('Geom: {}'.format(type(geom)))
-        voxgrid.addGeom(geom)
+        #print('Types: {}, {}, {}, {}, {}'.format(type(barr), type(shape), type(0.01), type(LVecBase4(0.0, 1.0, 0.0, 1.0)), type(LVecBase4(0.0, 0.0, 1.0, 1.0))))
+        #geom = p3d_voxgrid.create_voxel_grid(barr, shape, 0.05, LVecBase4(0.0, 1.0, 0.0, 1.0), LVecBase4(0.0, 0.0, 1.0, 1.0))
+        #print('Geom: {}'.format(type(geom)))
+        #voxgrid.addGeom(geom)
 
 
-        self.render.attachNewNode(voxgrid)
+        #self.render.attachNewNode(voxgrid)
+        self.render.attachNewNode(self.fov_node)
 
         #alight = AmbientLight('alight')
         #alight.setColor((0.2, 0.2, 0.2, 1))
@@ -201,6 +227,40 @@ class MyApp(ShowBase):
         #self.render.setShader(shader)
         #self.render.setShaderInput("light", dlnp)
 
+    def keyboardInput(self, char):
+        if char == 'a':
+            act = Action.MOVE_LEFT
+        elif char == 'd':
+            act = Action.MOVE_RIGHT
+        elif char == 'w':
+            act = Action.MOVE_FORWARD
+        elif char == 's':
+            act = Action.MOVE_BACKWARD
+        elif char == 'e':
+            act = Action.MOVE_DOWN
+        elif char == 'q':
+            act = Action.MOVE_UP
+        elif char == 'j':
+            act = Action.ROTATE_YAW_N
+        elif char == 'l':
+            act = Action.ROTATE_YAW_P
+        elif char == 'i':
+            act = Action.ROTATE_PITCH_P
+        elif char == 'k':
+            act = Action.ROTATE_PITCH_N
+        elif char == 'o':
+            act = Action.ROTATE_ROLL_P
+        elif char == 'u':
+            act = Action.ROTATE_ROLL_N
+        else:
+            return
+
+        self.env.step(act)
+        self.fov_node.removeGeom(0)
+        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
+        self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        self.fov_node.addGeom(self.fov_geom)
+
     # Define a procedure to move the camera.
     def spinCameraTask(self, task):
         angleDegrees = task.time * 6.0
@@ -208,6 +268,18 @@ class MyApp(ShowBase):
         self.camera.setPos(20 * sin(angleRadians), -20 * cos(angleRadians), 3)
         self.camera.setHpr(angleDegrees, 0, 0)
         return Task.cont
+
+    #def moveCameraTask(self, task):
+    #    action = self.player.get_action(None, None)
+    #    if action == Action.DO_NOTHING:
+    #        return Task.cont
+    #
+    #    self.fov_node.removeGeom(self.fov_geom)
+    #    self.env.step(action)
+    #    cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
+    #    self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+    #    self.fov_node.addGeom(self.fov_geom)
+
 
 
 app = MyApp()

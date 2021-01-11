@@ -27,10 +27,12 @@
     <Compile Include="data_structures.py" />
     <Compile Include="dqn.py" />
     <Compile Include="example_3d.py" />
+    <Compile Include="field_env_3d.py" />
     <Compile Include="human_player.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="field_env.py" />
+    <Compile Include="human_player_3d.py" />
     <Compile Include="random_agent.py" />
     <Compile Include="replay_buffers.py" />
     <Compile Include="train_agent.py" />
