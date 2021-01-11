@@ -139,7 +139,7 @@ class Field:
 
     def rotate_robot(self, axis, angle):
         rot = Rotation.from_rotvec(np.radians(angle) * axis)
-        self.robot_rot = self.robot_rot * rot
+        self.robot_rot = rot * self.robot_rot
 
     def step(self, action):        
         axes = self.robot_rot.as_matrix().transpose()
