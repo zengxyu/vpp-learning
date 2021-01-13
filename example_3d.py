@@ -5,11 +5,11 @@ from direct.task import Task
 # from direct.actor.Actor import Actor
 # from direct.interval.IntervalGlobal import Sequence
 from panda3d.core import GeomNode, Geom, GeomVertexData, GeomTriangles, GeomVertexWriter, GeomVertexFormat  # , Point3, GeomPrimitive, GeomTristrips
-from panda3d.core import LVecBase3i, LVecBase4, BitArray, LineSegs, TextNode  # ,DirectionalLight, AmbientLight
+from panda3d.core import LVecBase3i, LVecBase4, BitArray, LineSegs, TextNode, PTA_int, PTA_float # ,DirectionalLight, AmbientLight
 
 import p3d_voxgrid
+from p3d_voxgrid import VoxelGrid
 from field_env_3d import Field, Action
-from human_player_3d import HumanPlayer
 
 import numpy as np
 import binvox_rw
@@ -193,19 +193,22 @@ def get_bb_points(points):
 
 
 def get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, shape):
-    def clip(x, lower, upper): return max(lower, min(upper, x))
     bb_min, bb_max = get_bb_points([cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up])
-    bb_min, bb_max = clip(np.rint(bb_min), [0, 0, 0], shape), clip(np.rint(bb_max), [0, 0, 0], shape)
+    bb_min, bb_max = np.clip(np.rint(bb_min), [0, 0, 0], shape).astype(int), np.clip(np.rint(bb_max), [0, 0, 0], shape).astype(int)
     v1 = ep_right_up - ep_right_down
     v2 = ep_left_down - ep_right_down
     plane_normal = np.cross(v1, v2)
+    grid_inds = []
     for z in range(bb_min[2], bb_max[2] + 1):
         for y in range(bb_min[1], bb_max[1] + 1):
             for x in range(bb_min[0], bb_max[0] + 1):
                 point = np.array([x, y, z])
                 p_proj = line_plane_intersection(ep_right_down, plane_normal, cam_pos, (point - cam_pos))
+                if p_proj is None:
+                    continue
                 if point_in_rectangle(p_proj, ep_right_down, v1, v2):
-                    continue  # TODO add index
+                    grid_inds.append((x, y, z))
+    return grid_inds
 
 
 class MyApp(ShowBase):
@@ -246,7 +249,7 @@ class MyApp(ShowBase):
         # cube = GeomNode("cube")
         # cube.addGeom(createCube([0, 0, 0], [1, 1, 1]))
 
-        self.voxgrid = GeomNode("voxgrid")
+        self.voxgrid_node = GeomNode("voxgrid")
         self.fov_node = GeomNode("fov")
         # voxgrid.addGeom(createVoxelGrid(
         #    np.array([[[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 0, 0], [1, 1, 1]]]),
@@ -287,7 +290,6 @@ class MyApp(ShowBase):
         self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
         self.fov_node.addGeom(self.fov_geom)
 
-        self.player = HumanPlayer(self.env)
         self.accept('q', self.keyboardInput, ['q'])
         self.accept('w', self.keyboardInput, ['w'])
         self.accept('e', self.keyboardInput, ['e'])
@@ -305,23 +307,28 @@ class MyApp(ShowBase):
 
         model_flat = grid_array.flatten()
 
-        print('Converting numpy array to BitArray')
+        # print('Converting numpy array to BitArray')
 
-        barr = BitArray()
-        for i in range(len(model_flat)):
-            barr.set_bit_to(i, model_flat[i])
+        # barr = BitArray()
+        # for i in range(len(model_flat)):
+        #     barr.set_bit_to(i, model_flat[i])
 
-        print('Done')
+        # print('Done')
 
         # geom = createVoxelGrid(model.data, 0.01, (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0))
-        shape = LVecBase3i(model.data.shape[0], model.data.shape[1], model.data.shape[2])
+        self.shape = LVecBase3i(model.data.shape[0], model.data.shape[1], model.data.shape[2])
         # print('Types: {}, {}, {}, {}, {}'.format(type(barr), type(shape), type(0.01),
         # type(LVecBase4(0.0, 1.0, 0.0, 1.0)), type(LVecBase4(0.0, 0.0, 1.0, 1.0))))
-        geom = p3d_voxgrid.create_voxel_grid(barr, shape, self.scale, LVecBase4(0.0, 1.0, 0.0, 1.0), LVecBase4(0.0, 0.0, 1.0, 1.0))
+        # geom = p3d_voxgrid.create_voxel_grid(barr, shape, self.scale, LVecBase4(0.0, 1.0, 0.0, 1.0), LVecBase4(0.0, 0.0, 1.0, 1.0))
         # print('Geom: {}'.format(type(geom)))
-        self.voxgrid.addGeom(geom)
 
-        self.render.attachNewNode(self.voxgrid)
+        print(np.max(model_flat.astype(int)))
+
+        self.voxgrid = VoxelGrid(PTA_int(model_flat.astype(int)), self.shape, PTA_float([220/255, 20/255, 60/255, 1]), self.scale)
+
+        self.voxgrid_node.addGeom(self.voxgrid.getGeom())
+
+        self.render.attachNewNode(self.voxgrid_node)
         self.render.attachNewNode(self.fov_node)
 
         # alight = AmbientLight('alight')
@@ -375,6 +382,10 @@ class MyApp(ShowBase):
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
         self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
         self.fov_node.addGeom(self.fov_geom)
+
+        inds = get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, self.shape)
+        for ind in inds:
+            self.voxgrid.updateValue(LVecBase3i(ind), 1)
 
     # Define a procedure to move the camera.
     def spinCameraTask(self, task):
