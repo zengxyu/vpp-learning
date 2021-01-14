@@ -5,9 +5,8 @@ from direct.task import Task
 # from direct.actor.Actor import Actor
 # from direct.interval.IntervalGlobal import Sequence
 from panda3d.core import GeomNode, Geom, GeomVertexData, GeomTriangles, GeomVertexWriter, GeomVertexFormat  # , Point3, GeomPrimitive, GeomTristrips
-from panda3d.core import LVecBase3i, LVecBase4, BitArray, LineSegs, TextNode, PTA_int, PTA_float # ,DirectionalLight, AmbientLight
+from panda3d.core import LVecBase3i, LineSegs, PTA_int, PTA_float  # ,DirectionalLight, AmbientLight, LVecBase4, BitArray, TextNode
 
-import p3d_voxgrid
 from p3d_voxgrid import VoxelGrid
 from field_env_3d import Field, Action
 
@@ -165,10 +164,10 @@ def line_plane_intersection(p0, nv, l0, lv):
     """
     denom = np.dot(lv, nv)
     if denom == 0:  # No intersection or line contained in plane
-        return None
+        return None, None
 
     d = np.dot((p0 - l0), nv) / denom
-    return l0 + lv * d
+    return l0 + lv * d, d
 
 
 def point_in_rectangle(p, p0, v1, v2):
@@ -205,8 +204,8 @@ def get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_r
         for y in range(bb_min[1], bb_max[1] + 1):
             for x in range(bb_min[0], bb_max[0] + 1):
                 point = np.array([x, y, z])
-                p_proj = line_plane_intersection(ep_right_down, plane_normal, cam_pos, (point - cam_pos))
-                if p_proj is None:
+                p_proj, rel_dist = line_plane_intersection(ep_right_down, plane_normal, cam_pos, (point - cam_pos))
+                if p_proj is None or rel_dist < 1.0:  # if point lies behind projection, skip
                     continue
                 if point_in_rectangle(p_proj, ep_right_down, v1, v2):
                     grid_inds.extend([x, y, z])
@@ -267,7 +266,7 @@ class MyApp(ShowBase):
         self.test_cube = createEdgedCube([0, 0, 0], np.asarray(grid_array.shape) * self.scale)
         self.render.attachNewNode(self.test_cube)
 
-        self.env = Field(shape=grid_array.shape, target_count=100, sensor_range=10.0, hfov=90.0, vfov=60.0, scale=self.scale, max_steps=1000, headless=False)
+        self.env = Field(shape=grid_array.shape, target_count=100, sensor_range=50.0, hfov=90.0, vfov=60.0, scale=self.scale, max_steps=1000, headless=False)
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
 
@@ -289,9 +288,9 @@ class MyApp(ShowBase):
         # ruTextNodePath = self.render.attachNewNode(ru_text)
         # ruTextNodePath.setPos(tuple(ep_right_up * self.scale))
 
-        self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
-        self.fov_node.addGeom(self.fov_geom)
-        # self.fov_node = self.env.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        # self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        # self.fov_node.addGeom(self.fov_geom)
+        self.fov_node = self.env.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
         self.accept('q', self.keyboardInput, ['q'])
         self.accept('w', self.keyboardInput, ['w'])
@@ -327,8 +326,9 @@ class MyApp(ShowBase):
 
         print(np.max(model_flat.astype(int)))
 
-        # self.voxgrid = VoxelGrid(PTA_int(model_flat.astype(int)), self.shape, PTA_float([220/255, 20/255, 60/255, 1, 199/255, 21/255, 133/255, 1]), self.scale)
-        self.voxgrid = VoxelGrid(self.shape, PTA_float([220/255, 20/255, 60/255, 1, 199/255, 21/255, 133/255, 1]), self.scale)
+        colors = PTA_float([220/255, 20/255, 60/255, 1.0, 199/255, 21/255, 133/255, 1.0])
+        self.voxgrid = VoxelGrid(PTA_int(model_flat.astype(int).tolist()), self.shape, colors, self.scale)
+        # self.voxgrid = VoxelGrid(self.shape, PTA_float([220/255, 20/255, 60/255, 1, 199/255, 21/255, 133/255, 1]), self.scale)
 
         self.voxgrid_node.addGeom(self.voxgrid.getGeom())
 
@@ -384,10 +384,10 @@ class MyApp(ShowBase):
         self.env.step(act)
         self.fov_node.removeGeom(0)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
-        self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
-        self.fov_node.addGeom(self.fov_geom)
-        # self.fov_node = self.env.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
-        # self.render.attachNewNode(self.fov_node)
+        # self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        # self.fov_node.addGeom(self.fov_geom)
+        self.fov_node = self.env.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        self.render.attachNewNode(self.fov_node)
 
         print("Computing indices")
         time_start = time.perf_counter()
