@@ -14,6 +14,8 @@ from field_env_3d import Field, Action
 import numpy as np
 import binvox_rw
 
+import time
+
 
 def createEdgedCube(min, max):
     lines = LineSegs()
@@ -207,7 +209,7 @@ def get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_r
                 if p_proj is None:
                     continue
                 if point_in_rectangle(p_proj, ep_right_down, v1, v2):
-                    grid_inds.append((x, y, z))
+                    grid_inds.extend([x, y, z])
     return grid_inds
 
 
@@ -265,7 +267,7 @@ class MyApp(ShowBase):
         self.test_cube = createEdgedCube([0, 0, 0], np.asarray(grid_array.shape) * self.scale)
         self.render.attachNewNode(self.test_cube)
 
-        self.env = Field(shape=grid_array.shape, target_count=100, sensor_range=100.0, hfov=90.0, vfov=60.0, scale=self.scale, max_steps=1000, headless=False)
+        self.env = Field(shape=grid_array.shape, target_count=100, sensor_range=10.0, hfov=90.0, vfov=60.0, scale=self.scale, max_steps=1000, headless=False)
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
 
@@ -289,6 +291,7 @@ class MyApp(ShowBase):
 
         self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
         self.fov_node.addGeom(self.fov_geom)
+        # self.fov_node = self.env.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
         self.accept('q', self.keyboardInput, ['q'])
         self.accept('w', self.keyboardInput, ['w'])
@@ -324,7 +327,8 @@ class MyApp(ShowBase):
 
         print(np.max(model_flat.astype(int)))
 
-        self.voxgrid = VoxelGrid(PTA_int(model_flat.astype(int)), self.shape, PTA_float([220/255, 20/255, 60/255, 1]), self.scale)
+        # self.voxgrid = VoxelGrid(PTA_int(model_flat.astype(int)), self.shape, PTA_float([220/255, 20/255, 60/255, 1, 199/255, 21/255, 133/255, 1]), self.scale)
+        self.voxgrid = VoxelGrid(self.shape, PTA_float([220/255, 20/255, 60/255, 1, 199/255, 21/255, 133/255, 1]), self.scale)
 
         self.voxgrid_node.addGeom(self.voxgrid.getGeom())
 
@@ -382,10 +386,17 @@ class MyApp(ShowBase):
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
         self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
         self.fov_node.addGeom(self.fov_geom)
+        # self.fov_node = self.env.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        # self.render.attachNewNode(self.fov_node)
 
+        print("Computing indices")
+        time_start = time.perf_counter()
         inds = get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, self.shape)
-        for ind in inds:
-            self.voxgrid.updateValue(LVecBase3i(ind), 1)
+        print("Done in {} s".format(time.perf_counter() - time_start))
+        print("Drawing indices")
+        time_start = time.perf_counter()
+        self.voxgrid.updateValues(PTA_int(inds), 2)
+        print("Done in {} s".format(time.perf_counter() - time_start))
 
     # Define a procedure to move the camera.
     def spinCameraTask(self, task):

@@ -3,7 +3,7 @@
 import numpy as np
 from enum import IntEnum
 from scipy.spatial.transform import Rotation
-from panda3d.core import Geom, GeomVertexData, GeomTriangles, GeomVertexWriter, GeomVertexFormat
+from panda3d.core import Geom, GeomVertexData, GeomTriangles, GeomVertexWriter, GeomVertexFormat, LineSegs
 
 
 class Action(IntEnum):
@@ -50,7 +50,7 @@ class Field:
         self.OCCUPIED_COLOR = (211/255, 211/255, 211/255, 1)
         self.TARGET_COLOR = (0, 136/255, 0, 1)
         self.ROBOT_COLOR = (1, 165/255, 0, 1)
-        self.FOV_ALPHA = 1 # not working
+        self.FOV_ALPHA = 1.0 # not working
         self.FOV_UP_COLOR = (220/255, 20/255, 60/255, self.FOV_ALPHA) # Crimson red
         self.FOV_DOWN_COLOR = (199/255, 21/255, 133/255, self.FOV_ALPHA) # MediumVioletRed
         self.FOV_LEFT_COLOR = (255/255, 69/255, 0/255, self.FOV_ALPHA) # OrangeRed
@@ -74,7 +74,7 @@ class Field:
 
     def create_fov_geom(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         vertices = GeomVertexData('vertices', GeomVertexFormat.get_v3c4(), Geom.UHStatic)
-        vertices.setNumRows(5)
+        vertices.setNumRows(16)
         vertex = GeomVertexWriter(vertices, 'vertex')
         color = GeomVertexWriter(vertices, 'color')
 
@@ -134,6 +134,32 @@ class Field:
 
         geom.add_primitive(tri_prim)
         return geom
+
+    def create_fov_lines(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
+        cam_pos_scaled = np.asarray(cam_pos) * self.scale
+        ep_left_up_scaled = np.asarray(ep_left_up) * self.scale
+        ep_left_down_scaled = np.asarray(ep_left_down) * self.scale
+        ep_right_up_scaled = np.asarray(ep_right_up) * self.scale
+        ep_right_down_scaled = np.asarray(ep_right_down) * self.scale
+
+        lines = LineSegs()
+        lines.moveTo(tuple(cam_pos_scaled))
+        lines.drawTo(tuple(ep_left_down_scaled))
+        lines.draw_to(tuple(ep_left_up_scaled))
+        lines.draw_to(tuple(cam_pos_scaled))
+        lines.draw_to(tuple(ep_right_down_scaled))
+        lines.draw_to(tuple(ep_right_up_scaled))
+        lines.draw_to(tuple(cam_pos_scaled))
+
+        lines.move_to(tuple(ep_left_down_scaled))
+        lines.draw_to(tuple(ep_right_down_scaled))
+
+        lines.move_to(tuple(ep_left_up_scaled))
+        lines.draw_to(tuple(ep_right_up_scaled))
+
+        lines.setThickness(4)
+        node = lines.create()
+        return node
 
     def move_robot(self, direction):
         self.robot_pos += direction
