@@ -7,17 +7,16 @@ import argparse
 from direct.stdpy import threading
 
 from field_env_3d import Field
-import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--headless", action="store_true", help="Run in headless mode")
 args = parser.parse_args()
 
-field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=200, init_file='VG07_6.binvox', headless=args.headless)
+field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=1000, init_file='VG07_6.binvox', headless=args.headless)
 
 
 def main_loop():
-    global field
+    global field, args
     episodes = 200000
 
     # player = Agent(field, train_agent = True)
@@ -39,6 +38,12 @@ def main_loop():
             player.store_reward(reward, done)
 
             rew_sum += reward
+
+            print("Timesteps: ", ts)
+            print("Reward: ", rew_sum)
+
+            if not args.headless:
+                threading.Thread.considerYield()
 
             ts += 1
 

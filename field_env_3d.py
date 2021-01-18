@@ -5,9 +5,11 @@ from enum import IntEnum
 from scipy.spatial.transform import Rotation
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import GeomNode, Geom, GeomVertexData, GeomTriangles, GeomVertexWriter, GeomVertexFormat, LineSegs
-from panda3d.core import LVecBase3i, PTA_int, PTA_float 
+from panda3d.core import LVecBase3i, PTA_int, PTA_float
 from p3d_voxgrid import VoxelGrid
 import binvox_rw
+from direct.stdpy import threading
+import time
 
 
 class Action(IntEnum):
@@ -64,7 +66,8 @@ class FieldGUI(ShowBase):
         self.TARGET_SEEN_COLOR = (218/255, 112/255, 214/255, 1.0)  # Orchid
 
         self.voxgrid_node = GeomNode("voxgrid")
-        self.fov_node = GeomNode("fov")
+        self.fov_node = None
+        self.fov_node_path = None
 
         self.colors = PTA_float(self.OCCUPIED_UNSEEN_COLOR + self.TARGET_UNSEEN_COLOR + self.FREE_SEEN_COLOR +
                                 self.OCCUPIED_SEEN_COLOR + self.TARGET_SEEN_COLOR)
@@ -76,15 +79,18 @@ class FieldGUI(ShowBase):
         self.voxgrid_node.addGeom(self.voxgrid.getGeom())
 
         self.render.attachNewNode(self.voxgrid_node)
-        self.render.attachNewNode(self.fov_node)
+
+        self.gui_done = threading.Event()
 
         self.accept('reset', self.reset)
         self.accept('update_cell', self.updateSeenCell)
         self.accept('update_fov', self.updateFov)
+        self.accept('update_fov_and_cells', self.updateFovAndCells)
 
     def reset(self):
         gui_map = self.env.global_map - 1  # GUI map is shifted by one for unseen cells
         self.voxgrid.reset(PTA_int(gui_map.flatten().tolist()))
+        self.gui_done.set()
 
     def create_edged_cube(self, min, max):
         lines = LineSegs()
@@ -204,10 +210,28 @@ class FieldGUI(ShowBase):
     def updateSeenCell(self, coord):
         # seen values 3 higher than unseen
         self.voxgrid.updateValue(LVecBase3i(coord), self.env.global_map[coord] + 3)
+        self.gui_done.set()
+
+    def updateSeenCells(self, coords, values):
+        self.voxgrid.updateValues(coords, values)
+        self.gui_done.set()
 
     def updateFov(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
+        if self.fov_node_path:
+            self.fov_node_path.removeNode()
+
         self.fov_node = self.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
-        self.render.attachNewNode(self.fov_node)
+        self.fov_node_path = self.render.attachNewNode(self.fov_node)
+        self.gui_done.set()
+
+    def updateFovAndCells(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, coords, values):
+        if self.fov_node_path:
+            self.fov_node_path.removeNode()
+
+        self.fov_node = self.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        self.fov_node_path = self.render.attachNewNode(self.fov_node)
+        self.voxgrid.updateValues(coords, values)
+        self.gui_done.set()
 
 
 class Field:
@@ -297,15 +321,19 @@ class Field:
         return np.amin(points, axis=0), np.amax(points, axis=0)
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
+        time_start = time.perf_counter()
         bb_min, bb_max = self.get_bb_points([cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up])
-        bb_min, bb_max = np.clip(np.rint(bb_min), [0, 0, 0], np.asarray(self.shape) - 1).astype(int), np.clip(np.rint(bb_max), [0, 0, 0], self.shape).astype(int)
+        bb_min, bb_max = np.clip(np.rint(bb_min), [0, 0, 0], self.shape).astype(int), np.clip(np.rint(bb_max), [0, 0, 0], self.shape).astype(int)
         v1 = ep_right_up - ep_right_down
         v2 = ep_left_down - ep_right_down
         plane_normal = np.cross(v1, v2)
         found_targets = 0
-        for z in range(bb_min[2], bb_max[2] + 1):
-            for y in range(bb_min[1], bb_max[1] + 1):
-                for x in range(bb_min[0], bb_max[0] + 1):
+        if not self.headless:
+            coords = PTA_int()
+            values = PTA_int()
+        for z in range(bb_min[2], bb_max[2]):
+            for y in range(bb_min[1], bb_max[1]):
+                for x in range(bb_min[0], bb_max[0]):
                     point = np.array([x, y, z])
                     if self.known_map[x, y, z] != FieldValues.UNKNOWN:  # no update necessary if point already seen
                         continue
@@ -318,12 +346,23 @@ class Field:
                         if self.known_map[x, y, z] == FieldValues.OCCUPIED:
                             found_targets += 1
                         if not self.headless:
-                            self.gui.messenger.send('update_cell', [(x, y, z)], 'default')
+                            coords.push_back(int(x))
+                            coords.push_back(int(y))
+                            coords.push_back(int(z))
+                            values.push_back(int(self.known_map[x, y, z] + 3))
+                            # self.gui.messenger.send('update_cell', [(x, y, z)], 'default')
+                            # self.gui.gui_done.wait()
+                            # self.gui.gui_done.clear()
                             # self.gui.updateSeenCell((x, y, z))
 
         if not self.headless:
-            self.gui.messenger.send('update_fov', [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up], 'default')
+            self.gui.messenger.send('update_fov_and_cells', [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, coords, values], 'default')
+            # self.gui.messenger.send('update_fov', [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up], 'default')
+            self.gui.gui_done.wait()
+            self.gui.gui_done.clear()
             # self.gui.updateFov(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+
+        print("Updating field took {} s".format(time.perf_counter() - time_start))
 
         return found_targets
 
@@ -368,27 +407,26 @@ class Field:
         self.found_targets += new_targets_found
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
-        return self.known_map, np.concatenate(self.robot_pos, self.robot_rot), new_targets_found, done
+        return self.known_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
 
     def reset(self):
-        print('1')
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
         self.robot_pos = np.random.uniform((0.0, 0.0, 0.0), self.shape)
         self.robot_rot = Rotation.random()
         self.step_count = 0
         self.found_targets = 0
-        print('2')
 
         if not self.headless:
             self.gui.messenger.send('reset', [], 'default')
+            self.gui.gui_done.wait()
+            self.gui.gui_done.clear()
             # self.gui.reset()
-
-        print('3')
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
-        print('4')
+        print(self.robot_pos)
+        print(self.robot_rot.as_quat())
 
-        return self.known_map, np.concatenate(self.robot_pos, self.robot_rot.as_quat())
+        return self.known_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
