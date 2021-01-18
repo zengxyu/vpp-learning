@@ -1,7 +1,8 @@
 @echo off
-if not exist P3DModuleBuilder/.git (
-	git clone https://github.com/Eruvae/P3DModuleBuilder
-)
+:: if not exist P3DModuleBuilder/.git (
+:: 	git clone https://github.com/Eruvae/P3DModuleBuilder
+::)
+git submodule update --init
 
 cd P3DModuleBuilder
 git fetch
@@ -9,3 +10,12 @@ git checkout p3d_voxgrid
 python build.py --clean
 cd ..
 rm p3d_voxgrid.pdb
+
+cd pybind11_modules
+if not exist build (
+    mkdir build
+)
+cd build
+cmake ..
+cmake --build . --config Release
+cp Release/*.pyd ../..
