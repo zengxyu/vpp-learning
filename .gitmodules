@@ -1,6 +1,6 @@
 [submodule "P3DModuleBuilder"]
 	path = P3DModuleBuilder
 	url = git@github.com:Eruvae/P3DModuleBuilder.git
-[submodule "pybind11_test/pybind11"]
-	path = pybind11_test/pybind11
+[submodule "pybind11_modules/pybind11"]
+	path = pybind11_modules/pybind11
 	url = https://github.com/pybind/pybind11.git
