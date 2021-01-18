@@ -4,13 +4,14 @@ import numpy as np
 # from agent_ppo import Agent
 from random_agent_3d import RandomAgent
 import argparse
-from direct.stdpy import threading
-
 from field_env_3d import Field
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--headless", action="store_true", help="Run in headless mode")
 args = parser.parse_args()
+
+if not args.headless:
+    from direct.stdpy import threading
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=200, init_file='VG07_6.binvox', headless=args.headless)
 
