@@ -150,68 +150,6 @@ def createVoxelGrid(arr, scale, min_col, max_col):
     return geom
 
 
-def line_plane_intersection(p0, nv, l0, lv):
-    """ return intersection of a line with a plane
-
-    Parameters:
-        p0: Point in plane
-        nv: Normal vector of plane
-        l0: Point on line
-        lv: Direction vector of line
-
-    Returns:
-        The intersection point
-    """
-    denom = np.dot(lv, nv)
-    if denom == 0:  # No intersection or line contained in plane
-        return None, None
-
-    d = np.dot((p0 - l0), nv) / denom
-    return l0 + lv * d, d
-
-
-def point_in_rectangle(p, p0, v1, v2):
-    """ check if point is within reactangle
-
-    Parameters:
-        p: Point
-        p0: Corner point of rectangle
-        v1: Side vector 1 starting from p0
-        v2: Side vector 2 starting from p0
-
-    Returns:
-        True if within rectangle
-    """
-    v1_len = np.linalg.norm(v1)
-    v2_len = np.linalg.norm(v2)
-    v1_proj_length = np.dot((p - p0), v1 / v1_len)
-    v2_proj_length = np.dot((p - p0), v2 / v2_len)
-    return (v1_proj_length >= 0 and v1_proj_length <= v1_len and v2_proj_length >= 0 and v2_proj_length <= v2_len)
-
-
-def get_bb_points(points):
-    return np.amin(points, axis=0), np.amax(points, axis=0)
-
-
-def get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, shape):
-    bb_min, bb_max = get_bb_points([cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up])
-    bb_min, bb_max = np.clip(np.rint(bb_min), [0, 0, 0], shape).astype(int), np.clip(np.rint(bb_max), [0, 0, 0], shape).astype(int)
-    v1 = ep_right_up - ep_right_down
-    v2 = ep_left_down - ep_right_down
-    plane_normal = np.cross(v1, v2)
-    grid_inds = []
-    for z in range(bb_min[2], bb_max[2] + 1):
-        for y in range(bb_min[1], bb_max[1] + 1):
-            for x in range(bb_min[0], bb_max[0] + 1):
-                point = np.array([x, y, z])
-                p_proj, rel_dist = line_plane_intersection(ep_right_down, plane_normal, cam_pos, (point - cam_pos))
-                if p_proj is None or rel_dist < 1.0:  # if point lies behind projection, skip
-                    continue
-                if point_in_rectangle(p_proj, ep_right_down, v1, v2):
-                    grid_inds.extend([x, y, z])
-    return grid_inds
-
-
 class MyApp(ShowBase):
 
     def __init__(self):
@@ -391,7 +329,7 @@ class MyApp(ShowBase):
 
         print("Computing indices")
         time_start = time.perf_counter()
-        inds = get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, self.shape)
+        inds = self.env.get_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, self.shape)
         print("Done in {} s".format(time.perf_counter() - time_start))
         print("Drawing indices")
         time_start = time.perf_counter()

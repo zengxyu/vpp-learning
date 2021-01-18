@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>03201a23-22e9-4074-ac62-f6ace9dd9b07</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>example_3d.py</StartupFile>
+    <StartupFile>train_agent_3d.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -34,8 +34,10 @@
     <Compile Include="field_env.py" />
     <Compile Include="human_player_3d.py" />
     <Compile Include="random_agent.py" />
+    <Compile Include="random_agent_3d.py" />
     <Compile Include="replay_buffers.py" />
     <Compile Include="train_agent.py" />
+    <Compile Include="train_agent_3d.py" />
     <Compile Include="vpp_learning.py" />
   </ItemGroup>
   <ItemGroup>
