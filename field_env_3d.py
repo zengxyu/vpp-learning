@@ -10,6 +10,8 @@ from p3d_voxgrid import VoxelGrid
 import binvox_rw
 from direct.stdpy import threading
 import time
+import field_env_3d_helper
+from field_env_3d_helper import Vec3D
 
 
 class Action(IntEnum):
@@ -321,6 +323,22 @@ class Field:
         return np.amin(points, axis=0), np.amax(points, axis=0)
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
+        time_start = time.perf_counter()
+        self.known_map, found_targets, coords, values = field_env_3d_helper.update_grid_inds_in_view(self.known_map, self.global_map, Vec3D(*tuple(cam_pos)),
+                                                                                                     Vec3D(*tuple(ep_left_down)), Vec3D(*tuple(ep_left_up)),
+                                                                                                     Vec3D(*tuple(ep_right_down)), Vec3D(*tuple(ep_right_up)))
+
+        if not self.headless:
+            self.gui.messenger.send('update_fov_and_cells', [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up,
+                                                             coords, values], 'default')
+            self.gui.gui_done.wait()
+            self.gui.gui_done.clear()
+
+        print("Updating field took {} s".format(time.perf_counter() - time_start))
+
+        return found_targets
+
+    def update_grid_inds_in_view_old(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
         bb_min, bb_max = self.get_bb_points([cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up])
         bb_min, bb_max = np.clip(np.rint(bb_min), [0, 0, 0], self.shape).astype(int), np.clip(np.rint(bb_max), [0, 0, 0], self.shape).astype(int)
