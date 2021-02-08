@@ -176,6 +176,46 @@ std::pair<Vec3D, Vec3D> get_bb_points(const std::vector<Vec3D> &points, const ss
     return std::make_pair(min, max);
 }
 
+inline bool in_range(int val, int size)
+{
+    return val >= 0 && val < size;
+}
+
+int count_unknown(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
+{
+    int unkown = 0;
+    for (double frac=0.0; frac < len; frac += step)
+    {
+        Vec3D cur = start + frac * dir_vec;
+        int x = (int)cur.x;
+        if (!in_range(x, known_map.shape()[0])) break;
+        int y = (int)cur.y;
+        if (!in_range(y, known_map.shape()[1])) break;
+        int z = (int)cur.z;
+        if (!in_range(z, known_map.shape()[2])) break;
+        int cell_val = *known_map.data(x, y, z);
+        if (cell_val == 0)
+            unkown++;
+    }
+    return unkown;
+}
+
+/*py::array_t<int> generate_camera_image(const py::array_t<int> &map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up, int xres=640, int yres=480)
+{
+    Vec3D left_right = ep_right_up - ep_left_up;
+    Vec3D up_down = ep_left_down - ep_left_up;
+    for (int x = 0; x < xres; x++)
+    {
+        double xfac = (double)x / (double)xres;
+        for (int y = 0; y < yres; y++)
+        {
+            double yfac = (double)y / (double)yres;
+            Vec3D cur_target = ep_left_up + xfac * left_right + yfac * up_down;
+            Vec3D unit_dir = (cur_target - cam_pos).normalized();
+        }
+    }
+}*/
+
 std::tuple<py::array_t<int>, int, std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
 {
     std::vector<Vec3D> points = {cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up};
@@ -227,5 +267,6 @@ PYBIND11_MODULE(field_env_3d_helper, m) {
         .def("dot", &Vec3D::dot)
         .def("abs", &Vec3D::abs);
     m.def("update_grid_inds_in_view", &update_grid_inds_in_view, "Update grid indices");
+    m.def("count_unknown", &count_unknown, "Count unknown cells on ray");
     m.def("test", &test, "Print test");
 }

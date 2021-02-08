@@ -8,6 +8,18 @@ import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
+vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
+
+
+def generate_vec3d_from_arr(arr):
+    return Vec3D(*tuple(arr))
+
+
+generate_vec3d_vectorized = np.vectorize(generate_vec3d_from_arr, otypes=[Vec3D])
+
+
+count_unknown_vectorized = np.vectorize(field_env_3d_helper.count_unknown, otypes=[int], excluded=[0, 1, 3, 4])
+
 
 class Action(IntEnum):
     DO_NOTHING = 0,
@@ -87,6 +99,21 @@ class Field:
         ep_right_down = self.robot_pos + vec_right_down * self.sensor_range
         ep_right_up = self.robot_pos + vec_right_up * self.sensor_range
         return self.robot_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up
+
+    def compute_rot_vecs(self, min_ang, max_ang, num_steps):
+        axes = self.robot_rot.as_matrix().transpose()
+        rh = np.radians(np.linspace(min_ang, max_ang, num_steps))
+        rv = np.radians(np.linspace(min_ang, max_ang, num_steps))
+        rots_x = Rotation.from_rotvec(np.outer(rh, axes[2]))
+        rots_y = Rotation.from_rotvec(np.outer(rv, axes[1]))
+        rots = vec_apply(np.outer(rots_x, rots_y), vectors=axes[0])
+        rot_vecs = generate_vec3d_vectorized(rots)
+        return rot_vecs
+
+    def generate_unknown_map(self, cam_pos):
+        rot_vecs = self.compute_rot_vecs(-180, 180, 18)
+        unknown_map = count_unknown_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0, 50.0)
+        return unknown_map
 
     def line_plane_intersection(self, p0, nv, l0, lv):
         """ return intersection of a line with a plane
@@ -231,7 +258,11 @@ class Field:
         self.found_targets += new_targets_found
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
-        return self.known_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
+
+        unknown_map = self.generate_unknown_map(cam_pos)
+        # print(unknown_map)
+
+        return unknown_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
 
     def reset(self):
         self.known_map = np.zeros(self.shape)
@@ -253,4 +284,7 @@ class Field:
         print(self.robot_pos)
         print(self.robot_rot.as_quat())
 
-        return self.known_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
+        unknown_map = self.generate_unknown_map(cam_pos)
+        # print(unknown_map)
+
+        return unknown_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
