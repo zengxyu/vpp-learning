@@ -1,5 +1,3 @@
-import os
-import time
 import math
 import torch
 import random
@@ -8,7 +6,9 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import replay_buffers as mem
+from memory import replay_buffers as mem
+
+
 #import torchvision.transforms as T
 
 

@@ -2,7 +2,7 @@ import random
 import torch
 import numpy as np
 from collections import namedtuple, deque
-from data_structures import SumTree
+from memory.data_structures import SumTree
 
 class ReplayBuffer:
 	# Replay buffer to store past experiences that the agent can then use for training data => de-correlation
