@@ -1,14 +1,10 @@
 import matplotlib.pyplot as plt
-from random import randint
-import pickle
 import numpy as np
 import pygame as pg
-from pygame.locals import *
-from agent_ppo import Agent
-from PIL import Image
+from agent.agent_ppo import Agent
 import argparse
 
-from field_env import Field, Action
+from field_env import Field
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--headless", action="store_true", help="Run in headless mode")
