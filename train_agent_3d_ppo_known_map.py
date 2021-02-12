@@ -1,9 +1,5 @@
-# import matplotlib.pyplot as plt
-# import pickle
 import numpy as np
-# from agent_ppo import Agent
-from agent.agent_ppo import Agent
-from random_agent_3d import RandomAgent
+from agent.agent_ppo_3d_known_map import Agent
 import argparse
 from field_env_3d import Field
 
@@ -22,9 +18,6 @@ player = Agent(field, train_agent=True)
 def main_loop():
     global field, args
     episodes = 200000
-
-    # player = Agent(field, train_agent = True)
-    # player = RandomAgent(field)
 
     print('resetting field')
     observed_map, robot_pose = field.reset()
@@ -60,27 +53,10 @@ def main_loop():
                 observed_map, robot_pose = field.reset()
                 print("episode {} over".format(i))
 
-                # if (i+1) % 1000 == 0:
-                #     player.store_model("Agent_ppo_state_dict_%d.mdl" % (i+1))
-                #     plt.plot(total_rewards)
-                #     plt.plot(smoothed_rewards)
-                #     plt.title("Total reward per episode")
-                #     plt.savefig("rewards_ppo_%d_episodes.png" % (i+1))
-                #     plt.clf()
-
-    # save dict
-    # player.store_model("Agent_ppo_state_dict.mdl")
-    # plt.plot(total_rewards)
-    # plt.plot(smoothed_rewards)
-    # plt.title("Total reward per episode")
-    # plt.savefig("rewards.png")
-
 
 if args.headless:
     main_loop()
 else:
-    # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
-    # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
     main_thread = threading.Thread(target=main_loop)
     main_thread.start()
     field.gui.run()

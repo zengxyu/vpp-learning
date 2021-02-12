@@ -275,7 +275,7 @@ class Field:
 
         # unknown_map = self.generate_unknown_map(cam_pos)
 
-        return unknown_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
+        return self.known_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
 
     def reset(self):
         self.known_map = np.zeros(self.shape)
@@ -297,7 +297,7 @@ class Field:
         print(self.robot_pos)
         print(self.robot_rot.as_quat())
 
-        unknown_map = self.generate_unknown_map(cam_pos)
+        # unknown_map = self.generate_unknown_map(cam_pos)
         # print(unknown_map)
 
-        return unknown_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
+        return self.known_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
