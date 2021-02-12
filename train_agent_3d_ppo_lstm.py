@@ -6,7 +6,7 @@ import argparse
 from field_env_3d import Field
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--headless", action="store_true", help="Run in headless mode")
+parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
 args = parser.parse_args()
 
 if not args.headless:
