@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 
 class PPOPolicy3DUnknownMap(torch.nn.Module):
-    def __init__(self, state_space, action_space):
+    def __init__(self, action_space):
         super().__init__()
         self.fc1 = torch.nn.Linear(324, 64)
         self.fc2 = torch.nn.Linear(64, 32)

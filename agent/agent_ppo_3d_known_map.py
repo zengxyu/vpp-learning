@@ -1,33 +1,30 @@
 import torch
+import torch.nn.functional as F
 import numpy as np
 
-from field_env_3d import Action
+from network.network_ppo_3d_known_map import PPOPolicy3D
 
 
 class Agent:
     """description of class"""
 
-    def __init__(self, field, train_agent=False):
+    def __init__(self, params, field, train_agent=False):
         self.name = "PPOng"
         self.train_agent = train_agent
         self.FRAME_SIZE = np.product(field.shape)
-        self.ACTION_SPACE = len(Action)
-        self.TRAJ_COLLECTION_NUM = 4
-        self.TRAJ_LEN = 4
-        # self.BATCH_SIZE = 32
+        self.ACTION_SPACE = len(params['action'])
+        self.TRAJ_COLLECTION_NUM = params['traj_collection_num']
+        self.TRAJ_LEN = params['traj_len']
         self.tlen_counter = 0
         self.tcol_counter = 0
-        # self.FRAME_SKIP = 1
         self.EPSILON = 0.2
         self.EPOCH_NUM = 4
-        self.gamma = 0.98
+        self.gamma = params['gamma']
         self.train_device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
             'cpu')  # 'cuda' if torch.cuda.is_available() else pu'
-        print("is cuda available:", torch.cuda.is_available())
-        print("train device:", self.train_device)
+
         self.policy = PPOPolicy3D(self.FRAME_SIZE, self.ACTION_SPACE).to(self.train_device)
-        # self.old_policy = copy.deepcopy(self.policy)
-        self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-4)
+        self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=params['lr'])
 
         self.traj_memory = [[], [], [], [], [], []]
 
@@ -43,10 +40,13 @@ class Agent:
         self.last_probs = None
         self.last_reward = None
         self.last_value = None
-        # self.observations = []
-        # self.values = []
-        # self.best_values = []
-        # self.rewards = []
+
+        print("\nis cuda available:", torch.cuda.is_available())
+        print("train device:", self.train_device)
+        print("TRAJ_COLLECTION_NUM:", self.TRAJ_COLLECTION_NUM)
+        print("TRAJ_LEN:", self.TRAJ_LEN)
+        print("gamma:", self.gamma)
+        print("lr:", params['lr'])
 
     def load_model(self, filename, map_location=None):  # pass 'cpu' as map location if no cuda available
         state_dict = torch.load(filename, map_location)
