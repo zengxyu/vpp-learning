@@ -273,7 +273,7 @@ class Field:
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
 
-        # unknown_map = self.generate_unknown_map(cam_pos)
+        unknown_map = self.generate_unknown_map(cam_pos)
 
         return unknown_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
 

@@ -200,6 +200,43 @@ int count_unknown(const py::array_t<int> &known_map, const Vec3D &start, const V
     return unkown;
 }
 
+int count_known_free(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
+{
+    int known_free = 0;
+    for (double frac=0.0; frac < len; frac += step)
+    {
+        Vec3D cur = start + frac * dir_vec;
+        int x = (int)cur.x;
+        if (!in_range(x, known_map.shape()[0])) break;
+        int y = (int)cur.y;
+        if (!in_range(y, known_map.shape()[1])) break;
+        int z = (int)cur.z;
+        if (!in_range(z, known_map.shape()[2])) break;
+        int cell_val = *known_map.data(x, y, z);
+        if (cell_val == 1)
+            known_free++;
+    }
+    return known_free;
+}
+
+int count_known_target(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
+{
+    int known_target = 0;
+    for (double frac=0.0; frac < len; frac += step)
+    {
+        Vec3D cur = start + frac * dir_vec;
+        int x = (int)cur.x;
+        if (!in_range(x, known_map.shape()[0])) break;
+        int y = (int)cur.y;
+        if (!in_range(y, known_map.shape()[1])) break;
+        int z = (int)cur.z;
+        if (!in_range(z, known_map.shape()[2])) break;
+        int cell_val = *known_map.data(x, y, z);
+        if (cell_val == 2)
+            known_target++;
+    }
+    return known_target;
+}
 /*py::array_t<int> generate_camera_image(const py::array_t<int> &map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up, int xres=640, int yres=480)
 {
     Vec3D left_right = ep_right_up - ep_left_up;
@@ -216,7 +253,7 @@ int count_unknown(const py::array_t<int> &known_map, const Vec3D &start, const V
     }
 }*/
 
-std::tuple<py::array_t<int>, int, std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
+std::tuple<py::array_t<int>, int,int, std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
 {
     std::vector<Vec3D> points = {cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up};
     auto[bb_min, bb_max] = get_bb_points(points, known_map.shape());
@@ -224,6 +261,7 @@ std::tuple<py::array_t<int>, int, std::vector<int>, std::vector<int>> update_gri
     Vec3D v2 = ep_left_down - ep_right_down;
     Vec3D plane_normal = v1.cross(v2);
     int found_targets = 0;
+    int free_cells = 0;
     std::vector<int> coords, values;
     for (size_t z = (size_t)bb_min.z; z < (size_t)bb_max.z; z++)
     {
@@ -243,6 +281,8 @@ std::tuple<py::array_t<int>, int, std::vector<int>, std::vector<int>> update_gri
                     // for now, occupied cells are targets, change later
                     if (*known_map.data(x, y, z) == 2)
                         found_targets += 1;
+                    if (*known_map.data(x, y, z) == 1)
+                        free_cells += 1;
                      //if (!headless) {}
                     coords.push_back(x);
                     coords.push_back(y);
@@ -252,7 +292,8 @@ std::tuple<py::array_t<int>, int, std::vector<int>, std::vector<int>> update_gri
             }
         }
     }
-    return std::make_tuple(known_map, found_targets, coords, values);
+//    double reward = found_targets*0.7+free_cells*0.3;
+    return std::make_tuple(known_map, found_targets,free_cells, coords, values);
 }
 
 void test()
@@ -268,5 +309,8 @@ PYBIND11_MODULE(field_env_3d_helper, m) {
         .def("abs", &Vec3D::abs);
     m.def("update_grid_inds_in_view", &update_grid_inds_in_view, "Update grid indices");
     m.def("count_unknown", &count_unknown, "Count unknown cells on ray");
+    m.def("count_known_free", &count_known_free, "Count unknown cells on ray");
+    m.def("count_known_target", &count_known_target, "Count unknown cells on ray");
+
     m.def("test", &test, "Print test");
 }

@@ -1,7 +1,6 @@
 import pygame as pg
-from field_env import Field, Action
+from field_env import Field
 from human_player import HumanPlayer
-from random_agent import RandomAgent
 
 pg.init()
 

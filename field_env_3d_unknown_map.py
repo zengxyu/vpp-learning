@@ -18,6 +18,9 @@ def generate_vec3d_from_arr(arr):
 generate_vec3d_vectorized = np.vectorize(generate_vec3d_from_arr, otypes=[Vec3D])
 
 count_unknown_vectorized = np.vectorize(field_env_3d_helper.count_unknown, otypes=[int], excluded=[0, 1, 3, 4])
+count_known_free_vectorized = np.vectorize(field_env_3d_helper.count_known_free, otypes=[int], excluded=[0, 1, 3, 4])
+count_known_target_vectorized = np.vectorize(field_env_3d_helper.count_known_target, otypes=[int],
+                                             excluded=[0, 1, 3, 4])
 
 
 class Action(IntEnum):
@@ -55,6 +58,7 @@ class GuiFieldValues(IntEnum):
 class Field:
     def __init__(self, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False, scale=0.05):
         self.found_targets = 0
+        self.free_cells = 0
         self.sensor_range = sensor_range
         self.hfov = hfov
         self.vfov = vfov
@@ -68,6 +72,8 @@ class Field:
         self.MOVE_STEP = 1.0
         self.ROT_STEP = 15.0
 
+        self.ratio = 0.1
+
         if init_file:
             self.read_env_from_file(init_file, scale)
 
@@ -77,7 +83,9 @@ class Field:
         self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
         self.target_count = np.count_nonzero(self.global_map)
         print("Total target count : {} ".format(self.target_count))
+        print("#targets/#free_cells = {}".format(self.target_count / (np.product(self.shape))))
         self.found_targets = 0
+        self.free_cells = 0
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
         self.shape = self.global_map.shape
         self.known_map = np.zeros(self.shape)
@@ -113,7 +121,11 @@ class Field:
     def generate_unknown_map(self, cam_pos):
         rot_vecs = self.compute_rot_vecs(-180, 180, 18)
         unknown_map = count_unknown_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0, 50.0)
-        return unknown_map
+        known_free_map = count_known_free_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
+                                                     50.0)
+        known_target_map = count_known_target_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+                                                         1.0, 50.0)
+        return unknown_map, known_free_map, known_target_map
 
     def line_plane_intersection(self, p0, nv, l0, lv):
         """ return intersection of a line with a plane
@@ -157,18 +169,19 @@ class Field:
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
-        self.known_map, found_targets, coords, values = field_env_3d_helper.update_grid_inds_in_view(self.known_map,
-                                                                                                     self.global_map,
-                                                                                                     Vec3D(*tuple(
-                                                                                                         cam_pos)),
-                                                                                                     Vec3D(*tuple(
-                                                                                                         ep_left_down)),
-                                                                                                     Vec3D(*tuple(
-                                                                                                         ep_left_up)),
-                                                                                                     Vec3D(*tuple(
-                                                                                                         ep_right_down)),
-                                                                                                     Vec3D(*tuple(
-                                                                                                         ep_right_up)))
+        self.known_map, found_targets, free_cells, coords, values = field_env_3d_helper.update_grid_inds_in_view(
+            self.known_map,
+            self.global_map,
+            Vec3D(*tuple(
+                cam_pos)),
+            Vec3D(*tuple(
+                ep_left_down)),
+            Vec3D(*tuple(
+                ep_left_up)),
+            Vec3D(*tuple(
+                ep_right_down)),
+            Vec3D(*tuple(
+                ep_right_up)))
 
         if not self.headless:
             self.gui.messenger.send('update_fov_and_cells',
@@ -179,7 +192,7 @@ class Field:
 
         # print("Updating field took {} s".format(time.perf_counter() - time_start))
 
-        return found_targets
+        return found_targets, free_cells
 
     def update_grid_inds_in_view_old(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
@@ -269,16 +282,25 @@ class Field:
             self.rotate_robot(axes[2], -self.ROT_STEP)
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
-        new_targets_found = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        new_targets_found, new_free_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
+                                                                          ep_right_down, ep_right_up)
+        self.free_cells += new_free_cells
         self.found_targets += new_targets_found
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
 
-        unknown_map = self.generate_unknown_map(cam_pos)
-        # print("unknown_map shape:", unknown_map.shape)
-        # print(unknown_map)
+        # done = (self.found_targets >= self.ratio * self.target_count) or (self.step_count >= self.max_steps)
+        # if done and self.found_targets >= self.ratio * self.target_count:
+        #     self.ratio = min(self.ratio * 1.01, 1)
+        #     self.max_steps = self.max_steps * 1.01
 
-        return unknown_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
+        # elif done and self.step_count >= self.max_steps:
+        #
+        unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
+        map = np.array([unknown_map, known_free_map, known_target_map])
+
+        return map, np.concatenate(
+            (self.robot_pos, self.robot_rot.as_quat())), new_targets_found, new_free_cells, done
 
     def reset(self):
         self.known_map = np.zeros(self.shape)
@@ -287,6 +309,7 @@ class Field:
         self.robot_rot = Rotation.random()
         self.step_count = 0
         self.found_targets = 0
+        self.free_cells = 0
 
         if not self.headless:
             self.gui.messenger.send('reset', [], 'default')
@@ -300,7 +323,7 @@ class Field:
         # print(self.robot_pos)
         # print(self.robot_rot.as_quat())
 
-        unknown_map = self.generate_unknown_map(cam_pos)
+        unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         # print(unknown_map)
-
-        return unknown_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
+        map = np.array([unknown_map, known_free_map, known_target_map])
+        return map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))

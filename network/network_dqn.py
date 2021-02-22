@@ -1,358 +1,298 @@
-import math
 import torch
-import random
-import pickle
-import numpy as np
-import torch.nn as nn
-import torch.optim as optim
+from torch import nn
 import torch.nn.functional as F
-from memory import replay_buffers as mem
 
 
-#import torchvision.transforms as T
+class DQN_Network_Shadow(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        # self.con1 = torch.nn.Conv2d(1, 16, kernel_size=3, stride=4)
+        self.con1 = torch.nn.Conv2d(1, 4, kernel_size=3, stride=1)
+
+        # self.con3 = torch.nn.Conv2d(32, 32, 3)
+        # self.sm = torch.nn.Softmax2d()
+        self.fc1 = torch.nn.Linear(5776, 2048)
+
+        # self.fc1 = torch.nn.Linear(256, 32)
+        self.fc2 = torch.nn.Linear(2048, 512)
+        self.fc3 = torch.nn.Linear(512, 32)
+
+        self.fc_pose = torch.nn.Linear(2, 32)
+
+        self.fc_pol = torch.nn.Linear(64, 4)
+
+        # Initialize neural network weights
+        # self.init_weights()
+
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+    def forward(self, frame, robot_pose):
+        out = self.con1(frame)
+        out = F.relu(out)
+        out = out.reshape(out.size(0), -1)
+        out = self.fc1(out)
+        out = F.relu(out)
+        out = self.fc2(out)
+        out = F.relu(out)
+        out = self.fc3(out)
+        out = F.relu(out)
+
+        out_pose = self.fc_pose(robot_pose)
+        out_pose = F.relu(out_pose)
+        out = torch.cat((out, out_pose), dim=1)
+        # ===================================================changed
+        q_value = self.fc_pol(out)
+        return q_value
 
 
-class NN(nn.Module):
-	# A simple neural network
+class DQN_Network(torch.nn.Module):
+    def __init__(self, action_space):
+        super().__init__()
 
-	def __init__(self, input_size, hidden1_size, hidden2_size, output_size, seed):
-		super(NN, self).__init__()
-		self.input_size = input_size
-		self.output_size = output_size
-		self.seed = torch.manual_seed(seed)
-		#
-		self.fc_in = nn.Linear(input_size, hidden1_size)		# input layer -> hidden layer 1 (256)
-		self.fc_h1 = nn.Linear(hidden1_size, hidden2_size)		# hidden layer 1 (256) -> hidden layer 2 (128)
-		self.fc_out = nn.Linear(hidden2_size, output_size)		# hidden layer 2 (128) -> output layer
+        self.frame_con1 = torch.nn.Conv2d(3, 16, kernel_size=4, stride=2)
+        self.frame_con2 = torch.nn.Conv2d(16, 32, kernel_size=4, stride=2)
+        self.frame_fc1 = torch.nn.Linear(288, 512)
+        self.frame_fc2 = torch.nn.Linear(512, 128)
 
-	def forward(self, x):
-		# Forwards a state through the NN to get an action
+        self.pose_fc1 = torch.nn.Linear(7, 32)
+        self.pose_fc2 = torch.nn.Linear(32, 128)
 
-		x = self.fc_in(x)  # input layer -> hidden layer 1
-		x = F.relu(x)
+        self.concat_fc = torch.nn.Linear(256, 64)
 
-		x = self.fc_h1(x)  # hidden layer 1 -> hidden layer 2
-		x = torch.tanh(x)  # x = F.relu(x)
+        self.fc_val = torch.nn.Linear(64, action_space)
 
-		x = self.fc_out(x)	# hidden layer 2 -> output layer
-		return x
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
 
+    def forward(self, frame, robot_pose):
+        out_frame = F.relu(self.frame_con1(frame))
+        out_frame = F.relu(self.frame_con2(out_frame))
 
-class ConvolutionNN(nn.Module):
-	# A simple convolutional neural network
+        out_frame = out_frame.reshape(out_frame.size()[0], -1)
+        out_frame = F.relu(self.frame_fc1(out_frame))
+        out_frame = F.relu(self.frame_fc2(out_frame))
 
-	def __init__(self, input_size, _, __, output_size, seed):
-		super(ConvolutionNN, self).__init__()
-		self.input_size = input_size
-		self.output_size = output_size
-		self.seed = torch.manual_seed(seed)
-		
-		self.features = nn.Sequential(
-			nn.Conv2d(input_size[0], 32, kernel_size=8, stride=4),
-			nn.ReLU(),
-			nn.Conv2d(32, 64, kernel_size=4, stride=2),
-			nn.ReLU(),
-			nn.Conv2d(64, 64, kernel_size=3, stride=1),
-			nn.ReLU()
-		)
-		
-		size_x = input_size[1]
-		size_y = input_size[2]
-		
-		last_layer = None
-		for layer in self.features:
-			if type(layer) is nn.Conv2d:
-				size_x = ((size_x - layer.kernel_size[0]) // layer.stride[0]) + 1
-				size_y = ((size_y - layer.kernel_size[1]) // layer.stride[1]) + 1
-				last_layer = layer
-		
-		self.fc = nn.Sequential(
-			nn.Linear(size_x*size_y*last_layer.out_channels, 256),
-			nn.ReLU(),
-			nn.Linear(256, output_size)
-		)
+        out_pose = F.relu(self.pose_fc1(robot_pose))
+        out_pose = F.relu(self.pose_fc2(out_pose))
 
-	def forward(self, x):
-		x = self.features(x)
-		x = x.view(x.size(0), -1)
-		x = self.fc(x)
+        out = torch.cat((out_frame, out_pose), dim=1)
 
-		return x
+        out = F.relu(self.concat_fc(out))
+
+        q_value = self.fc_val(out)
+        return q_value
 
 
-class DuelingNN(nn.Module):
-	# A simple dueling neural network
+class DQN_NetworkDeeper(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        # self.con1 = torch.nn.Conv2d(1, 16, kernel_size=3, stride=4)
+        self.con1 = torch.nn.Conv2d(1, 16, kernel_size=8, stride=4)
 
-	def __init__(self, input_size, hidden1_size, hidden2_size, output_size, seed):
-		super(DuelingNN, self).__init__()
-		self.input_size = input_size
-		self.output_size = output_size
-		self.seed = torch.manual_seed(seed)
-		#
-		self.fc_in = nn.Linear(input_size, hidden1_size)
-		self.fc_h1 = nn.Linear(hidden1_size, hidden2_size)
-		self.fc_V = nn.Linear(hidden2_size, 1)
-		self.fc_A = nn.Linear(hidden2_size, output_size)
+        self.con2 = torch.nn.Conv2d(16, 32, kernel_size=5, stride=2)
+        self.con3 = torch.nn.Conv2d(32, 64, kernel_size=3, stride=1)
 
-	def forward(self, x):
-		# Forwards a state through the NN to get an action
+        # self.con3 = torch.nn.Conv2d(32, 32, 3)
+        # self.sm = torch.nn.Softmax2d()
+        self.fc1 = torch.nn.Linear(64, 32)
 
-		flat1 = F.relu(self.fc_in(x))
-		flat2 = F.relu(self.fc_h1(flat1))
-		V = self.fc_V(flat2)
-		A = self.fc_A(flat2)
+        # self.fc1 = torch.nn.Linear(256, 32)
+        # self.fc2 = torch.nn.Linear(64, 64)
+        # self.fc3 = torch.nn.Linear(64, 64)
 
-		return V, A
+        self.fc_pose = torch.nn.Linear(2, 32)
+
+        self.fc_pol1 = torch.nn.Linear(64, 32)
+        self.fc_pol2 = torch.nn.Linear(32, 4)
+
+        # Initialize neural network weights
+        self.init_weights()
+
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+    def forward(self, frame, robot_pose):
+        out = self.con1(frame)
+        out = F.relu(out)
+        out = self.con2(out)
+        out = F.relu(out)
+        out = self.con3(out)
+        out = F.relu(out)
+        out = out.reshape(out.size(0), -1)
+        out = self.fc1(out)
+        out = F.relu(out)
+
+        out_pose = self.fc_pose(robot_pose)
+        out_pose = F.relu(out_pose)
+        out = torch.cat((out, out_pose), dim=1)
+        # ===================================================changed
+        out = self.fc_pol1(out)
+        out = F.relu(out)
+        q_value = self.fc_pol2(out)
+        return q_value
 
 
-class Agent():
-	# A Deep-Q Network
-	#	Double DQN: Use 2 networks to decouple the action selection from the target Q value generation (Reduces the overestimation of q values, more stable learning)
-	#		Implemented in DQN.update
-	#	Dueling DQN: Only learn when actions have an effect on the rewards (Good if there is a gamestate when any input is accepted)
-	#		Implemented in NN.forward
-	#		TODO: https://nervanasystems.github.io/coach/components/agents/value_optimization/dueling_dqn.html
-	#	PER Prioritized Experience Replay: Very important memories may occur rarely thus needing prioritization
-	#		Implemented in ReplayBuffer
+class DQN_NetworkDeeper2(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        # self.con1 = torch.nn.Conv2d(1, 16, kernel_size=3, stride=4)
+        self.con1 = torch.nn.Conv2d(1, 16, kernel_size=8, stride=4)
+        self.con2 = torch.nn.Conv2d(16, 32, kernel_size=5, stride=2)
+        self.con3 = torch.nn.Conv2d(32, 64, kernel_size=3, stride=1)
 
-	NAME = "DQN"
+        self.con4 = torch.nn.Conv2d(1, 16, kernel_size=8, stride=4)
+        self.con5 = torch.nn.Conv2d(16, 32, kernel_size=5, stride=2)
+        self.con6 = torch.nn.Conv2d(32, 64, kernel_size=3, stride=1)
+        # self.con3 = torch.nn.Conv2d(32, 32, 3)
+        # self.sm = torch.nn.Softmax2d()
+        self.fc1 = torch.nn.Linear(64, 32)
+        self.fc2 = torch.nn.Linear(64, 32)
 
-	# Hyperparameters
-	LAYER_H1_SIZE = 256
-	LAYER_H2_SIZE = 128
-	ALPHA = 0.00005			# learning rate (0.001, 0.0001)
-	ALPHA_DECAY = 0.01		# [UNUSED] for Adam
-	GAMMA = 0.99			# discount factor (0.95)
-	EPSILON_MAX = 1.0		# epsilon greedy threshold
-	EPSILON_MIN = 0.02
-	EPSILON_DECAY = 30000	# amount of steps to reach half-life (0.99 ~~ 400 steps)
-	TAU = 0.001				# target update factor for double DQN (0.002)
-	TGT_UPDATE_RATE = 1000	# target update rate ^ instead of factor
-	MEMORY_SIZE = 100000	# size of the replay buffer
-	MEMORY_FILL = 10000		# size of samples to get before starting to play
-	BATCH_SIZE = 64			# size of one mini-batch to sample (128)
-	UPDATE_RATE = 2			# update every X steps (1)
-	DOUBLE_DQN = True		# whether to use double-DQN or vanilla DQN
-	DUELING_DQN = False		# WIP: whether to use dueling NN or normal NN
-	PRIO_REPLAY = False		# whether to use prioritized replay buffer or normal replay buffer
+        # self.fc1 = torch.nn.Linear(256, 32)
+        # self.fc2 = torch.nn.Linear(64, 64)
+        # self.fc3 = torch.nn.Linear(64, 64)
 
-	"""
-	LAYER_H1_SIZE = 64			
-	LAYER_H2_SIZE = 64		
-	ALPHA = 0.0005			# learning rate (0.001)
-	ALPHA_DECAY = 0.01		# [UNUSED] for Adam
-	GAMMA = 0.99			# discount factor (0.95)
-	EPSILON_MAX = 1.0		# epsilon greedy threshold
-	EPSILON_MIN = 0.01
-	EPSILON_DECAY = 0.995	# (0.995)
-	TAU = 0.001				# target update factor for double DQN (0.002)
-	MEMORY_SIZE = 200000	# size of the replay 
-	BATCH_SIZE = 64			# size of one mini-batch to sample (128)
-	UPDATE_RATE = 4			# update every X steps (1)
-	DOUBLE_DQN = True		# whether to use double-DQN or vanilla DQN
-	PRIO_REPLAY = False		# whether to use prioritized replay buffer or normal replay buffer
-	"""
+        self.fc_pose = torch.nn.Linear(2, 32)
 
-	def __init__(self, input_size, output_size, training_mode, is_conv, load_filename, seed):
-		self.update_step = 0
-		self.epsilon = self.EPSILON_MAX
-		self.seed = seed
-		self.training_mode = training_mode
-		self.is_conv = is_conv
-		self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-		self.input_size = input_size
-		self.output_size = output_size
-		self.load_filename = load_filename
+        self.fc_pol1 = torch.nn.Linear(96, 48)
+        self.fc_pol2 = torch.nn.Linear(48, 4)
 
-		# Handle loading of previously saved models
-		if load_filename:
-			with open(load_filename, "rb") as f:
-				self.epsilon = pickle.load(f)
-				#self.memory = pickle.load(f)
-				self.LAYER_H1_SIZE = pickle.load(f)
-				self.LAYER_H2_SIZE = pickle.load(f)
-				self.ALPHA = pickle.load(f)
-				self.ALPHA_DECAY = pickle.load(f)
-				self.GAMMA = pickle.load(f)
-				self.EPSILON_MAX = pickle.load(f)
-				self.EPSILON_MIN = pickle.load(f)
-				self.EPSILON_DECAY = pickle.load(f)
-				self.TAU = pickle.load(f)
-				self.MEMORY_SIZE = pickle.load(f)
-				self.BATCH_SIZE = pickle.load(f)
-				self.UPDATE_RATE = pickle.load(f)
-				self.DOUBLE_DQN = pickle.load(f)
-				self.PRIO_REPLAY = pickle.load(f)
-				# self.MEMORY_FILL = self.MEMORY_SIZE		# if a model is loaded we re-fill our experience buffer completely before learning
+        # Initialize neural network weights
+        # self.init_weights()
 
-		# Start epsilon at EPSILON_MIN when loading an existing model and model is updated
-		self.step = math.inf if self.load_filename else 0
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
 
-		if self.PRIO_REPLAY:
-			self.memory = mem.PriorityReplayBuffer(self.device, self.input_size, self.MEMORY_SIZE, self.BATCH_SIZE, self.seed)
-		else:
-			self.memory = mem.ReplayBuffer(self.device, self.MEMORY_SIZE, self.BATCH_SIZE, self.seed)
+    def forward(self, frame, frame2, robot_pose):
+        out = self.con1(frame)
+        out = F.relu(out)
+        out = self.con2(out)
+        out = F.relu(out)
+        out = self.con3(out)
+        out = F.relu(out)
+        out = out.reshape(out.size(0), -1)
+        out = self.fc1(out)
+        out = F.relu(out)
 
-	def init_network(self):
-		# Create the model / NN
-		ModelType = NN
-		if self.DUELING_DQN:
-			ModelType = DuelingNN
-		elif self.is_conv:
-			ModelType = ConvolutionNN
+        out2 = self.con4(frame)
+        out2 = F.relu(out2)
+        out2 = self.con5(out2)
+        out2 = F.relu(out2)
+        out2 = self.con6(out2)
+        out2 = F.relu(out2)
+        out2 = out2.reshape(out2.size(0), -1)
+        out2 = self.fc2(out2)
+        out2 = F.relu(out2)
 
-		self.nn = ModelType(self.input_size, self.LAYER_H1_SIZE, self.LAYER_H2_SIZE, self.output_size, self.seed).to(self.device)
-		self.target_nn = ModelType(self.input_size, self.LAYER_H1_SIZE, self.LAYER_H2_SIZE, self.output_size, self.seed).to(self.device)
+        out_pose = self.fc_pose(robot_pose)
+        out_pose = F.relu(out_pose)
 
-		# After creating all structures, load the weights into the NN's
-		if self.load_filename:
-			self.nn.load_state_dict(torch.load(self.load_filename + ".nn.pth", map_location=self.device))
-			if self.DOUBLE_DQN:
-				self.target_nn.load_state_dict(torch.load(self.load_filename + ".target_nn.pth", map_location=self.device))
+        out = torch.cat((out, out2, out_pose), dim=1)
+        # ===================================================changed
+        out = self.fc_pol1(out)
 
-		self.optimizer = optim.Adam(self.nn.parameters(), lr=self.ALPHA, amsgrad=False)
-		self.loss_func = nn.MSELoss()
-		self.td_loss_func = nn.L1Loss(reduction='none')
+        q_value = self.fc_pol2(out)
+        return q_value
 
-	def save_model(self, filename):
-		torch.save(self.nn.state_dict(), filename + ".mdl.nn.pth")
-		if self.DOUBLE_DQN:
-			torch.save(self.target_nn.state_dict(), filename + ".mdl.target_nn.pth")
-		with open(filename + ".mdl", "wb") as f:
-			pickle.dump(self.epsilon, f)
-			#pickle.dump(self.memory, f)
-			pickle.dump(self.LAYER_H1_SIZE, f)
-			pickle.dump(self.LAYER_H2_SIZE, f)
-			pickle.dump(self.ALPHA, f)
-			pickle.dump(self.ALPHA_DECAY, f)
-			pickle.dump(self.GAMMA, f)
-			pickle.dump(self.EPSILON_MAX, f)
-			pickle.dump(self.EPSILON_MIN, f)
-			pickle.dump(self.EPSILON_DECAY, f)
-			pickle.dump(self.TAU, f)
-			pickle.dump(self.MEMORY_SIZE, f)
-			pickle.dump(self.BATCH_SIZE, f)
-			pickle.dump(self.UPDATE_RATE, f)
-			pickle.dump(self.DOUBLE_DQN, f)
-			pickle.dump(self.PRIO_REPLAY, f)
 
-	def copy_from(self, model):
-		self.nn.load_state_dict(model.nn.state_dict())
-		if self.DOUBLE_DQN:
-			self.target_nn.load_state_dict(model.target_nn.state_dict())
+class Linear_DQN_Network(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
 
-	def get_action(self, state):
-		# Extract an output tensor (action) by forwarding the state into the NN
+        self.fc1 = torch.nn.Linear(1600, 784)
+        self.fc2 = torch.nn.Linear(784, 256)
+        self.fc3 = torch.nn.Linear(256, 32)
 
-		# Explore (random action)
-		if self.training_mode and random.random() < self.epsilon:
-			return random.choice(np.arange(self.nn.output_size))
+        self.fc_pose = torch.nn.Linear(2, 32)
 
-		# Abuse (get action from NN)
-		state = torch.tensor(state, dtype=torch.float).to(self.device).unsqueeze(0)
+        self.fc_pol = torch.nn.Linear(64, 4)
 
-		if self.DUELING_DQN:
-			self.nn.eval()						# Set NN to eval mode
-			with torch.no_grad():				# Disable autograd engine
-				_, advantage = self.nn(state)	# Forward state to NN
-			self.nn.train()						# Set NN back to train mode
+        # Initialize neural network weights
+        # self.init_weights()
 
-			return torch.argmax(advantage).item()
-		else:
-			self.nn.eval()				# Set NN to eval mode
-			with torch.no_grad():		# Disable autograd engine
-				value = self.nn(state)	# Forward state to NN
-			self.nn.train()				# Set NN back to train mode
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
 
-			# Return the action with the highest tensor value
-			action_max_value, index = torch.max(value, 1)
+    def forward(self, frame, robot_pose):
+        frame = frame.reshape(frame.size(0), -1)
+        robot_pose = robot_pose.reshape(robot_pose.size(0), -1)
 
-			return index.item()
+        out = self.fc1(frame)
+        out = F.relu(out)
 
-	def update(self, state, action, reward, next_state, done):
-		# Stores the experience in the replay buffer
-		self.memory.add_experience(state, action, reward, next_state, done)
+        out = self.fc2(out)
+        out = F.relu(out)
 
-		# Only update every 'UPDATE_RATE' steps if episode is not over to train faster
-		self.update_step += 1
-		if (self.update_step) % self.UPDATE_RATE != 0 and not done:
-			return
+        out = self.fc3(out)
+        out = F.relu(out)
 
-		# Wait for the replay memory to be filled with a few experiences first before learning from it
-		if len(self.memory) < self.MEMORY_FILL:
-			return
+        out_pose = self.fc_pose(robot_pose)
+        out_pose = F.relu(out_pose)
+        out = torch.cat((out, out_pose), dim=1)
+        # ===================================================changed
+        q_value = self.fc_pol(out)
+        return q_value
 
-		# Extract a random batch of experiences
-		if self.PRIO_REPLAY:
-			tree_idx, batch, IS_weights = self.memory.sample()
-			states, actions, rewards, next_states, dones = batch
-		else:
-			states, actions, rewards, next_states, dones = self.memory.sample()
 
-		# Normalize rewards / gradient step size
-		#rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-7)
+class DuelingDQN(nn.Module):
+    def __init__(self):
+        super(DuelingDQN, self).__init__()
+        self.fc1 = torch.nn.Linear(1600, 784)
+        self.fc2 = torch.nn.Linear(784, 256)
+        self.fc3 = torch.nn.Linear(256, 32)
 
-		if self.DUELING_DQN:
-			indices = np.arange(self.BATCH_SIZE)
+        self.fc_pose = torch.nn.Linear(2, 32)
 
-			curr_V, curr_A = self.nn(states)
-			next_V, next_A = self.target_nn(next_states)
-			eval_V, eval_A = self.nn(next_states)
+        self.fc_value = torch.nn.Linear(64, 128)
+        self.fc_adv = torch.nn.Linear(64, 128)
 
-			# Calculate current Q-Value from current states (current prediction of the NN)
-			curr_Q = torch.add(curr_V, (curr_A - curr_A.mean(dim=1, keepdim=True)))[indices, actions]
-			q_next = torch.add(next_V, (next_A - next_A.mean(dim=1, keepdim=True)))
-			q_eval = torch.add(eval_V, (eval_A - eval_A.mean(dim=1, keepdim=True)))
+        self.value = nn.Linear(128, 1)
+        self.adv = nn.Linear(128, 4)
 
-			max_actions = torch.argmax(q_eval, dim=1)
+    def forward(self, frame, robot_pose):
+        frame = frame.reshape(frame.size(0), -1)
+        out = self.fc1(frame)
+        out = F.relu(out)
 
-			# Calculate Q-Target values
-			expected_Q = (1 - dones) * (q_next[indices, max_actions] * self.GAMMA) + rewards
-		else:
-			# Calculate current Q-Value from current states (current prediction of the NN)
-			curr_Q = self.nn(states).gather(1, actions)
+        out = self.fc2(out)
+        out = F.relu(out)
 
-			if self.DOUBLE_DQN:
-				# Double DQN
-				#next_Q = self.target_nn(next_states).detach()
-				#max_next_Q = next_Q.max(1)[0].unsqueeze(1)
+        out = self.fc3(out)
+        out = F.relu(out)
 
-				next_q_values = self.nn(next_states)
-				next_q_state_values = self.target_nn(next_states)
-				next_q_value = next_q_state_values.gather(1, next_q_values.max(1)[1].unsqueeze(1))
+        out_pose = self.fc_pose(robot_pose)
+        out_pose = F.relu(out_pose)
+        out = torch.cat((out, out_pose), dim=1)
 
-				expected_Q = (1 - dones) * (next_q_value * self.GAMMA) + rewards
-			else:
-				# Vanilla DQN
-				next_Q = self.nn(next_states).detach()
-				max_next_Q = next_Q.max(1)[0].unsqueeze(1)
+        out_value = F.relu(self.fc_value(out))
+        out_adv = F.relu(self.fc_adv(out))
 
-				# Calculate Q-Target values
-				expected_Q = (1 - dones) * (max_next_Q * self.GAMMA) + rewards
+        value = self.value(out_value)
+        adv = self.adv(out_adv)
 
-		# Calculate the loss and update priorities in replay buffer if needed
-		if self.PRIO_REPLAY:
-			td_errors = self.td_loss_func(curr_Q, expected_Q)
-			loss = (IS_weights * self.loss_func(curr_Q, expected_Q)).mean()
-			self.memory.batch_update(tree_idx, td_errors.cpu().detach().numpy())
-		else:
-			loss = self.loss_func(curr_Q, expected_Q.detach())
+        advAverage = torch.mean(adv, dim=1, keepdim=True)
+        Q = value + adv - advAverage
 
-		# Minimize the loss
-		self.optimizer.zero_grad()
-		loss.backward()
-		self.optimizer.step()
+        return Q
 
-		# Update exploration rate
-		#self.epsilon = max(self.EPSILON_MIN, self.epsilon*EPSILON_DECAY_FAC)
-		self.epsilon = self.EPSILON_MIN + (self.EPSILON_MAX - self.EPSILON_MIN) * math.exp(-1.0 * self.step / self.EPSILON_DECAY)
-		self.step += 1
-
-		if self.DOUBLE_DQN:
-			# Update target NN from NN each 'TGT_UPDATE_RATE' steps
-			if self.update_step % self.TGT_UPDATE_RATE == 0:
-				self.target_nn.load_state_dict(self.nn.state_dict())
-			#
-			# Slowly update target NN from NN using factor TAU
-			# for target_param, param in zip(self.target_nn.parameters(), self.nn.parameters()):
-			#	target_param.data.copy_(self.TAU * param + (1 - self.TAU) * target_param)
+    # def select_action(self, state):
+    #     with torch.no_grad():
+    #         Q = self.forward(state)
+    #         action_index = torch.argmax(Q, dim=1)
+    #     return action_index.item()

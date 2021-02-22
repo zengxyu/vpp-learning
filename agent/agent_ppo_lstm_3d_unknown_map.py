@@ -1,23 +1,21 @@
 import os
+import pickle
+
+from memory.RewardRecord import RewardRecord
+from memory.memory_ppo_lstm import MemoryPPOLSTM
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 import torch
 import torch.nn.functional as F
-from src.env.config import ACTION
-from src.network.network_ppo_lstm import PPO_LSTM
-from src.memory.memory_ppo_lstm import MemoryPPOLSTM
 
 
 class Agent:
     """description of class"""
 
-    def __init__(self, params, writer, train_agent=False, is_resume=False, filepath="",
-                 train_device=torch.device('cuda')):
-        self.name = "PPOng"
-        self.train_agent = train_agent
-        self.writer = writer
-        # self.frame_size = np.product(field.shape)
+    def __init__(self, params, summary_writer, is_resume=False, filepath="", normalize=True):
+        self.summary_writer = summary_writer
+        self.normalize = normalize
         self.pose_size = 2
         self.action_size = params['action_size']
         self.batch_size = params['batch_size']
@@ -25,11 +23,11 @@ class Agent:
         self.num_layers = params['num_layers']
         self.lr = params['lr']
         self.Model = params['model']
-        # self.FRAME_SKIP = 1
         self.EPSILON = 0.2
         self.K_epoch = 16
         self.gamma = params['gamma']
-        self.train_device = train_device  # 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.train_device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
+            'cpu')  # 'cuda' if torch.cuda.is_available() else 'cpu'
         print("Action size : {}".format(self.action_size))
         print("Train device : {}".format(self.train_device))
         self.policy = self.get_model(is_resume, filepath)
@@ -47,6 +45,24 @@ class Agent:
         self.deltas, self.returns, self.advantages = [], [], []
         self.h_ins, self.c_ins, self.h_outs, self.c_outs = [], [], [], []
 
+        if self.normalize:
+            self.observed_map_mean, self.observed_map_std, self.robot_pose_mean, self.robot_pose_std, self.reward_mean, self.reward_std = self.load_data_mean_std(
+                config_dir=params['config_dir'])
+
+            self.reward_record = RewardRecord()
+
+    def load_data_mean_std(self, config_dir):
+        with open(os.path.join(config_dir, "observed_map_mean_std.pkl"), 'rb') as f:
+            observed_map_mean, observed_map_std = pickle.load(f)
+
+        with open(os.path.join(config_dir, "robot_pose_mean_std.pkl"), 'rb') as f:
+            robot_pose_mean, robot_pose_std = pickle.load(f)
+
+        with open(os.path.join(config_dir, "reward_mean_std.pkl"), 'rb') as f:
+            reward_mean, reward_std = pickle.load(f)
+
+        return observed_map_mean, observed_map_std, robot_pose_mean, robot_pose_std, reward_mean, reward_std
+
     def get_model(self, is_resume, filepath):
         policy = self.Model(self.action_size, self.num_layers).to(self.train_device)
         print("Model name:", self.Model)
@@ -63,12 +79,22 @@ class Agent:
         torch.save(self.policy.state_dict(), filename)
 
     def store_data(self, transition):
-        self.frames.append(transition[0])
-        self.robot_poses.append(transition[1])
+        frame = transition[0]
+        robot_pose = transition[1]
+        frames_prime = transition[4]
+        robot_poses_prime = transition[5]
+        if self.normalize:
+            frame = (frame - self.observed_map_mean) / (self.observed_map_std + 1e-8)
+            robot_pose = (robot_pose - self.robot_pose_mean) / (self.robot_pose_std + 1e-8)
+            frames_prime = (frames_prime - self.observed_map_mean) / (self.observed_map_std + 1e-8)
+            robot_poses_prime = (robot_poses_prime - self.robot_pose_mean) / (self.robot_pose_std + 1e-8)
+
+        self.frames.append(frame)
+        self.robot_poses.append(robot_pose)
         self.actions.append(transition[2])
         self.rewards.append(transition[3])
-        self.frames_prime.append(transition[4])
-        self.robot_poses_prime.append(transition[5])
+        self.frames_prime.append(frames_prime)
+        self.robot_poses_prime.append(robot_poses_prime)
         self.values.append(transition[6])
         self.probs.append(transition[7])
         self.dones.append(transition[8])
@@ -80,7 +106,6 @@ class Agent:
 
         # print("len(self.frames):", len(self.frames))
         # print("self.seq_len:", self.seq_len)
-        # len > 0 or an episode finished
         if len(self.frames) > self.seq_len:
             # compute returns and advantages
             for i in range(0, self.seq_len):
@@ -138,25 +163,28 @@ class Agent:
 
             new_vals, new_probs, _, _ = self.policy(frames, robot_poses, h_in, c_in)
             old_probs = probs.squeeze(2)
-            # new_categorical = torch.distributions.Categorical(new_probs)
-            # old_categorical = torch.distributions.Categorical(old_probs)
+
             new_prob_a = new_probs.gather(2, actions)
             old_prob_a = old_probs.gather(2, actions)
 
             ratio = torch.exp(torch.log(new_prob_a) - torch.log(old_prob_a))  # a/b == log(exp(a)-exp(b))
 
+            c1, c2 = 1, 0.01
+
             loss_clip = -torch.min(ratio * advantages,
                                    torch.clamp(ratio, 1 - self.EPSILON, 1 + self.EPSILON) * advantages).mean()
 
-            loss_mse = F.mse_loss(new_vals, returns)
-            # loss_ent = -new_categorical.entropy().mean()
+            loss_mse = c1 * F.mse_loss(new_vals, returns)
 
-            c1, c2 = 1, 0.01
+            new_probs_reshape = torch.reshape(new_probs, (-1, new_probs.size()[-1]))
+
+            loss_ent = -c2 * torch.sum(-torch.log2(new_probs_reshape) * new_probs_reshape, dim=1).mean()
 
             self.optimizer.zero_grad()
 
-            loss = loss_clip + c1 * loss_mse
+            loss = loss_clip + loss_mse + loss_ent
             loss.backward(retain_graph=True)
+            self.summary_writer.add_3_loss(loss_clip.item(), loss_mse.item(), loss_ent.item(), loss.item())
 
             self.optimizer.step()
 
@@ -176,6 +204,3 @@ class Agent:
         categorical = torch.distributions.Categorical(probs)
         action = categorical.sample()
         return action, value, probs, h_out, c_out
-
-    def get_name(self):
-        return self.name

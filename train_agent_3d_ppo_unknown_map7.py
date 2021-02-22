@@ -6,6 +6,7 @@ import argparse
 from agent.agent_ppo_3d_unknown_map import Agent
 from field_env_3d_unknown_map import Field, Action
 from memory.GridCellAccessRecord import GridCellAccessRecord
+from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap2
 from util.summary_writer import MySummaryWriter
 
 parser = argparse.ArgumentParser()
@@ -23,7 +24,8 @@ params = {
     'gamma': 0.98,
     'lr': 1e-5,
 
-    'output': "output_ppo_unknown_map",
+    'model': PPOPolicy3DUnknownMap2,
+    'output': "output_ppo_unknown_map7",
     'config_dir': "config_dir2"
 }
 
@@ -55,7 +57,7 @@ def main_loop():
         while not done:
 
             action = player.get_action(observed_map, robot_pose)
-            observed_map_prime, robot_pose_prime, reward1, done = field.step(action)
+            observed_map_prime, robot_pose_prime, reward1, reward3, done = field.step(action)
 
             r_ratio = 5
             reward2 = grid_cell_access_record.get_reward_of_new_visit(robot_pose_prime) * r_ratio
@@ -86,6 +88,9 @@ def main_loop():
 
                 rewards1 = []
                 rewards2 = []
+
+        if (i + 1) % 100 == 0:
+            player.store_model(os.path.join(params['output'], "Agent_ppo_state_dict_{}.mdl".format(i)))
 
 
 if args.headless:

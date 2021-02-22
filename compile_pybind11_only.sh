@@ -1,4 +1,5 @@
-git submodule update --init
+
+it submodule update --init
 
 cd pybind11_modules
 mkdir -p build
