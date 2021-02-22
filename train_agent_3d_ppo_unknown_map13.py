@@ -10,7 +10,7 @@ from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap2
 from util.summary_writer import MySummaryWriter
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
+parser.add_argument("--headless", default=False, action="store_true", help="Run in headless mode")
 args = parser.parse_args()
 
 if not args.headless:
@@ -37,7 +37,9 @@ summary_writer = MySummaryWriter(log_dir)
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=1000,
               init_file='VG07_6.binvox', headless=args.headless)
-player = Agent(params, field, summary_writer, train_agent=True, normalize=True)
+model_path = os.path.join(params['output'], "Agent_ppo_state_dict_99.mdl")
+
+player = Agent(params, field, summary_writer, train_agent=True, normalize=True, model_path=model_path)
 
 
 # grid_cell_access_record = GridCellAccessRecord(shape=(256, 256, 256))
@@ -48,7 +50,7 @@ def main_loop():
     episodes = 200000
 
     observed_map, robot_pose = field.reset()
-
+    init_observed_map, init_robot_pose = observed_map, robot_pose
     for i in range(0, episodes):
         done = False
         ts = 0
@@ -60,7 +62,9 @@ def main_loop():
 
             action = player.get_action(observed_map, robot_pose)
             observed_map_prime, robot_pose_prime, reward1, reward3, done = field.step(action)
-
+            # if np.sum(robot_pose[:3] - robot_pose_prime[:3]) != 0:
+            #     print("robot pose:{}".format(robot_pose))
+            #     print("robot pose prime:{}".format(robot_pose_prime))
             r_ratio = 5
             # reward2 = grid_cell_access_record.get_reward_of_new_visit(robot_pose_prime) * r_ratio
             # reward = reward1 + reward3
@@ -86,6 +90,8 @@ def main_loop():
             if done:
                 player.reset()
                 observed_map, robot_pose = field.reset()
+                end_observed_map, end_robot_pose = observed_map, robot_pose
+                distance_travelled = np.sqrt(np.sum(np.square(end_robot_pose[:3]-init_robot_pose[:3])))
                 # grid_cell_access_record.clear()
                 summary_writer.add_episode_len(ts, i)
                 print("\nepisode {} over".format(i))
@@ -94,6 +100,7 @@ def main_loop():
 
                 print("time steps:{}".format(ts))
                 print("learning rate:{}".format(player.optimizer.param_groups[0]['lr']))
+                print("distance travelled:{}".format(distance_travelled))
 
                 # print("mean rewards2:{}; new visit cell num: {}".format(np.sum(rewards2), np.sum(rewards2) / r_ratio))
 

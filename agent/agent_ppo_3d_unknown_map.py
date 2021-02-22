@@ -14,7 +14,7 @@ from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap
 class Agent:
     """description of class"""
 
-    def __init__(self, params, field, summary_writer, train_agent=False, normalize=True):
+    def __init__(self, params, field, summary_writer, train_agent=False, normalize=True, model_path=""):
         self.name = "PPOng"
         self.train_agent = train_agent
         self.normalize = normalize
@@ -32,6 +32,8 @@ class Agent:
             'cpu')  # 'cuda' if torch.cuda.is_available() else pu'
         self.model = params['model']
         self.policy = self.model(self.ACTION_SPACE).to(self.train_device)
+        if model_path != "":
+            self.policy.load_state_dict(torch.load(model_path, self.train_device))
         self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=params['lr'])
 
         # lam = lambda f: 1 - f / train_steps
