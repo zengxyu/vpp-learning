@@ -38,6 +38,14 @@ class Action(IntEnum):
     ROTATE_YAW_P = 11,
     ROTATE_YAW_N = 12
 
+# class Action(IntEnum):
+#     MOVE_FORWARD = 0,
+#     ROTATE_ROLL_P = 1,
+#     ROTATE_ROLL_N = 2,
+#     ROTATE_PITCH_P = 3,
+#     ROTATE_PITCH_N = 4,
+#     ROTATE_YAW_P = 5,
+#     ROTATE_YAW_N = 6
 
 class FieldValues(IntEnum):
     UNKNOWN = 0,
@@ -69,11 +77,14 @@ class Field:
         self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 1.0
+        self.MOVE_STEP = 1
         self.ROT_STEP = 15.0
 
         self.ratio = 0.1
 
+        print("max steps:", self.max_steps)
+        print("move step:", self.MOVE_STEP)
+        print("rot step:", self.ROT_STEP)
         if init_file:
             self.read_env_from_file(init_file, scale)
 
@@ -247,7 +258,7 @@ class Field:
 
     def move_robot(self, direction):
         self.robot_pos += direction
-        self.robot_pos = np.clip(self.robot_pos, [0, 0, 0], self.shape)
+        self.robot_pos = np.clip(self.robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
 
     def rotate_robot(self, axis, angle):
         rot = Rotation.from_rotvec(np.radians(angle) * axis)
@@ -305,8 +316,19 @@ class Field:
     def reset(self):
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
-        self.robot_pos = np.random.uniform((0.0, 0.0, 0.0), self.shape)
+        self.allowed_range = np.array([128, 128, 128])
+        self.allowed_lower_bound = np.array([128, 128, 128]) - self.allowed_range
+        self.allowed_upper_bound = np.array([128, 128, 128]) + self.allowed_range - 1
+
+        print("allowed_lower_bound:", self.allowed_lower_bound)
+        print("allowed_upper_bound:", self.allowed_upper_bound)
+
+
+        self.robot_pos = np.random.uniform(self.allowed_lower_bound, self.allowed_upper_bound)
+        # self.robot_pos = np.array([256.0, 256.0, 256.0])
+
         self.robot_rot = Rotation.random()
+        # self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         self.step_count = 0
         self.found_targets = 0
         self.free_cells = 0

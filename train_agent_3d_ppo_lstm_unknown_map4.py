@@ -24,10 +24,10 @@ params = {
 
     'batch_size': 16,
     'seq_len': 4,
-    'num_layers': 1,
+    'num_layers': 4,
     'model': PPO_LSTM4,  # PPO_LSTM, PPO_LSTM2, PPO_LSTM3
     'action_size': len(Action),
-    'output': "output_ppo_lstm_unknown_map2",
+    'output': "output_ppo_lstm_unknown_map4",
     'config_dir': "config_dir"
 
 }
@@ -68,7 +68,9 @@ def main_loop():
                 action.detach().cpu().numpy()[0][0])
 
             current_distance = np.sqrt(np.sum(np.square(robot_pose_prime[:3] - init_robot_pose[:3])))
-            reward2 = np.log10(current_distance + 1)
+            # reward2 = np.log10(current_distance + 1)
+            ratio = 5
+            reward2 = (np.exp(current_distance - pre_distance) - 1) * ratio
 
             # print("\npre_distance:", pre_distance)
             # print("current_distance:", current_distance)
@@ -108,9 +110,11 @@ def main_loop():
                 print("max distance travelled:{}".format(np.max(distances_travelled)))
 
             if player.memory.is_full_batch():
-                player.train_net()
+                loss = player.train_net()
 
                 player.memory.reset_data()
+
+                summary_writer.add_loss(loss)
 
 
 if args.headless:

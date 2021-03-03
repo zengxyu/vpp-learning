@@ -48,6 +48,127 @@ class DQN_Network_Shadow(torch.nn.Module):
         q_value = self.fc_pol(out)
         return q_value
 
+class DQN_Network4(torch.nn.Module):
+    def __init__(self, action_space):
+        super().__init__()
+
+        self.pose_fc1 = torch.nn.Linear(7, 32)
+        self.pose_fc2 = torch.nn.Linear(32, 128)
+
+        self.concat_fc = torch.nn.Linear(128, 64)
+
+        self.fc_val = torch.nn.Linear(64, action_space)
+
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+    def forward(self,  robot_pose):
+
+        out_pose = F.relu(self.pose_fc1(robot_pose))
+        out_pose = F.relu(self.pose_fc2(out_pose))
+
+
+        out = F.relu(self.concat_fc(out_pose))
+
+        q_value = self.fc_val(out)
+        return q_value
+
+class DQN_Network5(torch.nn.Module):
+    def __init__(self, action_size=13, robot_pose_size=7):
+        super().__init__()
+
+        self.pose_fc1a = torch.nn.Linear(3, 32)
+        self.pose_fc2a = torch.nn.Linear(32, 64)
+
+        self.pose_fc1b = torch.nn.Linear(3, 32)
+        self.pose_fc2b = torch.nn.Linear(32, 64)
+
+        self.pose_fc1c = torch.nn.Linear(4, 32)
+        self.pose_fc2c = torch.nn.Linear(32, 64)
+
+        self.pose_fc3 = torch.nn.Linear(192, 96)
+
+        self.fc_val = torch.nn.Linear(96, action_size)
+
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+    def forward(self, robot_pose):
+        # print("robot_pose[:, 6:] shape:", robot_pose[:, 6:].shape)
+        out_pose_a = F.relu(self.pose_fc1a(robot_pose[:, :3]))
+        out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+        out_pose_b = F.relu(self.pose_fc1b(robot_pose[:, 3:6]))
+        out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+
+        out_pose_c = F.relu(self.pose_fc1c(robot_pose[:, 6:]))
+        out_pose_c = F.relu(self.pose_fc2c(out_pose_c))
+
+        out = torch.cat((out_pose_a, out_pose_b, out_pose_c), dim=1)
+
+        out = F.relu(self.pose_fc3(out))
+
+        val = self.fc_val(out)
+        return val
+
+
+class DQN_Network6(torch.nn.Module):
+    def __init__(self, action_size=13, robot_pose_size=7):
+        super().__init__()
+
+        self.pose_fc1a = torch.nn.Linear(3, 32)
+        self.pose_fc2a = torch.nn.Linear(32, 64)
+
+        self.pose_fc1b = torch.nn.Linear(3, 32)
+        self.pose_fc2b = torch.nn.Linear(32, 64)
+
+        self.pose_fc1c = torch.nn.Linear(3, 32)
+        self.pose_fc2c = torch.nn.Linear(32, 64)
+
+        self.pose_fc1d = torch.nn.Linear(4, 32)
+        self.pose_fc2d = torch.nn.Linear(32, 64)
+
+        self.pose_fc3 = torch.nn.Linear(256, 128)
+
+        self.pose_fc4 = torch.nn.Linear(128, 32)
+
+        self.fc_val = torch.nn.Linear(32, action_size)
+
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+    def forward(self, robot_pose):
+        # print("robot_pose[:, 6:] shape:", robot_pose[:, 6:].shape)
+        out_pose_a = F.relu(self.pose_fc1a(robot_pose[:, 0:3]))
+        out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+        out_pose_b = F.relu(self.pose_fc1b(robot_pose[:, 3:6]))
+        out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+
+        out_pose_c = F.relu(self.pose_fc1c(robot_pose[:, 6:9]))
+        out_pose_c = F.relu(self.pose_fc2c(out_pose_c))
+
+        out_pose_d = F.relu(self.pose_fc1d(robot_pose[:, 9:]))
+        out_pose_d = F.relu(self.pose_fc2d(out_pose_d))
+
+        out = torch.cat((out_pose_a, out_pose_b, out_pose_c, out_pose_d), dim=1)
+
+        out = F.relu(self.pose_fc3(out))
+
+        out = F.relu(self.pose_fc4(out))
+
+        val = self.fc_val(out)
+        return val
+
 
 class DQN_Network(torch.nn.Module):
     def __init__(self, action_space):

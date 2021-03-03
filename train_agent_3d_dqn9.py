@@ -3,13 +3,18 @@ import os
 import argparse
 from agent.agent_dqn import Agent
 from field_env_3d_unknown_map import Field,Action
+from network.network_dqn import DQN_Network5
 from util.summary_writer import MySummaryWriter
 from util.util import get_euclidean_distance
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 import numpy as np
-
+"""
+起始位置为随机
+改了network,DQN_Network5
+继续改reward
+"""
 parser = argparse.ArgumentParser()
 parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
 args = parser.parse_args()
@@ -34,6 +39,7 @@ params = {
 
     # grid params
     'max_step': 1000,
+    'model': DQN_Network5,
 
     # train params
     'is_train': True,
@@ -46,7 +52,7 @@ params = {
     # folder params
 
     # output
-    'output_folder': "output_dqn2",
+    'output_folder': "output_dqn9",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config"
@@ -92,39 +98,34 @@ for i_episode in range(params['num_episodes']):
     while not done:
         action = player.act(observed_map, robot_pose)
         observed_map_next, robot_pose_next, reward1, reward3, done = field.step(action)
+        # 这里构造奖励
+        reward2 = 10 - get_euclidean_distance(robot_pose_next[:3], destination)
+        reward2 = int(reward2)
 
-        actions.append(action)
+        reward = reward2
+        robot_pose_input_next = np.append(destination-robot_pose_next[:3], robot_pose_next)
 
-        # 转到下一个状态
-        observed_map = observed_map_next.copy()
-        robot_pose = robot_pose_next.copy()
+        player.step(state=[observed_map, robot_pose], action=action, reward=reward,
+                    next_state=[observed_map_next, robot_pose_next], done=done)
+
         # train
         if time_step % 2 == 0:
             loss = player.learn(memory_config_dir=params['memory_config_dir'])
             summary_writer.add_loss(loss)
 
-        reward2 = -6
-        if get_euclidean_distance(robot_pose_next[:3], destination) < 1:
-            reward2 = 12
-        elif get_euclidean_distance(robot_pose_next[:3], destination) < 3:
-            reward2 = 8
-        elif get_euclidean_distance(robot_pose_next[:3], destination) < 5:
-            reward2 = 6
-        elif get_euclidean_distance(robot_pose_next[:3], destination) < 10:
-            reward2 = 4
-
-        reward = reward2
         time_step += 1
         # record
         summary_writer.add_reward(reward1, i_episode)
-        player.step(state=[observed_map, robot_pose], action=action, reward=reward,
-                    next_state=[observed_map_next, robot_pose_next], done=done)
+        actions.append(action)
         rewards1.append(reward1)
         rewards2.append(reward2)
+        # 转到下一个状态
+        observed_map = observed_map_next.copy()
+        robot_pose = robot_pose_next.copy()
 
         if not args.headless:
             threading.Thread.considerYield()
-
+        done = done or get_euclidean_distance(robot_pose_next[:3], destination) == 0
         # rewards.append(reward)
         if done:
             end_observed_map, end_robot_pose = observed_map, robot_pose
@@ -135,18 +136,14 @@ for i_episode in range(params['num_episodes']):
             print("mean rewards2:{}".format(np.sum(rewards2)))
             print("distance travelled:{}".format(distance_travelled))
             print("max distance travelled:{}".format(np.max(distances_travelled)))
-            print("in this episode, robot travels from {} to {}".format(init_robot_pose[:3], end_robot_pose[:3]))
-            print("is closer? ",
-                  get_euclidean_distance(end_robot_pose[:3], destination) < get_euclidean_distance(init_robot_pose[:3],
-                                                                                                   destination))
             print("rewards2:{}".format(rewards2))
             print("actions:{}".format(actions))
 
             # print("mean rewards2:{}; new visit cell num: {}".format(np.sum(rewards2), np.sum(rewards2) / r_ratio))
             is_closer = get_euclidean_distance(end_robot_pose[:3], destination) < get_euclidean_distance(
-                init_robot_pose[:3],
-                destination)
+                init_robot_pose[:3], destination)
             is_closer_list.append(is_closer)
+            print("in this episode, robot travels from {} to {}".format(init_robot_pose[:3], end_robot_pose[:3]))
             print("is closer? ", is_closer)
             print("closer rate:", np.sum(is_closer_list) / len(is_closer_list))
             rewards1 = []

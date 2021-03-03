@@ -11,7 +11,9 @@ import torch
 from memory.replay_buffer import PriorityReplayBuffer
 from network.network_dqn import DQN_Network, DQN_Network4
 
-
+"""
+this agent is with frame as input
+"""
 class Agent:
     def __init__(self, params, summary_writer, model_path=""):
         self.name = "grid world"
@@ -124,17 +126,17 @@ class Agent:
             # frames_in, robot_poses_in = states
             # next_frames_in, next_robot_poses_in = next_states
             if self.is_double:
-                q_values = self.policy_net( next_robot_poses_in).detach()
+                q_values = self.policy_net(next_frames_in, next_robot_poses_in).detach()
                 max_action_next = q_values.max(1)[1].unsqueeze(1)
                 Q_target = self.target_net(next_frames_in, next_robot_poses_in).gather(1, max_action_next)
                 Q_target = rewards + (self.gamma * Q_target * (1 - dones))
                 Q_expected = self.policy_net(frames_in, robot_poses_in).gather(1, actions)
             else:
-                q_values = self.target_net( next_robot_poses_in).detach()
+                q_values = self.target_net(next_frames_in, next_robot_poses_in).detach()
                 max_action_values = q_values.max(1)[0].unsqueeze(1)
                 # If done just use reward, else update Q_target with discounted action values
                 Q_target = rewards + (self.gamma * max_action_values * (1 - dones))
-                Q_action_values = self.policy_net(robot_poses_in)
+                Q_action_values = self.policy_net(frames_in, robot_poses_in)
                 Q_expected = Q_action_values.gather(1, actions)
                 # self.update_q_action_values(Q_action_values, robot_poses_in)
 
@@ -148,7 +150,7 @@ class Agent:
             self.optimizer.step()
             loss_value = loss.item()
 
-            Q_expected2 = self.policy_net(robot_poses_in).gather(1, actions)
+            Q_expected2 = self.policy_net(frames_in, robot_poses_in).gather(1, actions)
             loss_each_item = torch.abs(Q_expected2 - Q_target)
             rewards[rewards < 0] = 0
             loss_reward_each_item = loss_each_item + rewards

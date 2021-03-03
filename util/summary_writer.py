@@ -33,8 +33,8 @@ class MySummaryWriter:
         self.writer.add_scalar('for_each_episode/r_mean_reward_for_each_episode', self.sum_rewards_list[-1],
                                self.i_episode)
 
-        print("Mean loss for episode {} : {}".format(self.i_episode, self.mean_losses_list[-1]))
-        print("Sum reward1 for episode {} : {}".format(self.i_episode, self.sum_rewards_list[-1]))
+        # print("Mean loss for episode {} : {}".format(self.i_episode, self.mean_losses_list[-1]))
+        # print("Sum reward1 for episode {} : {}".format(self.i_episode, self.sum_rewards_list[-1]))
 
         self.writer.add_scalar('for_each_episode/l_smoothed_loss',
                                np.mean(self.mean_losses_list[max(0, self.i_episode - 200):]),
@@ -64,3 +64,6 @@ class MySummaryWriter:
         self.writer.add_scalar('for_each_update/ll_loss', loss, self.loss_index)
 
         self.loss_index += 1
+
+    def add_distance(self, distance, i_episode):
+        self.writer.add_scalar('for_each_episode/episode_distance', distance, i_episode)

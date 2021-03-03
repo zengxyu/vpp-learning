@@ -32,12 +32,13 @@ class Agent:
             'cpu')  # 'cuda' if torch.cuda.is_available() else pu'
         self.model = params['model']
         self.policy = self.model(self.ACTION_SPACE).to(self.train_device)
+        print(self.policy)
         if model_path != "":
             self.policy.load_state_dict(torch.load(model_path, self.train_device))
         self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=params['lr'])
 
         # lam = lambda f: 1 - f / train_steps
-        self.opti_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=300, gamma=0.05, last_epoch=-1)
+        # self.opti_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=300, gamma=0.05, last_epoch=-1)
         self.summary_writer = summary_writer
         self.traj_memory = [[], [], [], [], [], []]
 
@@ -143,7 +144,7 @@ class Agent:
         frame_in = torch.Tensor([frame]).to(self.train_device)
         robot_pose_in = torch.Tensor([robot_pose]).to(self.train_device)
 
-        value, pol = self.policy(frame_in, robot_pose_in)
+        value, pol = self.policy( robot_pose_in)
         action = torch.distributions.Categorical(pol).sample()
 
         if self.train_agent:
@@ -199,8 +200,9 @@ class Agent:
         for i in range(self.EPOCH_NUM):
             mb_frames, mb_robot_poses, mb_actions, mb_returns, mb_probs, mb_advantages = self.traj_memory
 
-            new_vals, new_probs = self.policy(torch.cat(mb_frames, dim=0).to(self.train_device),
-                                              torch.cat(mb_robot_poses, dim=0).to(self.train_device))
+            # new_vals, new_probs = self.policy(torch.cat(mb_frames, dim=0).to(self.train_device),
+            #                                   torch.cat(mb_robot_poses, dim=0).to(self.train_device))
+            new_vals, new_probs = self.policy(torch.cat(mb_robot_poses, dim=0).to(self.train_device))
             old_probs = torch.cat(mb_probs, dim=0)
 
             new_pol = torch.distributions.Categorical(new_probs)
@@ -238,7 +240,7 @@ class Agent:
             self.optimizer.step()
             self.optimizer.zero_grad()
 
-        self.opti_scheduler.step()
+        # self.opti_scheduler.step()
 
         self.traj_memory = [[], [], [], [], [], []]
         self.tcol_counter = 0
