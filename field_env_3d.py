@@ -19,6 +19,7 @@ generate_vec3d_vectorized = np.vectorize(generate_vec3d_from_arr, otypes=[Vec3D]
 
 
 count_unknown_vectorized = np.vectorize(field_env_3d_helper.count_unknown, otypes=[int], excluded=[0, 1, 3, 4])
+count_unknown_layer5_vectorized = np.vectorize(field_env_3d_helper.count_unknown_layer5, otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
 
 
 class Action(IntEnum):
@@ -71,6 +72,9 @@ class Field:
 
         if init_file:
             self.read_env_from_file(init_file, scale)
+        else:
+            self.target_count = 0
+            self.global_map += 1
 
     def read_env_from_file(self, filename, scale):
         with open(filename, 'rb') as f:
@@ -112,7 +116,7 @@ class Field:
 
     def generate_unknown_map(self, cam_pos):
         rot_vecs = self.compute_rot_vecs(-180, 180, 18)
-        unknown_map = count_unknown_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0, 50.0)
+        unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0, 250.0)
         return unknown_map
 
     def line_plane_intersection(self, p0, nv, l0, lv):
@@ -260,7 +264,7 @@ class Field:
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
 
         unknown_map = self.generate_unknown_map(cam_pos)
-        # print(unknown_map)
+        print(unknown_map)
 
         return unknown_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
 
@@ -285,6 +289,6 @@ class Field:
         print(self.robot_rot.as_quat())
 
         unknown_map = self.generate_unknown_map(cam_pos)
-        # print(unknown_map)
+        print(unknown_map)
 
         return unknown_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))

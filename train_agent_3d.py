@@ -11,9 +11,10 @@ parser.add_argument("--headless", action="store_true", help="Run in headless mod
 args = parser.parse_args()
 
 if not args.headless:
-    from direct.stdpy import threading
+    args.headless = True
+    # from direct.stdpy import threading
 
-field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=200, init_file='VG07_6.binvox', headless=args.headless)
+field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=200, init_file=None, headless=args.headless)
 
 
 def main_loop():
