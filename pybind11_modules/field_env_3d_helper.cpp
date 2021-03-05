@@ -200,6 +200,44 @@ int count_unknown(const py::array_t<int> &known_map, const Vec3D &start, const V
     return unkown;
 }
 
+int count_known_free(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
+{
+    int known_free = 0;
+    for (double frac=0.0; frac < len; frac += step)
+    {
+        Vec3D cur = start + frac * dir_vec;
+        int x = (int)cur.x;
+        if (!in_range(x, known_map.shape()[0])) break;
+        int y = (int)cur.y;
+        if (!in_range(y, known_map.shape()[1])) break;
+        int z = (int)cur.z;
+        if (!in_range(z, known_map.shape()[2])) break;
+        int cell_val = *known_map.data(x, y, z);
+        if (cell_val == 1)
+            known_free++;
+    }
+    return known_free;
+}
+
+int count_known_target(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
+{
+    int known_target = 0;
+    for (double frac=0.0; frac < len; frac += step)
+    {
+        Vec3D cur = start + frac * dir_vec;
+        int x = (int)cur.x;
+        if (!in_range(x, known_map.shape()[0])) break;
+        int y = (int)cur.y;
+        if (!in_range(y, known_map.shape()[1])) break;
+        int z = (int)cur.z;
+        if (!in_range(z, known_map.shape()[2])) break;
+        int cell_val = *known_map.data(x, y, z);
+        if (cell_val == 2)
+            known_target++;
+    }
+    return known_target;
+}
+
 std::tuple<int, int, int, int, int> count_unknown_layer5(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
 {
     std::vector<int> unknown_vec;
