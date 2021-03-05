@@ -21,6 +21,7 @@ if __name__ == '__main__':
     rotation_between_vectors = Rotation.from_matrix(rot)
 
     print("rotation_between_vectors as_quat\n", rotation_between_vectors.as_quat())
+    print(np.linalg.norm(rotation_between_vectors.as_quat()))
     print("rotation_between_vectors as_euler\n", rotation_between_vectors.as_euler("xyz", degrees=True))
 
     # rotated = np.dot(rot, vector1)

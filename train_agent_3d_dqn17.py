@@ -51,6 +51,7 @@ params = {
 
     # grid params
     'max_step': 1000,
+    'c_step': 20,
     'model': DQN_Network6,
 
     # train params
@@ -99,6 +100,8 @@ is_closer_list = []
 
 record_pose_count = 0
 update_freq = 5
+
+
 for i_episode in range(params['num_episodes']):
     done = False
     # rewards = []
@@ -115,6 +118,7 @@ for i_episode in range(params['num_episodes']):
     while not done:
         destination = robot_pose_cluster.get_destination(robot_pose[:3])
         direction = destination - robot_pose[:3]
+
         # normalize direction
         unit_direction = direction / np.linalg.norm(direction)
         # robot direction
