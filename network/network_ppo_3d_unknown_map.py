@@ -63,12 +63,18 @@ class PPOPolicy3DUnknownMap5(torch.nn.Module):
         self.pose_fc1a = torch.nn.Linear(3, 32)
         self.pose_fc2a = torch.nn.Linear(32, 64)
 
-        self.pose_fc1b = torch.nn.Linear(4, 32)
+        self.pose_fc1b = torch.nn.Linear(3, 32)
         self.pose_fc2b = torch.nn.Linear(32, 64)
 
-        self.concat_fc = torch.nn.Linear(128, 64)
+        self.pose_fc1c = torch.nn.Linear(3, 32)
+        self.pose_fc2c = torch.nn.Linear(32, 64)
 
-        self.pose_fc3 = torch.nn.Linear(64, 32)
+        self.pose_fc1d = torch.nn.Linear(4, 32)
+        self.pose_fc2d = torch.nn.Linear(32, 64)
+
+        self.pose_fc3 = torch.nn.Linear(256, 128)
+
+        self.pose_fc4 = torch.nn.Linear(128, 32)
 
         self.fc_val = torch.nn.Linear(32, 1)
         self.fc_pol = torch.nn.Linear(32, action_size)
@@ -80,16 +86,23 @@ class PPOPolicy3DUnknownMap5(torch.nn.Module):
                 torch.nn.init.zeros_(m.bias)
 
     def forward(self, robot_pose):
-        out_pose_a = F.relu(self.pose_fc1a(robot_pose[:, :3]))
+        out_pose_a = F.relu(self.pose_fc1a(robot_pose[:, 0:3]))
         out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
 
-        out_pose_b = F.relu(self.pose_fc1b(robot_pose[:, 3:]))
+        out_pose_b = F.relu(self.pose_fc1b(robot_pose[:, 3:6]))
         out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
 
-        out = torch.cat((out_pose_a, out_pose_b), dim=1)
+        out_pose_c = F.relu(self.pose_fc1c(robot_pose[:, 6:9]))
+        out_pose_c = F.relu(self.pose_fc2c(out_pose_c))
 
-        out = F.relu(self.concat_fc(out))
+        out_pose_d = F.relu(self.pose_fc1d(robot_pose[:, 9:]))
+        out_pose_d = F.relu(self.pose_fc2d(out_pose_d))
+
+        out = torch.cat((out_pose_a, out_pose_b, out_pose_c, out_pose_d), dim=1)
+
         out = F.relu(self.pose_fc3(out))
+
+        out = F.relu(self.pose_fc4(out))
 
         val = self.fc_val(out)
         pol = self.fc_pol(out)

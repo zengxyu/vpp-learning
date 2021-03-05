@@ -263,6 +263,55 @@ std::tuple<int, int, int, int, int> count_unknown_layer5(const py::array_t<int> 
     return std::make_tuple(unknown_vec[0], unknown_vec[1], unknown_vec[2], unknown_vec[3], unknown_vec[4]);
 }
 
+std::tuple<int, int, int, int, int> count_known_free_layer5(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
+{
+    std::vector<int> known_free_vec;
+
+    for (size_t i = 0; i < 5; i++)
+    {
+        int known_free = 0;
+        for (double frac=i*(len/5.0); frac < (i+1)*(len/5.0); frac += step)
+        {
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int)cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int)cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int)cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 1)
+                known_free++;
+        }
+        known_free_vec.push_back(known_free);
+    }
+    return std::make_tuple(known_free_vec[0], known_free_vec[1], known_free_vec[2], known_free_vec[3], known_free_vec[4]);
+}
+
+std::tuple<int, int, int, int, int> count_known_target_layer5(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
+{
+    std::vector<int> known_target_vec;
+
+    for (size_t i = 0; i < 5; i++)
+    {
+        int known_target = 0;
+        for (double frac=i*(len/5.0); frac < (i+1)*(len/5.0); frac += step)
+        {
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int)cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int)cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int)cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 2)
+                known_target++;
+        }
+        known_target_vec.push_back(known_target);
+    }
+    return std::make_tuple(known_target_vec[0], known_target_vec[1], known_target_vec[2], known_target_vec[3], known_target_vec[4]);
+}
 /*py::array_t<int> generate_camera_image(const py::array_t<int> &map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up, int xres=640, int yres=480)
 {
     Vec3D left_right = ep_right_up - ep_left_up;
@@ -335,9 +384,13 @@ PYBIND11_MODULE(field_env_3d_helper, m) {
         .def("abs", &Vec3D::abs);
     m.def("update_grid_inds_in_view", &update_grid_inds_in_view, "Update grid indices");
     m.def("count_unknown", &count_unknown, "Count unknown cells on ray");
-    m.def("count_unknown_layer5", &count_unknown_layer5, "Count unknown cells on ray in 5 layers");
     m.def("count_known_free", &count_known_free, "Count unknown cells on ray");
     m.def("count_known_target", &count_known_target, "Count unknown cells on ray");
+
+    m.def("count_unknown_layer5", &count_unknown_layer5, "Count unknown cells on ray in 5 layers");
+    m.def("count_known_free_layer5", &count_known_free_layer5, "Count unknown cells on ray in 5 layers");
+    m.def("count_known_target_layer5", &count_known_target_layer5, "Count unknown cells on ray in 5 layers");
+
 
     m.def("test", &test, "Print test");
 }

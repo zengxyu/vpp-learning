@@ -22,6 +22,13 @@ count_known_free_vectorized = np.vectorize(field_env_3d_helper.count_known_free,
 count_known_target_vectorized = np.vectorize(field_env_3d_helper.count_known_target, otypes=[int],
                                              excluded=[0, 1, 3, 4])
 
+count_unknown_layer5_vectorized = np.vectorize(field_env_3d_helper.count_unknown_layer5,
+                                               otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
+count_known_free_layer5_vectorized = np.vectorize(field_env_3d_helper.count_known_free_layer5,
+                                                  otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
+count_known_target_layer5_vectorized = np.vectorize(field_env_3d_helper.count_known_target_layer5,
+                                                    otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
+
 
 class Action(IntEnum):
     DO_NOTHING = 0,
@@ -37,6 +44,7 @@ class Action(IntEnum):
     ROTATE_PITCH_N = 10,
     ROTATE_YAW_P = 11,
     ROTATE_YAW_N = 12
+
 
 # class Action(IntEnum):
 #     MOVE_FORWARD = 0,
@@ -131,11 +139,19 @@ class Field:
 
     def generate_unknown_map(self, cam_pos):
         rot_vecs = self.compute_rot_vecs(-180, 180, 18)
-        unknown_map = count_unknown_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0, 50.0)
-        known_free_map = count_known_free_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
-                                                     50.0)
-        known_target_map = count_known_target_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
-                                                         1.0, 50.0)
+        # unknown_map = count_unknown_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0, 50.0)
+        # known_free_map = count_known_free_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
+        #                                              50.0)
+        # known_target_map = count_known_target_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+        #                                                  1.0, 50.0)
+
+        unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
+                                                      250.0)
+        known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+                                                            1.0, 250.0)
+        known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                                rot_vecs, 1.0, 250.0)
+
         return unknown_map, known_free_map, known_target_map
 
     def line_plane_intersection(self, p0, nv, l0, lv):
@@ -300,15 +316,8 @@ class Field:
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
 
-        # done = (self.found_targets >= self.ratio * self.target_count) or (self.step_count >= self.max_steps)
-        # if done and self.found_targets >= self.ratio * self.target_count:
-        #     self.ratio = min(self.ratio * 1.01, 1)
-        #     self.max_steps = self.max_steps * 1.01
-
-        # elif done and self.step_count >= self.max_steps:
-        #
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        map = np.array([unknown_map, known_free_map, known_target_map])
+        map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
 
         return map, np.concatenate(
             (self.robot_pos, self.robot_rot.as_quat())), new_targets_found, new_free_cells, done
@@ -322,7 +331,6 @@ class Field:
 
         print("allowed_lower_bound:", self.allowed_lower_bound)
         print("allowed_upper_bound:", self.allowed_upper_bound)
-
 
         self.robot_pos = np.random.uniform(self.allowed_lower_bound, self.allowed_upper_bound)
         # self.robot_pos = np.array([256.0, 256.0, 256.0])
@@ -347,5 +355,5 @@ class Field:
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         # print(unknown_map)
-        map = np.array([unknown_map, known_free_map, known_target_map])
+        map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
         return map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))

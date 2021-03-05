@@ -137,12 +137,12 @@ for i_episode in range(params['num_episodes']):
         #     action = 1
         observed_map_next, robot_pose_next, reward1, reward3, done = field.step(action)
 
-        # 这里构造奖励
+        # here to construct the reward
         reward2 = 109 - get_euclidean_distance(robot_pose_next[:3], destination)
         reward2 = int(reward2)
         reward = reward2
 
-        # 构造下一个状态
+        # here to construct the next state input
         direction_next = destination - robot_pose_next[:3]
         # normalize direction next
         unit_direction_next = direction_next / np.linalg.norm(direction_next)
@@ -162,7 +162,7 @@ for i_episode in range(params['num_episodes']):
             summary_writer.add_loss(loss)
 
         time_step += 1
-        # record
+        # here to record
         if reward1 > 20:
             robot_pose_cluster.add_robot_pose(robot_pose_next[:3])
         destination_list.append(destination.tolist())
