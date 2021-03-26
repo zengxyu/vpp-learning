@@ -144,7 +144,7 @@ class Agent:
         frame_in = torch.Tensor([frame]).to(self.train_device)
         robot_pose_in = torch.Tensor([robot_pose]).to(self.train_device)
 
-        value, pol = self.policy( robot_pose_in)
+        value, pol = self.policy( frame_in,robot_pose_in)
         action = torch.distributions.Categorical(pol).sample()
 
         if self.train_agent:
@@ -197,12 +197,60 @@ class Agent:
         loss_clip_values = []
         loss_val_values = []
         loss_ent_values = []
+
+        # for i in range(self.EPOCH_NUM):
+            # samples = self.traj_memory[i]
+            # samples = random.sample(self.traj_memory, self.BATCH_SIZE)
+            # mb_frames, mb_robot_poses, mb_actions, mb_returns, mb_probs, mb_advantages = self.traj_memory
+            #
+            # new_vals, new_probs = self.policy(torch.cat(mb_robot_poses, dim=0).to(self.train_device))
+            # old_probs = torch.cat(mb_probs, dim=0)
+            #
+            # new_pol = torch.distributions.Categorical(new_probs)
+            # old_pol = torch.distributions.Categorical(old_probs)
+            #
+            # action_tensor = torch.cat(mb_actions, dim=0)
+            #
+            # # new_pol2 = torch.gather(new_probs, dim=1, index=action_tensor.unsqueeze(1))
+            # # old_pol2 = torch.gather(old_probs, dim=1, index=action_tensor.unsqueeze(1))
+            #
+            # ratio = torch.exp(new_pol.log_prob(action_tensor) - old_pol.log_prob(action_tensor))
+            # # ratio2 = new_pol2 / old_pol2
+            #
+            # advantage_tensor = torch.cat(mb_advantages, dim=0)
+            # # advantage_tensor -= torch.mean(advantage_tensor)
+            # # advantage_tensor /= torch.std(advantage_tensor)
+            #
+            # loss_clip = -torch.min(ratio * advantage_tensor,
+            #                        torch.clamp(ratio, 1 - self.EPSILON, 1 + self.EPSILON) * advantage_tensor).mean()
+            # # loss_clip2 = torch.min(ratio2 * advantage_tensor, torch.clamp(ratio2, 1-self.EPSILON, 1+self.EPSILON) * advantage_tensor)
+            #
+            # returns_tensor = torch.cat(mb_returns, dim=0)
+            #
+            # loss_val = F.mse_loss(new_vals.squeeze(), returns_tensor)
+            #
+            # # loss_ent = -F.nll_loss(new_probs, action_tensor) #F.cross_entropy(new_probs, action_tensor)
+            # loss_ent = -new_pol.entropy().mean()
+            #
+            # c1, c2 = 1, 0.01
+            #
+            # loss = loss_clip + c1 * loss_val + c2 * loss_ent
+            #
+            # # loss.backward(retain_graph=True)
+            # loss.backward()
+            #
+            # for p in self.policy.parameters():
+            #     p.grad.data.clamp_(-1, 1)
+            #
+            # self.optimizer.step()
+            # self.optimizer.zero_grad()
+
         for i in range(self.EPOCH_NUM):
             mb_frames, mb_robot_poses, mb_actions, mb_returns, mb_probs, mb_advantages = self.traj_memory
 
-            # new_vals, new_probs = self.policy(torch.cat(mb_frames, dim=0).to(self.train_device),
-            #                                   torch.cat(mb_robot_poses, dim=0).to(self.train_device))
-            new_vals, new_probs = self.policy(torch.cat(mb_robot_poses, dim=0).to(self.train_device))
+            new_vals, new_probs = self.policy(torch.cat(mb_frames, dim=0).to(self.train_device),
+                                              torch.cat(mb_robot_poses, dim=0).to(self.train_device))
+            # new_vals, new_probs = self.policy(torch.cat(mb_robot_poses, dim=0).to(self.train_device))
             old_probs = torch.cat(mb_probs, dim=0)
 
             new_pol = torch.distributions.Categorical(new_probs)

@@ -9,7 +9,7 @@ from field_env_3d_unknown_map import Field, Action
 from memory.robot_pose_cluster import RobotPoseCluster
 from network.network_dqn import DQN_Network5, DQN_Network6
 from util.summary_writer import MySummaryWriter
-from util.util import get_euclidean_distance
+from util.util import get_eu_distance
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -116,7 +116,7 @@ for i_episode in range(params['num_episodes']):
     diff_directions = []
     destination_list = []
     while not done:
-        destination = robot_pose_cluster.get_destination(robot_pose[:3])
+        # destination = robot_pose_cluster.get_destination(robot_pose[:3])
         direction = destination - robot_pose[:3]
 
         # normalize direction
@@ -138,7 +138,7 @@ for i_episode in range(params['num_episodes']):
         observed_map_next, robot_pose_next, reward1, reward3, done = field.step(action)
 
         # here to construct the reward
-        reward2 = 109 - get_euclidean_distance(robot_pose_next[:3], destination)
+        reward2 = 109 - get_eu_distance(robot_pose_next[:3], destination)
         reward2 = int(reward2)
         reward = reward2
 
@@ -181,7 +181,7 @@ for i_episode in range(params['num_episodes']):
         # rewards.append(reward)
         if done:
             end_observed_map, end_robot_pose = observed_map, robot_pose
-            distance_travelled = get_euclidean_distance(end_robot_pose[:3], init_robot_pose[:3])
+            distance_travelled = get_eu_distance(end_robot_pose[:3], init_robot_pose[:3])
             distances_travelled.append(distance_travelled)
             print("\nepisode {} over".format(i_episode))
             print("mean rewards1:{}".format(np.sum(rewards1)))
@@ -196,7 +196,7 @@ for i_episode in range(params['num_episodes']):
             print("diff_direction_next:{}".format(diff_direction_next))
 
             # print("mean rewards2:{}; new visit cell num: {}".format(np.sum(rewards2), np.sum(rewards2) / r_ratio))
-            is_closer = get_euclidean_distance(end_robot_pose[:3], destination) < get_euclidean_distance(
+            is_closer = get_eu_distance(end_robot_pose[:3], destination) < get_eu_distance(
                 init_robot_pose[:3], destination)
             is_closer_list.append(is_closer)
             print("in this episode, robot travels from {} to {}".format(init_robot_pose[:3], end_robot_pose[:3]))

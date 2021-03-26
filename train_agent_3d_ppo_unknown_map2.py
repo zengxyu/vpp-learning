@@ -9,7 +9,8 @@ from scipy.spatial.transform.rotation import Rotation
 from agent.agent_ppo_3d_unknown_map import Agent
 from field_env_3d_unknown_map import Field, Action
 from memory.GridCellAccessRecord import GridCellAccessRecord
-from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap2, PPOPolicy3DUnknownMap4, PPOPolicy3DUnknownMap5
+from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap2, PPOPolicy3DUnknownMap4, PPOPolicy3DUnknownMap5, \
+    PPOPolicy3DUnknownMap6
 from util.summary_writer import MySummaryWriter
 from util.util import get_eu_distance
 
@@ -32,8 +33,8 @@ params = {
     'gamma': 0.98,
     'lr': 1e-4,
 
-    'model': PPOPolicy3DUnknownMap5,
-    'output': "output_ppo_unknown_map22",
+    'model': PPOPolicy3DUnknownMap6,
+    'output': "output_ppo_unknown_map2",
     'config_dir': "config_dir2"
 }
 
@@ -73,37 +74,23 @@ def main_loop():
         diff_directions = []
 
         while not done:
-            direction = destination - robot_pose[:3]
-
-            # normalize direction
-            unit_direction = direction / np.linalg.norm(direction)
             # robot direction
             robot_direction = Rotation.from_quat(robot_pose[3:]).as_matrix() @ initial_direction
-
-            diff_direction = unit_direction - robot_direction.squeeze()
-            diff_directions.append(int(np.linalg.norm(diff_direction) * 100) / 100)
-
-            robot_pose_input = np.concatenate([direction, diff_direction, robot_pose], axis=0)
+            robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
 
             action = player.get_action(observed_map, robot_pose_input)
             action = action.cpu().numpy()[0]
 
             observed_map_prime, robot_pose_prime, reward1, reward3, done = field.step(action)
 
-            # here to construct the reward
-            reward2 = 109 - get_eu_distance(robot_pose_prime[:3], destination)
-            reward2 = int(reward2)
-            reward = reward2
 
             # here to record
             ts += 1
 
             rewards1.append(reward1)
-            rewards2.append(reward2)
-            rewards.append(reward)
             actions.append(action)
 
-            player.store_reward(reward, done)
+            player.store_reward(reward1, done)
             summary_writer.add_reward(reward1, i)
 
             observed_map = observed_map_prime.copy()
@@ -122,25 +109,23 @@ def main_loop():
                 summary_writer.add_distance(get_eu_distance(end_robot_pose[:3], destination), i)
                 print("\nepisode {} over".format(i))
                 print("mean rewards1:{}".format(np.sum(rewards1)))
-                print("mean rewards2:{}".format(np.sum(rewards2)))
-
                 print("mean rewards:{}".format(np.sum(rewards)))
-                print("rewards2:{}".format(rewards2))
+                print("rewards1:{}".format(rewards1))
                 print("actions:{}".format(actions))
                 print("time steps:{}".format(ts))
                 print("learning rate:{}".format(player.optimizer.param_groups[0]['lr']))
-                print("distance travelled:{}".format(distance_travelled))
-                print("max distance travelled:{}".format(np.max(distances_travelled)))
-
-                print("distance travelled:{}".format(distance_travelled))
-                print("max distance travelled:{}".format(np.max(distances_travelled)))
+                # print("distance travelled:{}".format(distance_travelled))
+                # print("max distance travelled:{}".format(np.max(distances_travelled)))
+                #
+                # print("distance travelled:{}".format(distance_travelled))
+                # print("max distance travelled:{}".format(np.max(distances_travelled)))
                 print("in this episode, robot travels from {} to {}".format(init_robot_pose[:3], end_robot_pose[:3]))
-                is_closer = get_eu_distance(end_robot_pose[:3], destination) < get_eu_distance(
-                    init_robot_pose[:3],
-                    destination)
-                is_closer_list.append(is_closer)
-                print("is closer? ", is_closer)
-                print("closer rate:", np.sum(is_closer_list) / len(is_closer_list))
+                # is_closer = get_eu_distance(end_robot_pose[:3], destination) < get_eu_distance(
+                #     init_robot_pose[:3],
+                #     destination)
+                # is_closer_list.append(is_closer)
+                # print("is closer? ", is_closer)
+                # print("closer rate:", np.sum(is_closer_list) / len(is_closer_list))
                 # print("mean rewards2:{}; new visit cell num: {}".format(np.sum(rewards2), np.sum(rewards2) / r_ratio))
 
                 rewards1 = []

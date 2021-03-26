@@ -1,9 +1,13 @@
 import sys
 import os
 import argparse
-from agent.agent_dqn import Agent
+
+from scipy.spatial.transform.rotation import Rotation
+
+from agent.agent_dqn4 import Agent
 from field_env_3d_known_map import Action
-from field_env_3d_unknown_map import Field
+from field_env_3d_unknown_map2 import Field
+from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network10
 from util.summary_writer import MySummaryWriter
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
@@ -15,6 +19,14 @@ parser.add_argument("--headless", default=True, action="store_true", help="Run i
 args = parser.parse_args()
 if not args.headless:
     from direct.stdpy import threading
+
+"""
+出发点不固定，逐渐增加范围， 出发方向固定 frame 
+改了rotation的bug
+出发点完全随机
+没有Reward加权，
+使用的是robot pose
+"""
 
 params = {
     'name': 'dqn',
@@ -42,11 +54,12 @@ params = {
     'num_episodes': 5000000,
     'scale': 15,
     'use_gpu': True,
+    'model': DQN_Network10,
 
     # folder params
 
     # output
-    'output_folder': "output_dqn",
+    'output_folder': "output_dqn12",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config"
@@ -66,7 +79,7 @@ if not os.path.exists(params['model_folder']):
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
-field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=1000,
+field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
 player = Agent(params, summary_writer)
 
@@ -75,15 +88,28 @@ all_mean_losses = []
 time_step = 0
 
 observed_map, robot_pose = field.reset()
+initial_direction = np.array([[-1], [0], [0]])
 
 for i_episode in range(params['num_episodes']):
     done = False
     # rewards = []
     rewards1 = []
+    actions = []
+
     # rewards2 = []
+
     while not done:
+        # robot direction
+        robot_direction = Rotation.from_quat(robot_pose[3:]).as_matrix() @ initial_direction
+        robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
+
         action = player.act(observed_map, robot_pose)
         observed_map_next, robot_pose_next, reward1, reward3, done = field.step(action)
+
+        robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
+
+        # diff direction
+        robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
 
         player.step(state=[observed_map, robot_pose], action=action, reward=reward1,
                     next_state=[observed_map_next, robot_pose_next], done=done)
@@ -99,6 +125,7 @@ for i_episode in range(params['num_episodes']):
         summary_writer.add_loss(loss)
         summary_writer.add_reward(reward1, i_episode)
 
+        actions.append(action)
         rewards1.append(reward1)
         # rewards2.append(reward3)
 
@@ -107,13 +134,15 @@ for i_episode in range(params['num_episodes']):
 
         # rewards.append(reward)
         if done:
-            player.reset()
-            observed_map, robot_pose = field.reset()
 
             print("\nepisode {} over".format(i_episode))
             print("mean rewards1:{}".format(np.sum(rewards1)))
+            print("robot pose: {}".format(robot_pose[:3]))
+            print("actions:{}".format(np.array(actions)))
+            print("rewards:{}".format(np.array(rewards1)))
             # print("mean rewards2:{}; new visit cell num: {}".format(np.sum(rewards2), np.sum(rewards2) / r_ratio))
-
+            player.reset()
+            observed_map, robot_pose = field.reset()
             rewards1 = []
             rewards2 = []
 
