@@ -46,23 +46,11 @@ class Agent:
                 # 如果不是训练状态的话，不更新
                 self.update_every = 1000000000000000000
         print(self.policy_net)
-        # self.normalizer = Normalizer(config_dir=params['memory_config_dir']) if self.is_normalize else None
-
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=1e-4)
-        # self.optimizer = optim.RMSprop(self.policy_net.parameters(), lr=1e-4)
-        # if params['is_priority_buffer']:
         self.memory = PriorityReplayBuffer(buffer_size=self.buffer_size, batch_size=self.batch_size,
                                            device=self.device,
                                            normalizer=None, seed=self.seed)
-
-        # else:
-        #     self.memory = ReplayBuffer(buffer_size=self.buffer_size, batch_size=self.batch_size, device=self.device,
-        #                                seed=self.seed)
         self.time_step = 0
-
-    def save_normalized_memory(self, save_dir):
-        print("mean value is saved to memory!")
-        self.memory.normalize(save_dir=save_dir)
 
     def step(self, state, action, reward, next_state, done):
         # self.memory.add(state=state, action=action, reward=reward, next_state=next_state, done=done)
@@ -95,10 +83,6 @@ class Agent:
             frame_in = torch.Tensor([frame]).to(self.device)
             robot_pose_in = torch.Tensor([robot_pose]).to(self.device)
 
-            if self.is_normalize:
-                frame_in = self.normalizer.normalize_frame_in(frame_in)
-                robot_pose_in = self.normalizer.normalize_robot_pose_in(robot_pose_in)
-
             self.policy_net.eval()
             with torch.no_grad():
                 q_val = self.policy_net(frame_in, robot_pose_in)
@@ -114,15 +98,9 @@ class Agent:
 
         if len(self.memory) > self.batch_size:
             tree_idx, minibatch, ISWeights = self.memory.sample()
-
-            # sampled_experiences = self.memory.sample(self.is_normalize, memory_config_dir)
-            # sampled_experiences = self.memory.sample()
-
             frames_in, robot_poses_in, actions, rewards, next_frames_in, next_robot_poses_in, dones = minibatch
 
             # Get the action with max Q value
-            # frames_in, robot_poses_in = states
-            # next_frames_in, next_robot_poses_in = next_states
             if self.is_double:
                 q_values = self.policy_net(next_robot_poses_in).detach()
                 max_action_next = q_values.max(1)[1].unsqueeze(1)
@@ -141,8 +119,7 @@ class Agent:
             self.optimizer.zero_grad()
             loss = self.weighted_mse_loss(Q_expected, Q_target, ISWeights)
             loss.backward()
-            # for name, parms in self.policy_net.named_parameters():
-            #     print('-->name:', name, '-->grad_requirs:', parms.requires_grad, ' -->grad_value:', parms.grad)
+
             for p in self.policy_net.parameters():
                 p.grad.data.clamp_(-1, 1)
             self.optimizer.step()
@@ -150,7 +127,7 @@ class Agent:
 
             Q_expected2 = self.policy_net(frames_in, robot_poses_in).gather(1, actions)
             loss_each_item = torch.abs(Q_expected2 - Q_target)
-            # rewards[rewards < 0] = 0
+
             loss_reward_each_item = loss_each_item + rewards
             loss_reward_each_item = loss_reward_each_item.detach().cpu().numpy()
             tree_idx = tree_idx[:, np.newaxis]
