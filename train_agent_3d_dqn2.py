@@ -4,7 +4,7 @@ import argparse
 
 from scipy.spatial.transform.rotation import Rotation
 
-from agent.agent_dqn3 import Agent
+from agent.agent_dqn import Agent
 from field_env_3d_known_map import Action
 from field_env_3d_unknown_map2 import Field
 from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9

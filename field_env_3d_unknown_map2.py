@@ -331,13 +331,15 @@ class Field:
         self.allowed_range = np.array([128, 128, 128])
         self.allowed_lower_bound = np.array([128, 128, 128]) - self.allowed_range
         self.allowed_upper_bound = np.array([128, 128, 128]) + self.allowed_range - 1
-        if self.reset_count % 10 == 0:
+        if self.reset_count % 2 == 0:
             self.upper_scale += 1
         upper = np.array([1.0, 1.0, 1.0]) * self.upper_scale
 
         # self.robot_pos = np.random.uniform(self.allowed_lower_bound, self.allowed_upper_bound)
         upper = np.clip(upper, np.array([0.0, 0.0, 0.0]), np.array([255.0, 255.0, 255.0]))
-        self.robot_pos = np.random.uniform(np.array([0.0, 0.0, 0.0]), np.array([255.0, 255.0, 255.0]))
+        self.robot_pos = np.random.uniform(np.array([0.0, 0.0, 0.0]), upper)
+        # self.robot_pos = np.array([0.0, 0.0, 0.0])
+
         # print("upper:{}; reset robot pose as:{}".format(upper, self.robot_pos))
         print("reset robot pose as:{}".format(self.robot_pos))
 
