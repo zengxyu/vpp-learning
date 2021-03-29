@@ -107,7 +107,7 @@ for i_episode in range(params['num_episodes']):
         player.step(state=[observed_map, robot_pose_input], action=action, reward=reward1,
                     next_state=[observed_map_next, robot_pose_input_next], done=done)
 
-        # 转到下一个状态
+        # to the next state
         observed_map = observed_map_next.copy()
         robot_pose = robot_pose_next.copy()
         # train
