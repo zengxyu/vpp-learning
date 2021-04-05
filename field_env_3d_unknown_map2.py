@@ -340,7 +340,7 @@ class Field:
         self.robot_pos = np.random.uniform(np.array([0.0, 0.0, 0.0]), upper)
         # self.robot_pos = np.array([0.0, 0.0, 0.0])
 
-        # print("upper:{}; reset robot pose as:{}".format(upper, self.robot_pos))
+        print("upper:{}; reset robot pose as:{}".format(upper, self.robot_pos))
         print("reset robot pose as:{}".format(self.robot_pos))
 
         # self.robot_pos = np.array([0.0, 0.0, 0.0])

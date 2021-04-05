@@ -40,6 +40,7 @@ class Agent:
         self.policy_net = self.Model(self.action_size).to(self.device)
         self.target_net = self.Model(self.action_size).to(self.device)
         if not model_path == "":
+            print("resume model")
             self.load_model(file_path=model_path, map_location=self.device)
             self.update_target_network()
             if not params['is_train']:
