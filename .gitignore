@@ -1,7 +1,7 @@
 # local project files
 .vs
 .vscode
-
+.idea
 # virtualenv
 env
 
