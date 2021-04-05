@@ -9,7 +9,7 @@ from util.summary_writer import MySummaryWriter
 from memory.NormalizationSaver import NormalizationSaver
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
+parser.add_argument("--headless", default=False, action="store_true", help="Run in headless mode")
 args = parser.parse_args()
 
 params = {
@@ -40,6 +40,8 @@ player = RandomAgent(field)
 
 normalization_saver = NormalizationSaver()
 
+if not args.headless:
+    from direct.stdpy import threading
 
 def main_loop():
     global field, args
