@@ -345,8 +345,8 @@ class Field:
 
         # self.robot_pos = np.array([0.0, 0.0, 0.0])
 
-        self.robot_rot = Rotation.random()
-        # self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
+        # self.robot_rot = Rotation.random()
+        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         print("allowed range:{}".format(self.allowed_range))
         self.step_count = 0
         self.found_targets = 0

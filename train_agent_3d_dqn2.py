@@ -34,7 +34,7 @@ params = {
     'eps_min': 0.15,  # Minimum epsilon
     'gamma': 0.9,
     'buffer_size': 200000,
-    'batch_size': 16,
+    'batch_size': 128,
     'action_size': len(Action),
 
     'is_double': False,
@@ -70,14 +70,14 @@ if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
 # model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-model_path = os.path.join("output_dqn2", "model", "Agent_dqn_state_dict_200.mdl")
+model_path = os.path.join("output_dqn2", "model", "Agent_dqn_state_dict_600.mdl")
 
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
-player = Agent(params, summary_writer, model_path)
+player = Agent(params, summary_writer, model_path=model_path)
 
 all_mean_rewards = []
 all_mean_losses = []
@@ -115,7 +115,7 @@ def main_loop():
             observed_map = observed_map_next.copy()
             robot_pose = robot_pose_next.copy()
             # train
-            # loss = player.learn(memory_config_dir=params['memory_config_dir'])
+            loss = player.learn(memory_config_dir=params['memory_config_dir'])
 
             time_step += 1
             # record
@@ -142,7 +142,7 @@ def main_loop():
                 rewards1 = []
                 rewards2 = []
 
-                if (i_episode + 1) % 50 == 0:
+                if (i_episode + 1) % 200 == 0:
                     # plt.cla()
                     model_save_path = os.path.join(params['model_folder'],
                                                    "Agent_dqn_state_dict_%d.mdl" % (i_episode + 1))
