@@ -8,6 +8,8 @@ import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
+from scripts.vpp_env_client import EnvironmentClient
+
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
 
@@ -85,12 +87,13 @@ class Field:
         self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 10.0
+        self.MOVE_STEP = 1.0
         self.ROT_STEP = 15.0
 
         self.reset_count = 0
         self.upper_scale = 1
         self.ratio = 0.1
+        self.client = EnvironmentClient()
 
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
@@ -282,47 +285,67 @@ class Field:
         rot = Rotation.from_rotvec(np.radians(angle) * axis)
         self.robot_rot = rot * self.robot_rot
 
+    def relative_rotation(self, axis, angle):
+        rot = Rotation.from_rotvec(np.radians(angle) * axis)
+        return rot.as_quat()
+
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
-
+        relative_move = np.array([0, 0, 0])
+        relative_rot = np.array([0, 0, 0, 0])
         if action == Action.MOVE_FORWARD:
-            self.move_robot(axes[0] * self.MOVE_STEP)
+            relative_move = axes[0] * self.MOVE_STEP
+            self.move_robot(relative_move)
         elif action == Action.MOVE_BACKWARD:
-            self.move_robot(-axes[0] * self.MOVE_STEP)
+            relative_move = -axes[0] * self.MOVE_STEP
+            self.move_robot(relative_move)
         elif action == Action.MOVE_LEFT:
-            self.move_robot(axes[1] * self.MOVE_STEP)
+            relative_move = axes[1] * self.MOVE_STEP
+            self.move_robot(relative_move)
         elif action == Action.MOVE_RIGHT:
-            self.move_robot(-axes[1] * self.MOVE_STEP)
+            relative_move = -axes[1] * self.MOVE_STEP
+            self.move_robot(relative_move)
         elif action == Action.MOVE_UP:
-            self.move_robot(axes[2] * self.MOVE_STEP)
+            relative_move = axes[2] * self.MOVE_STEP
+            self.move_robot(relative_move)
         elif action == Action.MOVE_DOWN:
-            self.move_robot(-axes[2] * self.MOVE_STEP)
+            relative_move = -axes[2] * self.MOVE_STEP
+            self.move_robot(relative_move)
         elif action == Action.ROTATE_ROLL_P:
+            relative_rot = self.relative_rotation(axes[0], self.ROT_STEP)
             self.rotate_robot(axes[0], self.ROT_STEP)
         elif action == Action.ROTATE_ROLL_N:
+            relative_rot = self.relative_rotation(axes[0], -self.ROT_STEP)
             self.rotate_robot(axes[0], -self.ROT_STEP)
         elif action == Action.ROTATE_PITCH_P:
+            relative_rot = self.relative_rotation(axes[1], self.ROT_STEP)
             self.rotate_robot(axes[1], self.ROT_STEP)
         elif action == Action.ROTATE_PITCH_N:
+            relative_rot = self.relative_rotation(axes[1], -self.ROT_STEP)
             self.rotate_robot(axes[1], -self.ROT_STEP)
         elif action == Action.ROTATE_YAW_N:
+            relative_rot = self.relative_rotation(axes[2], self.ROT_STEP)
             self.rotate_robot(axes[2], self.ROT_STEP)
         elif action == Action.ROTATE_YAW_P:
+            relative_rot = self.relative_rotation(axes[2], -self.ROT_STEP)
             self.rotate_robot(axes[2], -self.ROT_STEP)
-
-        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
-        new_targets_found, new_free_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
-                                                                          ep_right_down, ep_right_up)
-        self.free_cells += new_free_cells
-        self.found_targets += new_targets_found
+        relative_pose = np.append(relative_move, relative_rot).tolist()
+        start_time = time.time()
+        unknownCount, freeCount, occupiedCount, roiCount, reward = self.client.sendRelativePose(relative_pose)
+        print("sendRelativeTime:{}".format(time.time() - start_time))
+        # cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
+        # new_targets_found, new_free_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
+        #                                                                   ep_right_down, ep_right_up)
+        # self.free_cells += new_free_cells
+        self.found_targets += reward
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
 
-        unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
+        # unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
+        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
         return map, np.concatenate(
-            (self.robot_pos, self.robot_rot.as_quat())), new_targets_found, new_free_cells, done
+            (self.robot_pos, self.robot_rot.as_quat())), reward, 0, done
 
     def reset(self):
         self.reset_count += 1
@@ -357,14 +380,14 @@ class Field:
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
             # self.gui.reset()
-
-        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
-        self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
-
+        # relative_pose = np.array([0, 0, 0, 0, 0, 0, 0]).tolist()
+        # cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
+        # self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        unknownCount, freeCount, occupiedCount, roiCount, reward = self.client.sendReset()
         # print(self.robot_pos)
         # print(self.robot_rot.as_quat())
 
-        unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
+        # unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         # print(unknown_map)
-        map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
+        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
         return map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))

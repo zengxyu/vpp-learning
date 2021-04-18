@@ -1,13 +1,14 @@
 import sys
 import os
 import argparse
+import time
 
 from scipy.spatial.transform.rotation import Rotation
 
 from agent.agent_dqn import Agent
 from field_env_3d_known_map import Action
-from field_env_3d_unknown_map2 import Field
-from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9
+from field_ros import Field
+from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network11
 from util.summary_writer import MySummaryWriter
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
@@ -15,7 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 import numpy as np
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--headless", default=False, action="store_true", help="Run in headless mode")
+parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
 args = parser.parse_args()
 if not args.headless:
     from direct.stdpy import threading
@@ -50,7 +51,7 @@ params = {
     'num_episodes': 5000000,
     'scale': 15,
     'use_gpu': False,
-    'model': DQN_Network9,
+    'model': DQN_Network11,
 
     # folder params
 
@@ -77,7 +78,7 @@ summary_writer = MySummaryWriter(log_dir)
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
-player = Agent(params, summary_writer, model_path=model_path)
+player = Agent(params, summary_writer)
 
 all_mean_rewards = []
 all_mean_losses = []
@@ -94,15 +95,18 @@ def main_loop():
         done = False
         rewards1 = []
         actions = []
-
+        e_start_time = time.time()
+        step_count = 0
         while not done:
+            step_count += 1
             # robot direction
             robot_direction = Rotation.from_quat(robot_pose[3:]).as_matrix() @ initial_direction
             robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
 
             action = player.act(observed_map, robot_pose_input)
+            time3 = time.time()
             observed_map_next, robot_pose_next, reward1, reward3, done = field.step(action)
-
+            print("{}-th episode : {}-th step takes {} secs".format(i_episode, step_count, time.time() - time3))
             robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
             # diff direction
@@ -148,6 +152,8 @@ def main_loop():
                                                    "Agent_dqn_state_dict_%d.mdl" % (i_episode + 1))
                     player.store_model(model_save_path)
 
+        e_end_time = time.time()
+        print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
     print('Complete')
 
 
