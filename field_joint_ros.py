@@ -32,35 +32,43 @@ count_known_target_layer5_vectorized = np.vectorize(field_env_3d_helper.count_kn
                                                     otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
 
 
+#
+# class Action(IntEnum):
+#     DO_NOTHING = 0
+#     MOVE_FORWARD = 1
+#     MOVE_BACKWARD = 2
+#     MOVE_LEFT = 3
+#     MOVE_RIGHT = 4
+#     MOVE_UP = 5
+#     MOVE_DOWN = 6
+#     ROTATE_ROLL_P = 7
+#     ROTATE_ROLL_N = 8
+#     ROTATE_PITCH_P = 9
+#     ROTATE_PITCH_N = 10
+#     ROTATE_YAW_P = 11
+#     ROTATE_YAW_N = 12
 
 class Action(IntEnum):
-    DO_NOTHING = 0
-    MOVE_FORWARD = 1
-    MOVE_BACKWARD = 2
-    MOVE_LEFT = 3
-    MOVE_RIGHT = 4
-    MOVE_UP = 5
-    MOVE_DOWN = 6
-    ROTATE_ROLL_P = 7
-    ROTATE_ROLL_N = 8
-    ROTATE_PITCH_P = 9
-    ROTATE_PITCH_N = 10
-    ROTATE_YAW_P = 11
-    ROTATE_YAW_N = 12
+    MOVE_JOINT0_FORWARD = 0
+    MOVE_JOINT0_BACKWARD = 1
+    MOVE_JOINT1_FORWARD = 2
+    MOVE_JOINT1_BACKWARD = 3
+    MOVE_JOINT2_FORWARD = 4
+    MOVE_JOINT2_BACKWARD = 5
+    MOVE_JOINT3_FORWARD = 6
+    MOVE_JOINT3_BACKWARD = 7
+    MOVE_JOINT4_FORWARD = 8
+    MOVE_JOINT4_BACKWARD = 9
+
 
 # class Action(IntEnum):
-#     MOVE_JOINT0_FORWARD = 0
-#     MOVE_JOINT0_BACKWARD = 1
-#     MOVE_JOINT1_FORWARD = 2
-#     MOVE_JOINT1_BACKWARD = 3
-#     MOVE_JOINT2_FORWARD = 4
-#     MOVE_JOINT2_BACKWARD = 5
-#     MOVE_JOINT3_FORWARD = 6
-#     MOVE_JOINT3_BACKWARD = 7
-#     MOVE_JOINT4_FORWARD = 8
-#     MOVE_JOINT4_BACKWARD = 9
-
-
+#     MOVE_FORWARD = 0,
+#     ROTATE_ROLL_P = 1,
+#     ROTATE_ROLL_N = 2,
+#     ROTATE_PITCH_P = 3,
+#     ROTATE_PITCH_N = 4,
+#     ROTATE_YAW_P = 5,
+#     ROTATE_YAW_N = 6
 
 class FieldValues(IntEnum):
     UNKNOWN = 0,
@@ -294,95 +302,52 @@ class Field:
         rot = Rotation.from_rotvec(np.radians(angle) * axis)
         return rot.as_quat()
 
-    def step(self, action):
-        axes = self.robot_rot.as_matrix().transpose()
-        relative_move = np.array([0, 0, 0])
-        relative_rot = np.array([0, 0, 0, 0])
-        if action == Action.MOVE_FORWARD:
-            relative_move = np.array([0.1, 0, 0])
-        elif action == Action.MOVE_BACKWARD:
-            relative_move = np.array([-0.1, 0, 0])
-        elif action == Action.MOVE_LEFT:
-            relative_move = np.array([0, 0.1, 0])
-        elif action == Action.MOVE_RIGHT:
-            relative_move = np.array([0, -0.1, 0])
-        elif action == Action.MOVE_UP:
-            relative_move = np.array([0, 0, 0.1])
-        elif action == Action.MOVE_DOWN:
-            relative_move = np.array([0, 0, -0.1])
-        elif action == Action.ROTATE_ROLL_P:
-            r = Rotation.from_euler('x', self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_ROLL_N:
-            r = Rotation.from_euler('x', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_PITCH_P:
-            r = Rotation.from_euler('y', self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_PITCH_N:
-            r = Rotation.from_euler('y', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_YAW_N:
-            r = Rotation.from_euler('z', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_YAW_P:
-            r = Rotation.from_euler('z', self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        relative_pose = np.append(relative_move, relative_rot).tolist()
-        start_time = time.time()
-        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
-            relative_pose)
-        # print("robot pose computed by me:{}".format(self.robot_pos))
-        self.robot_pos = robotPose[:3]
-        # print("robot pose computed by remote:{}".format(self.robot_pos))
-        self.robot_rot = Rotation.from_quat(robotPose[3:])
-        print("sendRelativeTime:{}".format(time.time() - start_time))
-        # cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
-        # new_targets_found, new_free_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
-        #                                                                   ep_right_down, ep_right_up)
-        # self.free_cells += new_free_cells
-        self.found_targets += reward
-        self.step_count += 1
-        done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
-
-        # unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
-
-        # return map, np.concatenate(
-        #     (self.robot_pos, self.robot_rot.as_quat())), reward, 0, done
-        return map, robotPose, reward,  done
-
     # def step(self, action):
-    #     joint_relative_move = np.array([0, 0, 0, 0, 0])
-    #     if action == Action.MOVE_JOINT0_FORWARD:
-    #         joint_relative_move = np.array([1, 0, 0, 0, 0])
-    #     elif action == Action.MOVE_JOINT0_BACKWARD:
-    #         joint_relative_move = np.array([-1, 0, 0, 0, 0])
-    #     elif action == Action.MOVE_JOINT1_FORWARD:
-    #         joint_relative_move = np.array([0, 1, 0, 0, 0])
-    #     elif action == Action.MOVE_JOINT1_BACKWARD:
-    #         joint_relative_move = np.array([0, -1, 0, 0, 0])
-    #     elif action == Action.MOVE_JOINT2_FORWARD:
-    #         joint_relative_move = np.array([0, 0, 1, 0, 0])
-    #     elif action == Action.MOVE_JOINT2_BACKWARD:
-    #         joint_relative_move = np.array([0, 0, -1, 0, 0])
-    #     elif action == Action.MOVE_JOINT3_FORWARD:
-    #         joint_relative_move = np.array([0, 0, 0, 1, 0])
-    #     elif action == Action.MOVE_JOINT3_BACKWARD:
-    #         joint_relative_move = np.array([0, 0, 0, -1, 0])
-    #     elif action == Action.MOVE_JOINT4_FORWARD:
-    #         joint_relative_move = np.array([0, 0, 0, 0, 1])
-    #     elif action == Action.MOVE_JOINT4_BACKWARD:
-    #         joint_relative_move = np.array([0, 0, 0, 0, -1])
-    #     relative_move = np.deg2rad(joint_relative_move * self.ROT_STEP).tolist()
+    #     axes = self.robot_rot.as_matrix().transpose()
+    #     relative_move = np.array([0, 0, 0])
+    #     relative_rot = np.array([0, 0, 0, 0])
+    #     if action == Action.MOVE_FORWARD:
+    #         relative_move = np.array([0.1, 0, 0])
+    #     elif action == Action.MOVE_BACKWARD:
+    #         relative_move = np.array([-0.1, 0, 0])
+    #     elif action == Action.MOVE_LEFT:
+    #         relative_move = np.array([0, 0.1, 0])
+    #     elif action == Action.MOVE_RIGHT:
+    #         relative_move = np.array([0, -0.1, 0])
+    #     elif action == Action.MOVE_UP:
+    #         relative_move = np.array([0, 0, 0.1])
+    #     elif action == Action.MOVE_DOWN:
+    #         relative_move = np.array([0, 0, -0.1])
+    #     elif action == Action.ROTATE_ROLL_P:
+    #         r = Rotation.from_euler('x', self.ROT_STEP, degrees=True)
+    #         relative_rot = r.as_quat()
+    #     elif action == Action.ROTATE_ROLL_N:
+    #         r = Rotation.from_euler('x', -self.ROT_STEP, degrees=True)
+    #         relative_rot = r.as_quat()
+    #     elif action == Action.ROTATE_PITCH_P:
+    #         relative_rot = self.relative_rotation(axes[1], self.ROT_STEP)
+    #         self.rotate_robot(axes[1], self.ROT_STEP)
+    #         r = Rotation.from_euler('y', self.ROT_STEP, degrees=True)
+    #         relative_rot = r.as_quat()
+    #     elif action == Action.ROTATE_PITCH_N:
+    #         r = Rotation.from_euler('y', -self.ROT_STEP, degrees=True)
+    #         relative_rot = r.as_quat()
+    #     elif action == Action.ROTATE_YAW_N:
+    #         relative_rot = self.relative_rotation(axes[2], self.ROT_STEP)
+    #         self.rotate_robot(axes[2], self.ROT_STEP)
+    #         r = Rotation.from_euler('z', -self.ROT_STEP, degrees=True)
+    #         relative_rot = r.as_quat()
+    #     elif action == Action.ROTATE_YAW_P:
+    #         r = Rotation.from_euler('z', self.ROT_STEP, degrees=True)
+    #         relative_rot = r.as_quat()
+    #     relative_pose = np.append(relative_move, relative_rot).tolist()
     #     start_time = time.time()
     #     unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
-    #         relative_move)
+    #         relative_pose)
     #     # print("robot pose computed by me:{}".format(self.robot_pos))
-    #     # self.robot_pos = robotPose[:3]
-    #     # print("robot pose computed7
-    #     # by remote:{}".format(self.robot_pos))
-    #     # self.robot_rot = Rotation.from_quat(robotPose[3:])
+    #     self.robot_pos = robotPose[:3]
+    #     # print("robot pose computed by remote:{}".format(self.robot_pos))
+    #     self.robot_rot = Rotation.from_quat(robotPose[3:])
     #     print("sendRelativeTime:{}".format(time.time() - start_time))
     #     # cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
     #     # new_targets_found, new_free_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
@@ -398,6 +363,53 @@ class Field:
     #     # return map, np.concatenate(
     #     #     (self.robot_pos, self.robot_rot.as_quat())), reward, 0, done
     #     return map, robotPose, reward, 0, done
+
+    def step(self, action):
+        joint_relative_move = np.array([0, 0, 0, 0, 0])
+        if action == Action.MOVE_JOINT0_FORWARD:
+            joint_relative_move = np.array([1, 0, 0, 0, 0])
+        elif action == Action.MOVE_JOINT0_BACKWARD:
+            joint_relative_move = np.array([-1, 0, 0, 0, 0])
+        elif action == Action.MOVE_JOINT1_FORWARD:
+            joint_relative_move = np.array([0, 1, 0, 0, 0])
+        elif action == Action.MOVE_JOINT1_BACKWARD:
+            joint_relative_move = np.array([0, -1, 0, 0, 0])
+        elif action == Action.MOVE_JOINT2_FORWARD:
+            joint_relative_move = np.array([0, 0, 1, 0, 0])
+        elif action == Action.MOVE_JOINT2_BACKWARD:
+            joint_relative_move = np.array([0, 0, -1, 0, 0])
+        elif action == Action.MOVE_JOINT3_FORWARD:
+            joint_relative_move = np.array([0, 0, 0, 1, 0])
+        elif action == Action.MOVE_JOINT3_BACKWARD:
+            joint_relative_move = np.array([0, 0, 0, -1, 0])
+        elif action == Action.MOVE_JOINT4_FORWARD:
+            joint_relative_move = np.array([0, 0, 0, 0, 1])
+        elif action == Action.MOVE_JOINT4_BACKWARD:
+            joint_relative_move = np.array([0, 0, 0, 0, -1])
+        relative_move = np.deg2rad(joint_relative_move * self.ROT_STEP).tolist()
+        start_time = time.time()
+        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativeJointTarget(
+            relative_move)
+        # print("robot pose computed by me:{}".format(self.robot_pos))
+        # self.robot_pos = robotPose[:3]
+        # print("robot pose computed7
+        # by remote:{}".format(self.robot_pos))
+        # self.robot_rot = Rotation.from_quat(robotPose[3:])
+        print("sendRelativeTime:{}".format(time.time() - start_time))
+        # cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
+        # new_targets_found, new_free_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
+        #                                                                   ep_right_down, ep_right_up)
+        # self.free_cells += new_free_cells
+        self.found_targets += reward
+        self.step_count += 1
+        done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
+
+        # unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
+        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
+
+        # return map, np.concatenate(
+        #     (self.robot_pos, self.robot_rot.as_quat())), reward, 0, done
+        return map, robotPose, robotJoints, reward, done
 
     def reset(self):
         self.reset_count += 1
@@ -446,4 +458,4 @@ class Field:
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
         # return map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
-        return map, robotPose
+        return map, robotPose, robotJoints

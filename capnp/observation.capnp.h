@@ -10,6 +10,7 @@
 #error "Version mismatch between generated code and library headers.  You must use the same version of the Cap'n Proto compiler and library."
 #endif
 
+#include "pose.capnp.h"
 
 namespace capnp {
 namespace schemas {
@@ -19,6 +20,7 @@ CAPNP_DECLARE_SCHEMA(d3d920ef8fc94d08);
 }  // namespace schemas
 }  // namespace capnp
 
+namespace vpp_msg {
 
 struct Observation {
   Observation() = delete;
@@ -28,7 +30,7 @@ struct Observation {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(d3d920ef8fc94d08, 3, 4)
+    CAPNP_DECLARE_STRUCT_HEADER(d3d920ef8fc94d08, 3, 6)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -75,6 +77,12 @@ public:
   inline  ::uint32_t getFoundRois() const;
 
   inline double getPlanningTime() const;
+
+  inline bool hasRobotPose() const;
+  inline  ::vpp_msg::Pose::Reader getRobotPose() const;
+
+  inline bool hasRobotJoints() const;
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getRobotJoints() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -151,6 +159,21 @@ public:
   inline double getPlanningTime();
   inline void setPlanningTime(double value);
 
+  inline bool hasRobotPose();
+  inline  ::vpp_msg::Pose::Builder getRobotPose();
+  inline void setRobotPose( ::vpp_msg::Pose::Reader value);
+  inline  ::vpp_msg::Pose::Builder initRobotPose();
+  inline void adoptRobotPose(::capnp::Orphan< ::vpp_msg::Pose>&& value);
+  inline ::capnp::Orphan< ::vpp_msg::Pose> disownRobotPose();
+
+  inline bool hasRobotJoints();
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder getRobotJoints();
+  inline void setRobotJoints( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value);
+  inline void setRobotJoints(::kj::ArrayPtr<const double> value);
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initRobotJoints(unsigned int size);
+  inline void adoptRobotJoints(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
+  inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownRobotJoints();
+
 private:
   ::capnp::_::StructBuilder _builder;
   template <typename, ::capnp::Kind>
@@ -169,6 +192,7 @@ public:
   inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
       : _typeless(kj::mv(typeless)) {}
 
+  inline  ::vpp_msg::Pose::Pipeline getRobotPose();
 private:
   ::capnp::AnyPointer::Pipeline _typeless;
   friend class ::capnp::PipelineHook;
@@ -401,4 +425,82 @@ inline void Observation::Builder::setPlanningTime(double value) {
       ::capnp::bounded<2>() * ::capnp::ELEMENTS, value);
 }
 
+inline bool Observation::Reader::hasRobotPose() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<4>() * ::capnp::POINTERS).isNull();
+}
+inline bool Observation::Builder::hasRobotPose() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<4>() * ::capnp::POINTERS).isNull();
+}
+inline  ::vpp_msg::Pose::Reader Observation::Reader::getRobotPose() const {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Pose>::get(_reader.getPointerField(
+      ::capnp::bounded<4>() * ::capnp::POINTERS));
+}
+inline  ::vpp_msg::Pose::Builder Observation::Builder::getRobotPose() {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Pose>::get(_builder.getPointerField(
+      ::capnp::bounded<4>() * ::capnp::POINTERS));
+}
+#if !CAPNP_LITE
+inline  ::vpp_msg::Pose::Pipeline Observation::Pipeline::getRobotPose() {
+  return  ::vpp_msg::Pose::Pipeline(_typeless.getPointerField(4));
+}
+#endif  // !CAPNP_LITE
+inline void Observation::Builder::setRobotPose( ::vpp_msg::Pose::Reader value) {
+  ::capnp::_::PointerHelpers< ::vpp_msg::Pose>::set(_builder.getPointerField(
+      ::capnp::bounded<4>() * ::capnp::POINTERS), value);
+}
+inline  ::vpp_msg::Pose::Builder Observation::Builder::initRobotPose() {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Pose>::init(_builder.getPointerField(
+      ::capnp::bounded<4>() * ::capnp::POINTERS));
+}
+inline void Observation::Builder::adoptRobotPose(
+    ::capnp::Orphan< ::vpp_msg::Pose>&& value) {
+  ::capnp::_::PointerHelpers< ::vpp_msg::Pose>::adopt(_builder.getPointerField(
+      ::capnp::bounded<4>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::vpp_msg::Pose> Observation::Builder::disownRobotPose() {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Pose>::disown(_builder.getPointerField(
+      ::capnp::bounded<4>() * ::capnp::POINTERS));
+}
+
+inline bool Observation::Reader::hasRobotJoints() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<5>() * ::capnp::POINTERS).isNull();
+}
+inline bool Observation::Builder::hasRobotJoints() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<5>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader Observation::Reader::getRobotJoints() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
+      ::capnp::bounded<5>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::getRobotJoints() {
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
+      ::capnp::bounded<5>() * ::capnp::POINTERS));
+}
+inline void Observation::Builder::setRobotJoints( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<5>() * ::capnp::POINTERS), value);
+}
+inline void Observation::Builder::setRobotJoints(::kj::ArrayPtr<const double> value) {
+  ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<5>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::initRobotJoints(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
+      ::capnp::bounded<5>() * ::capnp::POINTERS), size);
+}
+inline void Observation::Builder::adoptRobotJoints(
+    ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<5>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> Observation::Builder::disownRobotJoints() {
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
+      ::capnp::bounded<5>() * ::capnp::POINTERS));
+}
+
+}  // namespace
 
