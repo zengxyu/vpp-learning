@@ -55,7 +55,7 @@ params = {
     # folder params
 
     # output
-    'output_folder': "output_dqn2",
+    'output_folder': "output_dqn4",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config"
@@ -70,7 +70,7 @@ if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
 # model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-model_path = os.path.join("output_dqn2", "model", "Agent_dqn_state_dict_400.mdl")
+model_path = os.path.join("output_dqn4", "model", "Agent_dqn_state_dict_20.mdl")
 
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
@@ -96,6 +96,7 @@ def main_loop():
         actions = []
         e_start_time = time.time()
         step_count = 0
+        print("new robot pose : ", robot_pose)
         while not done:
             step_count += 1
             # robot direction
@@ -124,11 +125,11 @@ def main_loop():
 
             time_step += 1
             # record
-            # summary_writer.add_loss(loss)
-            # summary_writer.add_reward(reward1, i_episode)
+            summary_writer.add_loss(loss)
+            summary_writer.add_reward(reward1, i_episode)
 
             actions.append(action)
-            rewards1.append(reward1)
+            rewards1.append(int(reward1))
 
             if not args.headless:
                 threading.Thread.considerYield()
@@ -147,7 +148,7 @@ def main_loop():
                 rewards1 = []
                 rewards2 = []
 
-                if (i_episode + 1) % 200 == 0:
+                if (i_episode + 1) % 20 == 0:
                     # plt.cla()
                     model_save_path = os.path.join(params['model_folder'],
                                                    "Agent_dqn_state_dict_%d.mdl" % (i_episode + 1))

@@ -54,7 +54,7 @@ class Field:
         self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 1.0
+        self.MOVE_STEP = 0.5
         self.ROT_STEP = 15.0
 
         self.reset_count = 0
@@ -83,17 +83,17 @@ class Field:
         relative_move = np.array([0, 0, 0])
         relative_rot = np.array([0, 0, 0, 0])
         if action == Action.MOVE_FORWARD:
-            relative_move = np.array([0.1, 0, 0])
+            relative_move = np.array([1.0, 0, 0])
         elif action == Action.MOVE_BACKWARD:
-            relative_move = np.array([-0.1, 0, 0])
+            relative_move = np.array([-1.0, 0, 0])
         elif action == Action.MOVE_LEFT:
-            relative_move = np.array([0, 0.1, 0])
+            relative_move = np.array([0, 1.0, 0])
         elif action == Action.MOVE_RIGHT:
-            relative_move = np.array([0, -0.1, 0])
+            relative_move = np.array([0, -1.0, 0])
         elif action == Action.MOVE_UP:
-            relative_move = np.array([0, 0, 0.1])
+            relative_move = np.array([0, 0, 1.0])
         elif action == Action.MOVE_DOWN:
-            relative_move = np.array([0, 0, -0.1])
+            relative_move = np.array([0, 0, -1.0])
         elif action == Action.ROTATE_ROLL_P:
             r = Rotation.from_euler('x', self.ROT_STEP, degrees=True)
             relative_rot = r.as_quat()
@@ -112,21 +112,16 @@ class Field:
         elif action == Action.ROTATE_YAW_P:
             r = Rotation.from_euler('z', self.ROT_STEP, degrees=True)
             relative_rot = r.as_quat()
-        relative_pose = np.append(relative_move, relative_rot).tolist()
+        relative_pose = np.append(relative_move * self.MOVE_STEP, relative_rot).tolist()
         start_time = time.time()
         unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
             relative_pose)
-        # print("robot pose computed by me:{}".format(self.robot_pos))
-        self.robot_pos = robotPose[:3]
-        # print("robot pose computed by remote:{}".format(self.robot_pos))
-        self.robot_rot = Rotation.from_quat(robotPose[3:])
         print("sendRelativeTime:{}".format(time.time() - start_time))
         self.found_targets += reward
         self.step_count += 1
         done = self.step_count >= self.max_steps
-
         # unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
+        map = np.concatenate([unknownCount, freeCount, occupiedCount, roiCount], axis=0)
 
         # return map, np.concatenate(
         #     (self.robot_pos, self.robot_rot.as_quat())), reward, 0, done
@@ -141,5 +136,5 @@ class Field:
         self.free_cells = 0
 
         unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendReset()
-        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
+        map = np.concatenate([unknownCount, freeCount, occupiedCount, roiCount], axis=0)
         return map, robotPose
