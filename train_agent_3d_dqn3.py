@@ -70,14 +70,14 @@ if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
 # model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-model_path = os.path.join("output_dqn4", "model", "Agent_dqn_state_dict_20.mdl")
+model_path = os.path.join("output_dqn3", "model", "Agent_dqn_state_dict_140.mdl")
 
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
-player = Agent(params, summary_writer)
+player = Agent(params, summary_writer, model_path)
 
 all_mean_rewards = []
 all_mean_losses = []

@@ -121,7 +121,7 @@ class Field:
         self.step_count += 1
         done = self.step_count >= self.max_steps
         # unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        map = np.concatenate([unknownCount, freeCount, occupiedCount, roiCount], axis=0)
+        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
         # return map, np.concatenate(
         #     (self.robot_pos, self.robot_rot.as_quat())), reward, 0, done
@@ -136,5 +136,5 @@ class Field:
         self.free_cells = 0
 
         unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendReset()
-        map = np.concatenate([unknownCount, freeCount, occupiedCount, roiCount], axis=0)
+        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
         return map, robotPose

@@ -390,11 +390,10 @@ class DQN_Network13(torch.nn.Module):
 class DQN_Network11(torch.nn.Module):
     def __init__(self, action_size=13, robot_pose_size=7):
         super().__init__()
-        self.frame_con1 = torch.nn.Conv2d(20, 32, kernel_size=4, stride=2)
-        self.frame_fc1 = torch.nn.Linear(4352, 1024)
-        self.frame_fc2 = torch.nn.Linear(1024, 512)
+        self.frame_con1 = torch.nn.Conv2d(15, 24, kernel_size=4, stride=2)
+        self.frame_fc1 = torch.nn.Linear(3264, 512)
+        self.frame_fc2 = torch.nn.Linear(512, 128)
 
-        self.frame_fc3 = torch.nn.Linear(512, 128)
 
         self.pose_fc1a = torch.nn.Linear(3, 32)
         self.pose_fc2a = torch.nn.Linear(32, 64)
@@ -423,7 +422,6 @@ class DQN_Network11(torch.nn.Module):
         # print("out frame shape:", out_frame.shape)
         out_frame = F.relu(self.frame_fc1(out_frame))
         out_frame = F.relu(self.frame_fc2(out_frame))
-        out_frame = F.relu(self.frame_fc3(out_frame))
 
         # print("robot_pose[:, 6:] shape:", robot_pose[:, 6:].shape)
         out_pose_a = F.relu(self.pose_fc1a(robot_pose[:, 0:3]))
