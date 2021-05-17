@@ -23,6 +23,14 @@ class Action(IntEnum):
     ROTATE_YAW_P = 11
     ROTATE_YAW_N = 12
 
+# class Action(IntEnum):
+#     MOVE_FORWARD = 0
+#     MOVE_BACKWARD = 1
+#     MOVE_LEFT = 2
+#     MOVE_RIGHT = 3
+#     MOVE_UP = 4
+#     MOVE_DOWN = 5
+
 
 class FieldValues(IntEnum):
     UNKNOWN = 0,
@@ -54,7 +62,7 @@ class Field:
         self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 0.5
+        self.MOVE_STEP = 0.1
         self.ROT_STEP = 15.0
 
         self.reset_count = 0
@@ -81,7 +89,7 @@ class Field:
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
         relative_move = np.array([0, 0, 0])
-        relative_rot = np.array([0, 0, 0, 0])
+        relative_rot = np.array([0, 0, 0, 1])
         if action == Action.MOVE_FORWARD:
             relative_move = np.array([1.0, 0, 0])
         elif action == Action.MOVE_BACKWARD:
@@ -114,12 +122,12 @@ class Field:
             relative_rot = r.as_quat()
         relative_pose = np.append(relative_move * self.MOVE_STEP, relative_rot).tolist()
         start_time = time.time()
-        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
+        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells = self.client.sendRelativePose(
             relative_pose)
-        print("sendRelativeTime:{}".format(time.time() - start_time))
+        # print("sendRelativeTime:{}".format(time.time() - start_time))
         self.found_targets += reward
         self.step_count += 1
-        done = self.step_count >= self.max_steps
+        done = self.step_count >= self.max_steps or self.found_targets >= totalRoiCells
         # unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
@@ -135,6 +143,8 @@ class Field:
         self.found_targets = 0
         self.free_cells = 0
 
-        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendReset()
+        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells = self.client.sendReset()
+        print("total roi cells:{}".format(totalRoiCells))
+
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
         return map, robotPose

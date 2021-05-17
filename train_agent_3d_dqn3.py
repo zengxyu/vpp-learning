@@ -1,3 +1,4 @@
+import random
 import sys
 import os
 import argparse
@@ -55,7 +56,7 @@ params = {
     # folder params
 
     # output
-    'output_folder': "output_dqn4",
+    'output_folder': "output_dqn1",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config"
@@ -70,14 +71,14 @@ if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
 # model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-model_path = os.path.join("output_dqn3", "model", "Agent_dqn_state_dict_140.mdl")
+model_path = os.path.join("output_dqn5", "model", "Agent_dqn_state_dict_6_bak.mdl")
 
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
-player = Agent(params, summary_writer, model_path)
+player = Agent(params, summary_writer)
 
 all_mean_rewards = []
 all_mean_losses = []
@@ -104,11 +105,13 @@ def main_loop():
             robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
 
             action = player.act(observed_map, robot_pose_input)
+            # action = random.randint(0, 12)
             time3 = time.time()
             observed_map_next, robot_pose_next, reward1, done = field.step(action)
             print(
-                "{}-th episode : {}-th step takes {} secs; reward:{}".format(i_episode, step_count, time.time() - time3,
-                                                                             reward1))
+                "{}-th episode : {}-th step takes {} secs; action:{}; reward:{}".format(i_episode, step_count,
+                                                                                        time.time() - time3,
+                                                                                        action, reward1))
             robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
             # diff direction
@@ -148,7 +151,7 @@ def main_loop():
                 rewards1 = []
                 rewards2 = []
 
-                if (i_episode + 1) % 20 == 0:
+                if (i_episode + 1) % 3 == 0:
                     # plt.cla()
                     model_save_path = os.path.join(params['model_folder'],
                                                    "Agent_dqn_state_dict_%d.mdl" % (i_episode + 1))

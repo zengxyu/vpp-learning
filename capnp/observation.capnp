@@ -20,4 +20,6 @@ struct Observation {
 
   robotPose @9 :Pose;
   robotJoints @10 :List(Float64);
+
+  totalRoiCells @11 :UInt32;
 }

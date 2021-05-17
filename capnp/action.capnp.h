@@ -15,31 +15,12 @@
 namespace capnp {
 namespace schemas {
 
-CAPNP_DECLARE_SCHEMA(9bb505a50d7e0534);
-enum class Direction_9bb505a50d7e0534: uint16_t {
-  DO_NOTHING,
-  MOVE_FORWARD,
-  MOVE_BACKWARD,
-  MOVE_LEFT,
-  MOVE_RIGHT,
-  MOVE_UP,
-  MOVE_DOWN,
-  ROTATE_ROLL_P,
-  ROTATE_ROLL_N,
-  ROTATE_PITCH_P,
-  ROTATE_PITCH_N,
-  ROTATE_YAW_P,
-  ROTATE_YAW_N,
-};
-CAPNP_DECLARE_ENUM(Direction, 9bb505a50d7e0534);
 CAPNP_DECLARE_SCHEMA(f1d090b2c3bf545e);
 
 }  // namespace schemas
 }  // namespace capnp
 
 namespace vpp_msg {
-
-typedef ::capnp::schemas::Direction_9bb505a50d7e0534 Direction;
 
 struct Action {
   Action() = delete;
@@ -50,7 +31,8 @@ struct Action {
   enum Which: uint16_t {
     NONE,
     RESET,
-    DIRECTION,
+    RELATIVE_JOINT_TARGET,
+    ABSOLUTE_JOINT_TARGET,
     GOAL_POSE,
     RELATIVE_POSE,
   };
@@ -89,8 +71,13 @@ public:
   inline bool isReset() const;
   inline  ::capnp::Void getReset() const;
 
-  inline bool isDirection() const;
-  inline  ::vpp_msg::Direction getDirection() const;
+  inline bool isRelativeJointTarget() const;
+  inline bool hasRelativeJointTarget() const;
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getRelativeJointTarget() const;
+
+  inline bool isAbsoluteJointTarget() const;
+  inline bool hasAbsoluteJointTarget() const;
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getAbsoluteJointTarget() const;
 
   inline bool isGoalPose() const;
   inline bool hasGoalPose() const;
@@ -137,9 +124,23 @@ public:
   inline  ::capnp::Void getReset();
   inline void setReset( ::capnp::Void value = ::capnp::VOID);
 
-  inline bool isDirection();
-  inline  ::vpp_msg::Direction getDirection();
-  inline void setDirection( ::vpp_msg::Direction value);
+  inline bool isRelativeJointTarget();
+  inline bool hasRelativeJointTarget();
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder getRelativeJointTarget();
+  inline void setRelativeJointTarget( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value);
+  inline void setRelativeJointTarget(::kj::ArrayPtr<const double> value);
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initRelativeJointTarget(unsigned int size);
+  inline void adoptRelativeJointTarget(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
+  inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownRelativeJointTarget();
+
+  inline bool isAbsoluteJointTarget();
+  inline bool hasAbsoluteJointTarget();
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder getAbsoluteJointTarget();
+  inline void setAbsoluteJointTarget( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value);
+  inline void setAbsoluteJointTarget(::kj::ArrayPtr<const double> value);
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initAbsoluteJointTarget(unsigned int size);
+  inline void adoptAbsoluteJointTarget(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
+  inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownAbsoluteJointTarget();
 
   inline bool isGoalPose();
   inline bool hasGoalPose();
@@ -246,30 +247,124 @@ inline void Action::Builder::setReset( ::capnp::Void value) {
       ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
 }
 
-inline bool Action::Reader::isDirection() const {
-  return which() == Action::DIRECTION;
+inline bool Action::Reader::isRelativeJointTarget() const {
+  return which() == Action::RELATIVE_JOINT_TARGET;
 }
-inline bool Action::Builder::isDirection() {
-  return which() == Action::DIRECTION;
+inline bool Action::Builder::isRelativeJointTarget() {
+  return which() == Action::RELATIVE_JOINT_TARGET;
 }
-inline  ::vpp_msg::Direction Action::Reader::getDirection() const {
-  KJ_IREQUIRE((which() == Action::DIRECTION),
+inline bool Action::Reader::hasRelativeJointTarget() const {
+  if (which() != Action::RELATIVE_JOINT_TARGET) return false;
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Action::Builder::hasRelativeJointTarget() {
+  if (which() != Action::RELATIVE_JOINT_TARGET) return false;
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader Action::Reader::getRelativeJointTarget() const {
+  KJ_IREQUIRE((which() == Action::RELATIVE_JOINT_TARGET),
               "Must check which() before get()ing a union member.");
-  return _reader.getDataField< ::vpp_msg::Direction>(
-      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder Action::Builder::getRelativeJointTarget() {
+  KJ_IREQUIRE((which() == Action::RELATIVE_JOINT_TARGET),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Action::Builder::setRelativeJointTarget( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value) {
+  _builder.setDataField<Action::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::RELATIVE_JOINT_TARGET);
+  ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline void Action::Builder::setRelativeJointTarget(::kj::ArrayPtr<const double> value) {
+  _builder.setDataField<Action::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::RELATIVE_JOINT_TARGET);
+  ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder Action::Builder::initRelativeJointTarget(unsigned int size) {
+  _builder.setDataField<Action::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::RELATIVE_JOINT_TARGET);
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
+}
+inline void Action::Builder::adoptRelativeJointTarget(
+    ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value) {
+  _builder.setDataField<Action::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::RELATIVE_JOINT_TARGET);
+  ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> Action::Builder::disownRelativeJointTarget() {
+  KJ_IREQUIRE((which() == Action::RELATIVE_JOINT_TARGET),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
-inline  ::vpp_msg::Direction Action::Builder::getDirection() {
-  KJ_IREQUIRE((which() == Action::DIRECTION),
-              "Must check which() before get()ing a union member.");
-  return _builder.getDataField< ::vpp_msg::Direction>(
-      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+inline bool Action::Reader::isAbsoluteJointTarget() const {
+  return which() == Action::ABSOLUTE_JOINT_TARGET;
 }
-inline void Action::Builder::setDirection( ::vpp_msg::Direction value) {
+inline bool Action::Builder::isAbsoluteJointTarget() {
+  return which() == Action::ABSOLUTE_JOINT_TARGET;
+}
+inline bool Action::Reader::hasAbsoluteJointTarget() const {
+  if (which() != Action::ABSOLUTE_JOINT_TARGET) return false;
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Action::Builder::hasAbsoluteJointTarget() {
+  if (which() != Action::ABSOLUTE_JOINT_TARGET) return false;
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader Action::Reader::getAbsoluteJointTarget() const {
+  KJ_IREQUIRE((which() == Action::ABSOLUTE_JOINT_TARGET),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder Action::Builder::getAbsoluteJointTarget() {
+  KJ_IREQUIRE((which() == Action::ABSOLUTE_JOINT_TARGET),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Action::Builder::setAbsoluteJointTarget( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value) {
   _builder.setDataField<Action::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::DIRECTION);
-  _builder.setDataField< ::vpp_msg::Direction>(
-      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::ABSOLUTE_JOINT_TARGET);
+  ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline void Action::Builder::setAbsoluteJointTarget(::kj::ArrayPtr<const double> value) {
+  _builder.setDataField<Action::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::ABSOLUTE_JOINT_TARGET);
+  ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder Action::Builder::initAbsoluteJointTarget(unsigned int size) {
+  _builder.setDataField<Action::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::ABSOLUTE_JOINT_TARGET);
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
+}
+inline void Action::Builder::adoptAbsoluteJointTarget(
+    ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value) {
+  _builder.setDataField<Action::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::ABSOLUTE_JOINT_TARGET);
+  ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> Action::Builder::disownAbsoluteJointTarget() {
+  KJ_IREQUIRE((which() == Action::ABSOLUTE_JOINT_TARGET),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
 inline bool Action::Reader::isGoalPose() const {
