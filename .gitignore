@@ -12,3 +12,4 @@ output*
 *.pdb
 *.so
 __pycache__
+log

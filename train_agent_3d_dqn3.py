@@ -56,11 +56,11 @@ params = {
     # folder params
 
     # output
-    'output_folder': "output_dqn1",
+    'output_folder': "output_dqn2",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config",
-    'print_info': "small_env"
+    'print_info': "large_env"
 }
 
 params['log_folder'] = os.path.join(params['output_folder'], params['log_folder'])
@@ -107,10 +107,10 @@ def main_loop():
             # action = random.randint(0, 12)
             time3 = time.time()
             observed_map_next, robot_pose_next, reward1, done = field.step(action)
-            # print(
-            #     "{}-th episode : {}-th step takes {} secs; action:{}; reward:{}".format(i_episode, step_count,
-            #                                                                             time.time() - time3,
-            #                                                                             action, reward1))
+            print(
+                "{}-th episode : {}-th step takes {} secs; action:{}; reward:{}".format(i_episode, step_count,
+                                                                                        time.time() - time3,
+                                                                                        action, reward1))
             robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
             # diff direction
