@@ -91,13 +91,12 @@ def main_loop():
     initial_direction = np.array([[-1], [0], [0]])
 
     for i_episode in range(params['num_episodes']):
-        print("info:{}; episode {}".format(params['print_info'], i_episode))
+        print("\nInfo:{}; episode {}".format(params['print_info'], i_episode))
         done = False
         rewards1 = []
         actions = []
         e_start_time = time.time()
         step_count = 0
-        print("new robot pose : ", robot_pose)
         while not done:
             step_count += 1
             # robot direction
