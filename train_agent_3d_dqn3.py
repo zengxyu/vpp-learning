@@ -60,7 +60,7 @@ params = {
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config",
-    'print_info': "large_env"
+    'print_info': "small_env"
 }
 
 params['log_folder'] = os.path.join(params['output_folder'], params['log_folder'])
