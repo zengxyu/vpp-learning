@@ -59,8 +59,8 @@ params = {
     'output_folder': "output_dqn1",
     'log_folder': 'log',
     'model_folder': 'model',
-    'memory_config_dir': "memory_config"
-
+    'memory_config_dir': "memory_config",
+    'print_info': "small_env"
 }
 
 params['log_folder'] = os.path.join(params['output_folder'], params['log_folder'])
@@ -91,7 +91,7 @@ def main_loop():
     initial_direction = np.array([[-1], [0], [0]])
 
     for i_episode in range(params['num_episodes']):
-        print("episode {}".format(i_episode))
+        print("info:{}; episode {}".format(params['print_info'], i_episode))
         done = False
         rewards1 = []
         actions = []
