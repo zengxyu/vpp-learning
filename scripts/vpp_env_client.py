@@ -111,6 +111,7 @@ def main(args):
     print("robotJoints")
     print(robotJoints)
     print("Reward", reward)
+    print("totalRoiCells", totalRoiCells)
 
 
 if __name__ == '__main__':
