@@ -61,7 +61,7 @@ class Field:
         self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 0.1
+        self.MOVE_STEP = 0.2
         self.ROT_STEP = 15.0
 
         self.reset_count = 0

@@ -76,7 +76,7 @@ if not os.path.exists(params['model_folder']):
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
-field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
+field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=150,
               init_file='VG07_6.binvox', headless=args.headless)
 player = Agent(params, summary_writer)
 
