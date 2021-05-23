@@ -9,13 +9,12 @@ from scripts.vpp_env_client import EnvironmentClient
 
 
 class Action(IntEnum):
-    DO_NOTHING = 0
-    MOVE_FORWARD = 1
-    MOVE_BACKWARD = 2
-    MOVE_LEFT = 3
-    MOVE_RIGHT = 4
-    MOVE_UP = 5
-    MOVE_DOWN = 6
+    MOVE_FORWARD = 0
+    MOVE_BACKWARD = 1
+    MOVE_LEFT = 2
+    MOVE_RIGHT = 3
+    MOVE_UP = 4
+    MOVE_DOWN = 5
     ROTATE_ROLL_P = 7
     ROTATE_ROLL_N = 8
     ROTATE_PITCH_P = 9
@@ -62,7 +61,7 @@ class Field:
         self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 0.1
+        self.MOVE_STEP = 0.2
         self.ROT_STEP = 15.0
 
         self.reset_count = 0
@@ -89,7 +88,7 @@ class Field:
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
         relative_move = np.array([0, 0, 0])
-        relative_rot = np.array([0, 0, 0, 1])
+        relative_rot = np.array([0, 0, 0, 1.0])
         if action == Action.MOVE_FORWARD:
             relative_move = np.array([1.0, 0, 0])
         elif action == Action.MOVE_BACKWARD:
