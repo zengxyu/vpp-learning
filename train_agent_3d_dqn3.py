@@ -30,7 +30,7 @@ params = {
 
     # model params
     'update_every': 10,
-    'eps_start': 0.15,  # Default/starting value of eps
+    'eps_start': 0.5,  # Default/starting value of eps
     'eps_decay': 0.99999,  # Epsilon decay rate
     'eps_min': 0.15,  # Minimum epsilon
     'gamma': 0.9,
@@ -56,7 +56,7 @@ params = {
     # folder params
 
     # output
-    'output_folder': "output_dqn1",
+    'output_folder': "output_dqn2",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config",
@@ -76,7 +76,7 @@ if not os.path.exists(params['model_folder']):
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
-field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=150,
+field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
 player = Agent(params, summary_writer)
 
@@ -88,7 +88,7 @@ def main_loop():
     time_step = 0
 
     observed_map, robot_pose = field.reset()
-    initial_direction = np.array([[-1], [0], [0]])
+    initial_direction = np.array([[1], [0], [0]])
 
     for i_episode in range(params['num_episodes']):
         print("\nInfo:{}; episode {}".format(params['print_info'], i_episode))

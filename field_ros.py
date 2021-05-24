@@ -8,20 +8,6 @@ import time
 from scripts.vpp_env_client import EnvironmentClient
 
 
-class Action(IntEnum):
-    MOVE_FORWARD = 0
-    MOVE_BACKWARD = 1
-    MOVE_LEFT = 2
-    MOVE_RIGHT = 3
-    MOVE_UP = 4
-    MOVE_DOWN = 5
-    ROTATE_ROLL_P = 7
-    ROTATE_ROLL_N = 8
-    ROTATE_PITCH_P = 9
-    ROTATE_PITCH_N = 10
-    ROTATE_YAW_P = 11
-    ROTATE_YAW_N = 12
-
 # class Action(IntEnum):
 #     MOVE_FORWARD = 0
 #     MOVE_BACKWARD = 1
@@ -29,6 +15,26 @@ class Action(IntEnum):
 #     MOVE_RIGHT = 3
 #     MOVE_UP = 4
 #     MOVE_DOWN = 5
+#     ROTATE_ROLL_P = 7
+#     ROTATE_ROLL_N = 8
+#     ROTATE_PITCH_P = 9
+#     ROTATE_PITCH_N = 10
+#     ROTATE_YAW_P = 11
+#     ROTATE_YAW_N = 12
+
+class Action(IntEnum):
+    MOVE_FORWARD = 0
+    MOVE_BACKWARD = 1
+    MOVE_LEFT = 2
+    MOVE_RIGHT = 3
+    MOVE_UP = 4
+    MOVE_DOWN = 5
+    ROTATE_ROLL_P = 6
+    ROTATE_ROLL_N = 7
+    ROTATE_PITCH_P = 8
+    ROTATE_PITCH_N = 9
+    ROTATE_YAW_P = 10
+    ROTATE_YAW_N = 11
 
 
 class FieldValues(IntEnum):
@@ -61,7 +67,7 @@ class Field:
         self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 0.2
+        self.MOVE_STEP = 0.1
         self.ROT_STEP = 15.0
 
         self.reset_count = 0
