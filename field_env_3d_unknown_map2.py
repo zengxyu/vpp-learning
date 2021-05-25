@@ -129,10 +129,10 @@ class Field:
         ep_right_up = self.robot_pos + vec_right_up * self.sensor_range
         return self.robot_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up
 
-    def compute_rot_vecs(self, min_ang, max_ang, num_steps):
+    def compute_rot_vecs(self, min_ang_width, max_ang_width, width_steps, min_ang_height, max_ang_height, height_steps):
         axes = self.robot_rot.as_matrix().transpose()
-        rh = np.radians(np.linspace(min_ang, max_ang, num_steps))
-        rv = np.radians(np.linspace(min_ang, max_ang, num_steps))
+        rh = np.radians(np.linspace(min_ang_width, max_ang_width, width_steps))
+        rv = np.radians(np.linspace(min_ang_height, max_ang_height, height_steps))
         rots_x = Rotation.from_rotvec(np.outer(rh, axes[2]))
         rots_y = Rotation.from_rotvec(np.outer(rv, axes[1]))
         rots = vec_apply(np.outer(rots_x, rots_y), vectors=axes[0])
@@ -140,7 +140,7 @@ class Field:
         return rot_vecs
 
     def generate_unknown_map(self, cam_pos):
-        rot_vecs = self.compute_rot_vecs(-180, 180, 18)
+        rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
         # unknown_map = count_unknown_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0, 50.0)
         # known_free_map = count_known_free_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
         #                                              50.0)
