@@ -71,14 +71,14 @@ if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
 # model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-# model_path = os.path.join("output_dqn1", "model", "Agent_dqn_state_dict_21.mdl")
+model_path = os.path.join("output_dqn2", "model", "Agent_dqn_state_dict_81.mdl")
 
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
-player = Agent(params, summary_writer)
+player = Agent(params, summary_writer, model_path)
 
 all_mean_rewards = []
 all_mean_losses = []
@@ -89,7 +89,7 @@ def main_loop():
 
     observed_map, robot_pose = field.reset()
     initial_direction = np.array([[1], [0], [0]])
-
+    print("shape:", observed_map.shape)
     for i_episode in range(params['num_episodes']):
         print("\nInfo:{}; episode {}".format(params['print_info'], i_episode))
         done = False
@@ -107,10 +107,15 @@ def main_loop():
             # action = random.randint(0, 12)
             time3 = time.time()
             observed_map_next, robot_pose_next, reward1, done = field.step(action)
-            # print(
-            #     "{}-th episode : {}-th step takes {} secs; action:{}; reward:{}".format(i_episode, step_count,
-            #                                                                             time.time() - time3,
-            #                                                                             action, reward1))
+            print(
+                "{}-th episode : {}-th step takes {} secs; action:{}; reward:{}".format(i_episode, step_count,
+                                                                                        time.time() - time3,
+                                                                                        action, reward1))
+            found_target = reward1
+            # if robot_pose is the same with the robot_pose_next, then reward--
+            # if robot_pose == robot_pose_next:
+            #     reward1 -= 1
+
             robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
             # diff direction
@@ -128,7 +133,7 @@ def main_loop():
             time_step += 1
             # record
             summary_writer.add_loss(loss)
-            summary_writer.add_reward(reward1, i_episode)
+            summary_writer.add_reward(found_target, i_episode)
 
             actions.append(action)
             rewards1.append(int(reward1))

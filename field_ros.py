@@ -119,12 +119,13 @@ class Field:
         elif action == Action.ROTATE_PITCH_N:
             r = Rotation.from_euler('y', -self.ROT_STEP, degrees=True)
             relative_rot = r.as_quat()
-        elif action == Action.ROTATE_YAW_N:
-            r = Rotation.from_euler('z', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
         elif action == Action.ROTATE_YAW_P:
             r = Rotation.from_euler('z', self.ROT_STEP, degrees=True)
             relative_rot = r.as_quat()
+        elif action == Action.ROTATE_YAW_N:
+            r = Rotation.from_euler('z', -self.ROT_STEP, degrees=True)
+            relative_rot = r.as_quat()
+
         relative_pose = np.append(relative_move * self.MOVE_STEP, relative_rot).tolist()
         start_time = time.time()
         unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells = self.client.sendRelativePose(
@@ -152,4 +153,15 @@ class Field:
         print("total roi cells:{}".format(totalRoiCells))
 
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
+
+        # print("ori quat:{}".format(robotPose[3:]))
+        # angle = Rotation.from_quat(np.array(robotPose[3:]))
+        # angle = Rotation.as_euler(angle, "xyz")
+        # print("angle:{}".format(angle)
+        # print("quat:{}".format(Rotation.as_quat(Rotation.from_euler("xyz", np.array([0, 0, np.pi / 2])))))
+        # print("quat:{}".format(Rotation.as_quat(Rotation.from_euler("xyz", np.array([0, 0, -np.pi / 2])))))
+        # print("angle1:{}".format(
+        #     Rotation.as_euler(Rotation.from_quat(np.array([0., 0., -0.70710678, -0.70710678])), "xyz")))
+        # print("angle2:{}".format(
+        #     Rotation.as_euler(Rotation.from_quat(np.array([0., 0., 0.70710678, 0.70710678])), "xyz")))
         return map, robotPose

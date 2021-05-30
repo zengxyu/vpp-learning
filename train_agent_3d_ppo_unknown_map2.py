@@ -7,10 +7,8 @@ import argparse
 from scipy.spatial.transform.rotation import Rotation
 
 from agent.agent_ppo_3d_unknown_map import Agent
-from field_env_3d_unknown_map import Field, Action
-from memory.GridCellAccessRecord import GridCellAccessRecord
-from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap2, PPOPolicy3DUnknownMap4, PPOPolicy3DUnknownMap5, \
-    PPOPolicy3DUnknownMap6
+from field_env_3d_unknown_map2 import Field, Action
+from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap6
 from util.summary_writer import MySummaryWriter
 from util.util import get_eu_distance
 
@@ -55,7 +53,7 @@ def main_loop():
     global field, args
     episodes = 200000
 
-    initial_direction = np.array([[-1], [0], [0]])
+    initial_direction = np.array([[1], [0], [0]])
 
     distances_travelled = []
     destination = np.array([128, 128, 128])

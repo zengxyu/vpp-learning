@@ -388,7 +388,7 @@ class DQN_Network13(torch.nn.Module):
 
 
 class DQN_Network11(torch.nn.Module):
-    def __init__(self, action_size=13, robot_pose_size=7):
+    def __init__(self, action_size):
         super().__init__()
         self.frame_con1 = torch.nn.Conv2d(15, 24, kernel_size=4, stride=2)
         self.frame_fc1 = torch.nn.Linear(3264, 512)
