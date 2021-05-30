@@ -411,6 +411,7 @@ class Field:
         self.free_cells = 0
         if self.is_augment_env:
             if (self.step_count + 1) % self.augment_env_every == 0:
+                print("augment the env!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 self.global_map = self.augment_env()
 
         if not self.headless:
