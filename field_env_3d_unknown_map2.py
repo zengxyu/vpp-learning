@@ -151,9 +151,9 @@ class Field:
                                               self.shape[1] - self.trim_data_shape[1], \
                                               self.shape[2] - self.trim_data_shape[2]
             # randomly initialize the position
-            loc_x = random.randint(0, loc_max_x)
-            loc_y = random.randint(0, loc_max_y)
-            loc_z = random.randint(0, loc_max_z)
+            loc_x = random.randint(0, loc_max_x - 1)
+            loc_y = random.randint(0, loc_max_y - 1)
+            loc_z = random.randint(0, loc_max_z - 1)
             result = self.paste(wall, self.trim_data, (loc_x, loc_y, loc_z))
             result = result.astype(int)
         return result
@@ -412,7 +412,7 @@ class Field:
         self.free_cells = 0
         if self.is_augment_env:
             if self.reset_count % self.augment_env_every == 0:
-                self.augment_env_every = min(self.augment_env_every - 1, 10)
+                self.augment_env_every = max(self.augment_env_every - 1, 10)
                 print("augment the env!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 self.global_map = self.augment_env()
 
