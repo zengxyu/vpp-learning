@@ -34,7 +34,7 @@ params = {
     'eps_decay': 0.99999,  # Epsilon decay rate
     'eps_min': 0.15,  # Minimum epsilon
     'gamma': 0.9,
-    'buffer_size': 200000,
+    'buffer_size': 1000,
     'batch_size': 128,
     'action_size': len(Action),
 

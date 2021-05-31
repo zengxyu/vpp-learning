@@ -145,7 +145,7 @@ class Field:
     def augment_env(self):
         result = None
         if self.trim_data is not None and self.trim_data_shape is not None:
-            wall = np.zeros(self.shape)
+            wall = np.zeros(self.shape, dtype=np.int32)
             # make sure the the plant fully fitting within the wall
             loc_max_x, loc_max_y, loc_max_z = self.shape[0] - self.trim_data_shape[0], \
                                               self.shape[1] - self.trim_data_shape[1], \
@@ -402,7 +402,7 @@ class Field:
         self.robot_pos = np.random.uniform(np.array([0.0, 0.0, 0.0]), upper)
 
         # print("upper:{}; reset robot pose as:{}".format(upper, self.robot_pos))
-        print("reset robot pose as:{}".format(self.robot_pos))
+        print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
 
         self.robot_rot = Rotation.from_euler("xyz", np.array([0, 0, np.pi / 2]))
 

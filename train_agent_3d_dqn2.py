@@ -89,7 +89,7 @@ def main_loop():
     initial_direction = np.array([[1], [0], [0]])
 
     for i_episode in range(params['num_episodes']):
-        print("episode {}".format(i_episode))
+        print("episode {} start!".format(i_episode))
         done = False
         rewards1 = []
         actions = []
@@ -132,7 +132,7 @@ def main_loop():
 
                 print("\nepisode {} over".format(i_episode))
                 print("mean rewards1:{}".format(np.sum(rewards1)))
-                print("robot pose: {}".format(robot_pose[:3]))
+                print("robot pose ends in: {}".format(robot_pose[:3]))
                 print("actions:{}".format(np.array(actions)))
                 print("rewards:{}".format(np.array(rewards1)))
                 # print("mean rewards2:{}; new visit cell num: {}".format(np.sum(rewards2), np.sum(rewards2) / r_ratio))
