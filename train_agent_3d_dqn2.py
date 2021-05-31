@@ -139,7 +139,6 @@ def main_loop():
                 player.reset()
                 observed_map, robot_pose = field.reset()
                 rewards1 = []
-                rewards2 = []
 
                 if (i_episode + 1) % 50 == 0:
                     # plt.cla()

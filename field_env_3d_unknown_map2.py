@@ -100,7 +100,7 @@ class Field:
         self.known_map = np.zeros(self.shape)
         self.is_augment_env = is_augment_env
         # how often to augment the env
-        self.augment_env_every = 1000
+        self.augment_env_every = 30
         self.trim_data = None
         self.trim_data_shape = None
         self.max_steps = max_steps
@@ -410,8 +410,8 @@ class Field:
         self.found_targets = 0
         self.free_cells = 0
         if self.is_augment_env:
-            if (self.step_count + 1) % self.augment_env_every == 0:
-                self.augment_env_every = min(self.augment_env_every - 1, 100)
+            if self.reset_count % self.augment_env_every == 0:
+                self.augment_env_every = min(self.augment_env_every - 1, 10)
                 print("augment the env!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 self.global_map = self.augment_env()
 
