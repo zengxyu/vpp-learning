@@ -155,6 +155,7 @@ class Field:
             loc_y = random.randint(0, loc_max_y)
             loc_z = random.randint(0, loc_max_z)
             result = self.paste(wall, self.trim_data, (loc_x, loc_y, loc_z))
+            result = result.astype(int)
         return result
 
     def read_env_from_file(self, filename, scale):
@@ -163,7 +164,7 @@ class Field:
         self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
         self.trim_data = self.trim_zeros(self.global_map)
         self.trim_data_shape = np.shape(self.trim_data)
-
+        print("trim data shape:{}".format(self.trim_data_shape))
         self.target_count = np.count_nonzero(self.global_map)
         print("Total target count : {} ".format(self.target_count))
         print("#targets/#free_cells = {}".format(self.target_count / (np.product(self.shape))))

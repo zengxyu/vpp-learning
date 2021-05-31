@@ -45,7 +45,7 @@ params = {
     'max_step': 200,
 
     # train params
-    'is_train': True,
+    'is_train': False,
     'visualise': True,
     'is_normalize': False,
     'num_episodes': 5000000,
@@ -71,7 +71,7 @@ if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
 # model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-model_path = os.path.join("output_dqn2", "model", "Agent_dqn_state_dict_81.mdl")
+model_path = os.path.join("output_dqn2", "model", "Agent_dqn_state_dict_117.mdl")
 
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)

@@ -76,8 +76,10 @@ class Agent:
         :return:
         """
         rnd = random.random()
-        self.eps = max(self.eps * self.eps_decay, self.eps_min)
-
+        if self.params['is_train']:
+            self.eps = max(self.eps * self.eps_decay, self.eps_min)
+        else:
+            self.eps = 0
         if rnd < self.eps:
             return np.random.randint(self.action_size)
         else:
