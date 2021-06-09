@@ -45,7 +45,7 @@ params = {
     'max_step': 200,
 
     # train params
-    'is_train': False,
+    'is_train': True,
     'visualise': True,
     'is_normalize': False,
     'num_episodes': 5000000,
@@ -56,7 +56,7 @@ params = {
     # folder params
 
     # output
-    'output_folder': "output_dqn2",
+    'output_folder': "output_dqn1",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config",
