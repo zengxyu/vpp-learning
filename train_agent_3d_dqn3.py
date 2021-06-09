@@ -34,7 +34,7 @@ params = {
     'eps_decay': 0.99999,  # Epsilon decay rate
     'eps_min': 0.15,  # Minimum epsilon
     'gamma': 0.9,
-    'buffer_size': 1000,
+    'buffer_size': 200000,
     'batch_size': 128,
     'action_size': len(Action),
 
@@ -107,13 +107,13 @@ def main_loop():
             # action = random.randint(0, 12)
             time3 = time.time()
             observed_map_next, robot_pose_next, reward1, done = field.step(action)
-            print(
-                "{}-th episode : {}-th step takes {} secs; action:{}; reward:{}; sum reward:{}".format(i_episode,
-                                                                                                       step_count,
-                                                                                                       time.time() - time3,
-                                                                                                       action, reward1,
-                                                                                                       np.sum(
-                                                                                                           rewards1) + reward1))
+            #print(
+             #   "{}-th episode : {}-th step takes {} secs; action:{}; reward:{}; sum reward:{}".format(i_episode,
+              #                                                                                         step_count,
+               #                                                                                        time.time() - time3,
+                #                                                                                       action, reward1,
+                 #                                                                                      np.sum(
+                  #                                                                                         rewards1) + reward1))
             found_target = reward1
             # if robot_pose is the same with the robot_pose_next, then reward--
             # if robot_pose == robot_pose_next:
