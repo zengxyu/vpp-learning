@@ -154,14 +154,4 @@ class Field:
 
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
-        # print("ori quat:{}".format(robotPose[3:]))
-        # angle = Rotation.from_quat(np.array(robotPose[3:]))
-        # angle = Rotation.as_euler(angle, "xyz")
-        # print("angle:{}".format(angle)
-        # print("quat:{}".format(Rotation.as_quat(Rotation.from_euler("xyz", np.array([0, 0, np.pi / 2])))))
-        # print("quat:{}".format(Rotation.as_quat(Rotation.from_euler("xyz", np.array([0, 0, -np.pi / 2])))))
-        # print("angle1:{}".format(
-        #     Rotation.as_euler(Rotation.from_quat(np.array([0., 0., -0.70710678, -0.70710678])), "xyz")))
-        # print("angle2:{}".format(
-        #     Rotation.as_euler(Rotation.from_quat(np.array([0., 0., 0.70710678, 0.70710678])), "xyz")))
         return map, robotPose

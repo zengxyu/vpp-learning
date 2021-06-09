@@ -53,9 +53,17 @@ if __name__ == '__main__':
     # wall = np.zeros((10, 10, 10))
     # result = paste(wall, arr2, (7, 7, 7))
     # print(result)
-    start = 0.5
-    decay = 0.99999
-    end = start*decay**200000
-    c = 200000/300
-    print(end)
-    print(c)
+    # start = 0.5
+    # decay = 0.99999
+    # end = start*decay**200000
+    # c = 200000/300
+    # print(end)
+    # print(c)
+    import numpy as np
+    zipped = [[1, 5, 7], [5, 8, 0], [2, 2, 2]]
+    y = [5, 6, 1]
+    zipped2 = zip(zipped, y)
+    print("zipped:{}".format(zipped))
+    sort_zipped = sorted(zipped2, key=lambda x: y)
+    y_ind =
+    print("sort_zipped:{}".format(sort_zipped))
