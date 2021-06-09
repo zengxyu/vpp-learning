@@ -46,7 +46,7 @@ params = {
 
     # train params
     'is_train': True,
-    'visualise': True,
+    'visualise': False,
     'is_normalize': False,
     'num_episodes': 5000000,
     'scale': 15,
