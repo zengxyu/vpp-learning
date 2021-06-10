@@ -1,3 +1,4 @@
+import pickle
 import random
 import os
 
@@ -13,7 +14,7 @@ from network.network_dqn import DQN_Network, DQN_Network4
 
 
 class Agent:
-    def __init__(self, params, summary_writer, model_path=""):
+    def __init__(self, params, summary_writer, model_path="", replay_buffer_file=""):
         self.name = "grid world"
         self.params = params
         self.update_every = params['update_every']
@@ -48,15 +49,22 @@ class Agent:
                 self.update_every = 1000000000000000000
         print(self.policy_net)
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=1e-4)
-        self.memory = PriorityReplayBuffer(buffer_size=self.buffer_size, batch_size=self.batch_size,
-                                           device=self.device,
-                                           normalizer=None, seed=self.seed)
+        if replay_buffer_file == "":
+            self.memory = PriorityReplayBuffer(buffer_size=self.buffer_size, batch_size=self.batch_size,
+                                               device=self.device,
+                                               normalizer=None, seed=self.seed)
+        else:
+            self.memory = pickle.load(open(replay_buffer_file, 'rb'))
+            print("loaded replay buffer size:{}".format(self.memory.size))
         self.time_step = 0
 
     def step(self, state, action, reward, next_state, done):
-        # self.memory.add(state=state, action=action, reward=reward, next_state=next_state, done=done)
         self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
         self.time_step += 1
+        if self.time_step % 100 == 0:
+            print("save replay buffer to disk")
+            f = open("buffer.obj", 'wb')
+            pickle.dump(self.memory, f)
 
     def load_model(self, file_path, map_location):
         state_dict = torch.load(file_path, map_location=map_location)
@@ -99,7 +107,8 @@ class Agent:
         self.target_net.eval()
         loss_value = 0
 
-        if len(self.memory) > self.batch_size:
+        # if len(self.memory) > self.batch_size:
+        if True:
             tree_idx, minibatch, ISWeights = self.memory.sample()
             frames_in, robot_poses_in, actions, rewards, next_frames_in, next_robot_poses_in, dones = minibatch
 

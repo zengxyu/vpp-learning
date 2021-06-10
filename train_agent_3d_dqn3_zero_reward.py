@@ -56,7 +56,7 @@ params = {
     # folder params
 
     # output
-    'output_folder': "output_dqn_try_small_state_input",
+    'output_folder': "output_dqn_try_small_state_input_zero_reward",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config",
@@ -76,7 +76,7 @@ model_path = os.path.join("output_dqn00", "model", "Agent_dqn_state_dict_3750.md
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
-field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
+field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=150,
               init_file='VG07_6.binvox', headless=args.headless)
 replay_buffer_file = "buffer.obj"
 player = Agent(params, summary_writer,
@@ -95,10 +95,12 @@ def main_loop():
     for i_episode in range(params['num_episodes']):
         print("\nInfo:{}; episode {}".format(params['print_info'], i_episode))
         done = False
-        rewards1 = []
+        rewards = []
+        found_targets = []
         actions = []
         e_start_time = time.time()
         step_count = 0
+        zero_reward_consistant_count = 0
         while not done:
             step_count += 1
             # robot direction
@@ -108,24 +110,24 @@ def main_loop():
             action = player.act(observed_map, robot_pose_input)
             # action = random.randint(0, 12)
             time3 = time.time()
-            observed_map_next, robot_pose_next, reward1, done = field.step(action)
-            print(
-                "{}-th episode : {}-th step takes {} secs; action:{}; reward:{}; sum reward:{}".format(i_episode,
-                                                                                                       step_count,
-                                                                                                       time.time() - time3,
-                                                                                                       action, reward1,
-                                                                                                       np.sum(
-                                                                                                           rewards1) + reward1))
-            found_target = reward1
+            observed_map_next, robot_pose_next, reward, done = field.step(action)
+
+            found_target = reward
             # if robot_pose is the same with the robot_pose_next, then reward--
-            # if robot_pose == robot_pose_next:
-            #     reward1 -= 1
+            if reward == 0:
+                zero_reward_consistant_count += 1
+            else:
+                zero_reward_consistant_count = 0
+            # # reward redefine
+            # reward = reward - zero_reward_consistant_count * 0.5
+            if zero_reward_consistant_count >= 10:
+                done = True
             robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
             # diff direction
             robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
 
-            player.step(state=[observed_map, robot_pose_input], action=action, reward=reward1,
+            player.step(state=[observed_map, robot_pose_input], action=action, reward=reward,
                         next_state=[observed_map_next, robot_pose_input_next], done=done)
 
             # to the next state
@@ -135,27 +137,35 @@ def main_loop():
             loss = player.learn(memory_config_dir=params['memory_config_dir'])
 
             time_step += 1
+
+            print(
+                "{}-th episode : {}-th step takes {} secs; action:{}; found target:{}; sum found targets:{}; reward:{}; sum reward:{}".format(
+                    i_episode,
+                    step_count,
+                    time.time() - time3,
+                    action, found_target, np.sum(found_targets) + found_target, reward,
+                    np.sum(rewards) + reward))
             # record
             summary_writer.add_loss(loss)
             summary_writer.add_reward(found_target, i_episode)
 
             actions.append(action)
-            rewards1.append(int(reward1))
-
+            rewards.append(reward)
+            found_targets.append(int(found_target))
             if not args.headless:
                 threading.Thread.considerYield()
 
             # rewards.append(reward)
             if done:
                 print("\nepisode {} over".format(i_episode))
-                print("mean rewards1:{}".format(np.sum(rewards1)))
+                print("mean rewards1:{}".format(np.sum(rewards)))
                 print("robot pose: {}".format(robot_pose[:3]))
                 print("actions:{}".format(np.array(actions)))
-                print("rewards:{}".format(np.array(rewards1)))
+                print("rewards:{}".format(np.array(rewards)))
                 # print("mean rewards2:{}; new visit cell num: {}".format(np.sum(rewards2), np.sum(rewards2) / r_ratio))
                 player.reset()
                 observed_map, robot_pose = field.reset()
-                rewards1 = []
+                rewards = []
                 rewards2 = []
 
                 if (i_episode + 1) % 3 == 0:
