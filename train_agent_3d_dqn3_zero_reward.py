@@ -138,13 +138,13 @@ def main_loop():
 
             time_step += 1
 
-            print(
-                "{}-th episode : {}-th step takes {} secs; action:{}; found target:{}; sum found targets:{}; reward:{}; sum reward:{}".format(
-                    i_episode,
-                    step_count,
-                    time.time() - time3,
-                    action, found_target, np.sum(found_targets) + found_target, reward,
-                    np.sum(rewards) + reward))
+            # print(
+            #     "{}-th episode : {}-th step takes {} secs; action:{}; found target:{}; sum found targets:{}; reward:{}; sum reward:{}".format(
+            #         i_episode,
+            #         step_count,
+            #         time.time() - time3,
+            #         action, found_target, np.sum(found_targets) + found_target, reward,
+            #         np.sum(rewards) + reward))
             # record
             summary_writer.add_loss(loss)
             summary_writer.add_reward(found_target, i_episode)
