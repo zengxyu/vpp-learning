@@ -71,7 +71,7 @@ if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
 # model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-model_path = os.path.join("output_dqn00", "model", "Agent_dqn_state_dict_3750.mdl")
+model_path = os.path.join("Agent_dqn_state_dict_18.mdl")
 
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
@@ -79,7 +79,7 @@ summary_writer = MySummaryWriter(log_dir)
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=150,
               init_file='VG07_6.binvox', headless=args.headless)
 replay_buffer_file = "buffer.obj"
-player = Agent(params, summary_writer,
+player = Agent(params, summary_writer, model_path=model_path if os.path.exists(model_path) else "",
                replay_buffer_file=replay_buffer_file if os.path.exists(replay_buffer_file) else "")
 
 all_mean_rewards = []
