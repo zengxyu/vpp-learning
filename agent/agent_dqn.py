@@ -61,10 +61,10 @@ class Agent:
     def step(self, state, action, reward, next_state, done):
         self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
         self.time_step += 1
-        if self.time_step % 100 == 0:
-            print("save replay buffer to disk")
-            f = open("buffer.obj", 'wb')
-            pickle.dump(self.memory, f)
+        # if self.time_step % 100 == 0:
+        #     print("save replay buffer to disk")
+        #     f = open("buffer.obj", 'wb')
+        #     pickle.dump(self.memory, f)
 
     def load_model(self, file_path, map_location):
         state_dict = torch.load(file_path, map_location=map_location)
