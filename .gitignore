@@ -14,3 +14,5 @@ output*
 __pycache__
 log
 log_bak
+buffer.obj
+buffer_bak.obj
