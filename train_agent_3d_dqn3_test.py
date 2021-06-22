@@ -54,7 +54,7 @@ params = {
 
     # output
     'output_folder': "output_dqn_try_small_state_input_zero_reward_test",
-    'input_model_folder': "output_dqn_try_small_state_input_zero_reward",
+    'input_model_folder': "",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config",
@@ -70,7 +70,8 @@ if not os.path.exists(params['model_folder']):
 
 model_path = os.path.join(params['input_model_folder'], "model", "Agent_dqn_state_dict_444.mdl")
 # model_path = os.path.join("Agent_dqn_state_dict_444.mdl")
-
+if not os.path.exists(model_path):
+    print("model path not exists")
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
