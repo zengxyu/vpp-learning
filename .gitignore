@@ -13,3 +13,4 @@ output*
 *.so
 __pycache__
 log
+log_bak
