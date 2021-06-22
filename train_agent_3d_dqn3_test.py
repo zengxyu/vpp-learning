@@ -42,7 +42,7 @@ params = {
     'is_priority_buffer': True,
 
     # train params
-    'is_train': True,
+    'is_train': False,
     'visualise': False,
     'is_normalize': False,
     'num_episodes': 20,
