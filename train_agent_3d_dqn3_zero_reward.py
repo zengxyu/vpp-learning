@@ -51,12 +51,12 @@ params = {
     'num_episodes': 5000000,
     'scale': 15,
     'use_gpu': False,
-    'model': DQN_Network12,
+    'model': DQN_Network11,
 
     # folder params
 
     # output
-    'output_folder': "output_dqn_try_small_state_input_zero_reward",
+    'output_folder': "output_dqn_try_world19",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config",
@@ -71,14 +71,14 @@ if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
 # model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-model_path = os.path.join("Agent_dqn_state_dict_18.mdl")
-
+# model_path = os.path.join("Agent_dqn_state_dict_18.mdl")
+model_path = ""
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
-field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=150,
+field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=500,
               init_file='VG07_6.binvox', headless=args.headless)
-replay_buffer_file = "buffer.obj"
+replay_buffer_file = "buffer1.obj"
 player = Agent(params, summary_writer, model_path=model_path if os.path.exists(model_path) else "",
                replay_buffer_file=replay_buffer_file if os.path.exists(replay_buffer_file) else "")
 
@@ -138,13 +138,13 @@ def main_loop():
 
             time_step += 1
 
-            # print(
-            #     "{}-th episode : {}-th step takes {} secs; action:{}; found target:{}; sum found targets:{}; reward:{}; sum reward:{}".format(
-            #         i_episode,
-            #         step_count,
-            #         time.time() - time3,
-            #         action, found_target, np.sum(found_targets) + found_target, reward,
-            #         np.sum(rewards) + reward))
+            print(
+                "{}-th episode : {}-th step takes {} secs; action:{}; found target:{}; sum found targets:{}; reward:{}; sum reward:{}".format(
+                    i_episode,
+                    step_count,
+                    time.time() - time3,
+                    action, found_target, np.sum(found_targets) + found_target, reward,
+                    np.sum(rewards) + reward))
             # record
             summary_writer.add_loss(loss)
             summary_writer.add_reward(found_target, i_episode)

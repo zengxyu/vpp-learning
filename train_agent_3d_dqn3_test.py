@@ -48,7 +48,7 @@ params = {
     'num_episodes': 20,
     'scale': 15,
     'use_gpu': False,
-    'model': DQN_Network12,
+    'model': DQN_Network11,
 
     # folder params
 
@@ -68,7 +68,7 @@ if not os.path.exists(params['log_folder']):
 if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
-model_path = os.path.join(params['input_model_folder'], "model", "Agent_dqn_state_dict_444.mdl")
+model_path = os.path.join(params['input_model_folder'], "model", "Agent_dqn_state_dict_351.mdl")
 # model_path = os.path.join("Agent_dqn_state_dict_444.mdl")
 if not os.path.exists(model_path):
     print("model path not exists")

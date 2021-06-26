@@ -47,7 +47,7 @@ params = {
     'max_step': 200,
 
     # train params
-    'is_train': False,
+    'is_train': True,
     'visualise': True,
     'is_normalize': False,
     'num_episodes': 1,
@@ -73,14 +73,14 @@ if not os.path.exists(params['model_folder']):
     os.makedirs(params['model_folder'])
 
 # model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-model_path = os.path.join("output_dqn00", "model", "Agent_dqn_state_dict_3750.mdl")
+# model_path = os.path.join("output_dqn00", "model", "Agent_dqn_state_dict_3750.mdl")
 
 log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
-player = Agent(params, summary_writer, model_path)
+player = Agent(params, summary_writer)
 
 all_mean_rewards = []
 all_mean_losses = []
@@ -112,17 +112,17 @@ def main_loop():
 
             # action = player.act(observed_map, robot_pose_input)
             # action = pre_actions[step_count - 1] if step_count < pre_actions.__len__() else get_human_action()
-            # action = get_human_action()
-            action = random.randint(0, 11)
+            action = get_human_action()
+            # action = random.randint(0, 11)
             time3 = time.time()
             observed_map_next, robot_pose_next, reward, done = field.step(action)
-            # print(
-            #     "{}-th episode : {}-th step takes {} secs; \naction:{}; reward:{}; sum reward:{}".format(i_episode,
-            #                                                                                              step_count,
-            #                                                                                              time.time() - time3,
-            #                                                                                              action, reward,
-            #                                                                                              np.sum(
-            #                                                                                                  rewards) + reward))
+            print(
+                "{}-th episode : {}-th step takes {} secs; \naction:{}; reward:{}; sum reward:{}".format(i_episode,
+                                                                                                         step_count,
+                                                                                                         time.time() - time3,
+                                                                                                         action, reward,
+                                                                                                         np.sum(
+                                                                                                             rewards) + reward))
             found_target = reward
             # if robot_pose is the same with the robot_pose_next, then reward--
             # if robot_pose == robot_pose_next:

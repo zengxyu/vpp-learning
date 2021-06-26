@@ -51,7 +51,7 @@ params = {
     'num_episodes': 5000000,
     'scale': 15,
     'use_gpu': False,
-    'model': DQN_Network12,
+    'model': DQN_Network11,
 
     # folder params
 
