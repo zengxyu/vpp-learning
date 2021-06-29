@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pygame as pg
-from agent.agent_ppo import Agent
+from old_agent.agent_ppo import Agent
 import argparse
 
 from field_env import Field

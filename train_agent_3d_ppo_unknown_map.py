@@ -6,7 +6,7 @@ import argparse
 
 from scipy.spatial.transform.rotation import Rotation
 
-from agent.agent_ppo_3d_unknown_map import Agent
+from old_agent.agent_ppo_3d_unknown_map import Agent
 from field_env_3d_unknown_map import Field, Action
 from memory.GridCellAccessRecord import GridCellAccessRecord
 from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap2, PPOPolicy3DUnknownMap4, PPOPolicy3DUnknownMap5

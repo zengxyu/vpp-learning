@@ -9,7 +9,7 @@ from memory.data_structures import SumTree
 class ReplayBuffer:
     def __init__(self, buffer_size, batch_size, device, seed):
         """
-        Replay memory allow agent to record experiences and learn from them
+        Replay memory allow old_agent to record experiences and learn from them
 
         Parametes
         ---------
@@ -23,12 +23,12 @@ class ReplayBuffer:
         self.memory = deque(maxlen=buffer_size)
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
 
-    def add(self, state, action, reward, next_state, done):
+    def add_experience(self, state, action, reward, next_state, done):
         """Add experience"""
         experience = self.experience(state, action, reward, next_state, done)
         self.memory.append(experience)
 
-    def sample(self, normalize, save_dir=""):
+    def sample(self):
         """
         Sample randomly and return (state, action, reward, next_state, done) tuple as torch tensors
         """
@@ -37,47 +37,43 @@ class ReplayBuffer:
         experiences = random.sample(self.memory, k=self.batch_size)
 
         # Convert to torch tensors
-        frames = torch.from_numpy(
-            np.conjugate([experience.state[0] for experience in experiences if experience is not None])).float().to(
-            self.device)
-        robot_poses = torch.from_numpy(
-            np.conjugate([experience.state[1] for experience in experiences if experience is not None])).float().to(
-            self.device)
-
         actions = torch.from_numpy(
             np.vstack([experience.action for experience in experiences if experience is not None])).long().to(
             self.device)
         rewards = torch.from_numpy(
             np.vstack([experience.reward for experience in experiences if experience is not None])).float().to(
             self.device)
-
-        frames_next = torch.from_numpy(
-            np.conjugate(
-                [experience.next_state[0] for experience in experiences if experience is not None])).float().to(
-            self.device)
-        robot_poses_next = torch.from_numpy(
-            np.conjugate(
-                [experience.next_state[1] for experience in experiences if experience is not None])).float().to(
-            self.device)
-
         # Convert done from boolean to int
         dones = torch.from_numpy(
             np.vstack([experience.done for experience in experiences if experience is not None]).astype(
                 np.uint8)).float().to(self.device)
 
-        if normalize:
-            frames_mean, frames_std, robot_pos_mean, robot_pos_std, actions_mean, actions_std, \
-            rewards_mean, rewards_std, frames_next_mean, frames_next_std, \
-            robot_pos_next_mean, robot_pos_next_std = self.load_normalization_config(save_dir)
+        if isinstance(experiences[0].state, list):
+            frames = torch.from_numpy(
+                np.conjugate([experience.state[0] for experience in experiences if experience is not None])).float().to(
+                self.device)
+            robot_poses = torch.from_numpy(
+                np.conjugate([experience.state[1] for experience in experiences if experience is not None])).float().to(
+                self.device)
+            frames_next = torch.from_numpy(
+                np.conjugate(
+                    [experience.next_state[0] for experience in experiences if experience is not None])).float().to(
+                self.device)
+            robot_poses_next = torch.from_numpy(
+                np.conjugate(
+                    [experience.next_state[1] for experience in experiences if experience is not None])).float().to(
+                self.device)
+            states = [frames, robot_poses]
+            next_states = [frames_next, robot_poses_next]
+        else:
+            states = torch.from_numpy(
+                np.conjugate([experience.state for experience in experiences if experience is not None])).float().to(
+                self.device)
+            next_states = torch.from_numpy(
+                np.conjugate(
+                    [experience.next_state for experience in experiences if experience is not None])).float().to(
+                self.device)
 
-            frames = (frames - frames_mean) / frames_std
-            robot_poses = (robot_poses - robot_pos_mean) / robot_pos_std
-            # actions = (actions - actions_mean) / actions_std
-            rewards = (rewards - rewards_mean) / rewards_std
-            frames_next = (frames_next - frames_next_mean) / frames_next_std
-            robot_poses_next = (robot_poses_next - robot_pos_next_mean) / robot_pos_next_std
-        states = [frames, robot_poses]
-        next_states = [frames_next, robot_poses_next]
         return (states, actions, rewards, next_states, dones)
 
     def __len__(self):
@@ -109,7 +105,10 @@ class PriorityReplayBuffer:
         self.seed = random.seed(seed)
 
     def add_experience(self, state, action, reward, next_state, done):
-        transition = np.hstack((state, action, reward, next_state, done))
+        if isinstance(state, list):
+            transition = np.hstack((state, action, reward, next_state, done))
+        else:
+            transition = np.array([state, action, reward, next_state, done], dtype=object)
         max_p = np.max(self.tree.tree[-self.tree.capacity:])
         if max_p == 0.0:
             max_p = self.abs_err_upper
@@ -142,19 +141,28 @@ class PriorityReplayBuffer:
         if self.normalizer is not None:
             print("normalize it")
             b_memory = self.normalizer.normalize_mini_batch(b_memory)
-        return b_idx, b_memory, ISWeights
+        return torch.from_numpy(b_idx).to(self.device), b_memory, torch.from_numpy(ISWeights).to(self.device)
 
     def to_tensor(self, mini_batch):
         mini_batch = mini_batch.T
-        frames_in, robot_poses_in, actions, rewards, next_frames_in, next_robot_poses_in, dones = mini_batch
-        frames_in = self.to_float_tensor(frames_in).squeeze(1)
-        robot_poses_in = self.to_float_tensor(robot_poses_in).squeeze(1)
-        actions = self.to_long_tensor(actions)
-        rewards = self.to_float_tensor(rewards)
-        next_frames_in = self.to_float_tensor(next_frames_in).squeeze(1)
-        next_robot_poses_in = self.to_float_tensor(next_robot_poses_in).squeeze(1)
-        dones = self.to_long_tensor(dones)
-        return [frames_in, robot_poses_in, actions, rewards, next_frames_in, next_robot_poses_in, dones]
+        if mini_batch.shape[0] == 7:
+            frames_in, robot_poses_in, actions, rewards, next_frames_in, next_robot_poses_in, dones = mini_batch
+            frames_in = self.to_float_tensor(frames_in).squeeze(1)
+            robot_poses_in = self.to_float_tensor(robot_poses_in).squeeze(1)
+            actions = self.to_long_tensor(actions)
+            rewards = self.to_float_tensor(rewards)
+            next_frames_in = self.to_float_tensor(next_frames_in).squeeze(1)
+            next_robot_poses_in = self.to_float_tensor(next_robot_poses_in).squeeze(1)
+            dones = self.to_long_tensor(dones)
+            return [[frames_in, robot_poses_in], actions, rewards, [next_frames_in, next_robot_poses_in], dones]
+        else:
+            state_in, actions, rewards, next_state_in, dones = mini_batch
+            state_in = self.to_float_tensor(state_in).squeeze(1)
+            actions = self.to_long_tensor(actions)
+            rewards = self.to_float_tensor(rewards)
+            next_state_in = self.to_float_tensor(next_state_in).squeeze(1)
+            dones = self.to_long_tensor(dones)
+            return [state_in, actions, rewards, next_state_in, dones]
 
     def to_float_tensor(self, object_array):
         return torch.FloatTensor(np.array(object_array.tolist()).astype(np.float)).unsqueeze(1).to(self.device)

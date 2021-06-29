@@ -4,7 +4,7 @@ import argparse
 
 from scipy.spatial.transform.rotation import Rotation
 
-from agent.agent_dqn import Agent
+from old_agent.agent_dqn import Agent
 from field_env_3d_unknown_map2 import Field, Action
 from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network11
 from util.summary_writer import MySummaryWriter
@@ -75,7 +75,7 @@ log_dir = os.path.join(params['output_folder'], 'log')
 summary_writer = MySummaryWriter(log_dir)
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
-              init_file='VG07_6.binvox', headless=args.headless, is_augment_env=True)
+              init_file='VG07_6.binvox', headless=args.headless, is_augment_env=False)
 player = Agent(params, summary_writer)
 
 all_mean_rewards = []
@@ -114,7 +114,7 @@ def main_loop():
             observed_map = observed_map_next.copy()
             robot_pose = robot_pose_next.copy()
             # train
-            loss = player.learn(memory_config_dir=params['memory_config_dir'])
+            loss = player.learn()
 
             time_step += 1
             # record

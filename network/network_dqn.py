@@ -387,6 +387,33 @@ class DQN_Network13(torch.nn.Module):
         return val
 
 
+class DQN_Network_CartPole(nn.Module):
+    def __init__(self, input_size=4, hidden=256, action_size=2):
+        nn.Module.__init__(self)
+        self.l1 = nn.Linear(input_size, 256)
+        self.l2 = nn.Linear(256, action_size)
+
+    def forward(self, x):
+        x = F.relu(self.l1(x))
+        x = self.l2(x)
+        return x
+
+
+class DQN_Network_Dueling_CartPole(nn.Module):
+    def __init__(self, input_size=4, hidden=256, action_size=2):
+        nn.Module.__init__(self)
+        self.l1 = nn.Linear(input_size, hidden)
+        self.advantage = nn.Linear(hidden, action_size)
+
+        self.value = nn.Linear(hidden, 1)
+
+    def forward(self, x):
+        x = F.relu(self.l1(x))
+        advantage = self.advantage(x)
+        value = self.value(x)
+        return value + advantage - torch.mean(advantage, dim=1).unsqueeze(1)
+
+
 class DQN_Network12(torch.nn.Module):
     def __init__(self, action_size):
         super().__init__()
@@ -411,8 +438,8 @@ class DQN_Network12(torch.nn.Module):
                 torch.nn.init.zeros_(m.weight)
                 torch.nn.init.zeros_(m.bias)
 
-    def forward(self, frame, robot_pose):
-
+    def forward(self, state):
+        frame, robot_pose = state
         out_frame = F.relu(self.frame_con1(frame))
         # out_frame = F.relu(self.frame_con2(out_frame))
 
@@ -462,7 +489,8 @@ class DQN_Network11(torch.nn.Module):
                 torch.nn.init.zeros_(m.weight)
                 torch.nn.init.zeros_(m.bias)
 
-    def forward(self, frame, robot_pose):
+    def forward(self, state):
+        frame, robot_pose = state
 
         out_frame = F.relu(self.frame_con1(frame))
         # out_frame = F.relu(self.frame_con2(out_frame))
@@ -487,6 +515,65 @@ class DQN_Network11(torch.nn.Module):
 
         val = self.fc_val(out)
         return val
+
+
+class DQN_Network11_Dueling(torch.nn.Module):
+    def __init__(self, action_size):
+        super().__init__()
+        self.frame_con1 = torch.nn.Conv2d(15, 24, kernel_size=4, stride=2)
+        self.frame_fc1 = torch.nn.Linear(3264, 512)
+        self.frame_fc2 = torch.nn.Linear(512, 128)
+
+        self.pose_fc1a = torch.nn.Linear(3, 32)
+        self.pose_fc2a = torch.nn.Linear(32, 64)
+
+        self.pose_fc1b = torch.nn.Linear(3, 32)
+        self.pose_fc2b = torch.nn.Linear(32, 64)
+
+        self.pose_fc3 = torch.nn.Linear(256, 128)
+
+        self.pose_fc4 = torch.nn.Linear(128, 32)
+
+        # self.fc_val = torch.nn.Linear(32, action_size)
+
+        self.advantage = nn.Linear(32, action_size)
+
+        self.value = nn.Linear(32, 1)
+
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+    def forward(self, state):
+        frame, robot_pose = state
+
+        out_frame = F.relu(self.frame_con1(frame))
+        # out_frame = F.relu(self.frame_con2(out_frame))
+
+        out_frame = out_frame.reshape(out_frame.size()[0], -1)
+        # print("out frame shape:", out_frame.shape)
+        out_frame = F.relu(self.frame_fc1(out_frame))
+        out_frame = F.relu(self.frame_fc2(out_frame))
+
+        # print("robot_pose[:, 6:] shape:", robot_pose[:, 6:].shape)
+        out_pose_a = F.relu(self.pose_fc1a(robot_pose[:, 0:3]))
+        out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+        out_pose_b = F.relu(self.pose_fc1b(robot_pose[:, 3:6]))
+        out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+
+        out = torch.cat((out_frame, out_pose_a, out_pose_b), dim=1)
+        # print(out.shape)
+        out = F.relu(self.pose_fc3(out))
+
+        out = F.relu(self.pose_fc4(out))
+
+        advantage = self.advantage(out)
+        value = self.value(out)
+
+        return value + advantage - torch.mean(advantage, dim=1).unsqueeze(1)
 
 
 class DQN_Network10(torch.nn.Module):

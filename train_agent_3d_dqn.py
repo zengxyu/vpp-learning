@@ -2,7 +2,7 @@ import sys
 import os
 import argparse
 
-from agent.agent_dqn import Agent
+from old_agent.agent_dqn import Agent
 from field_env_3d_known_map import Action
 from field_env_3d_unknown_map import Field
 from util.summary_writer import MySummaryWriter
