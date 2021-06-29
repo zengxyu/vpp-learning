@@ -3,7 +3,6 @@ import os
 import logging
 import torch
 import torch.optim as optim
-from nn_builder.pytorch.NN import NN
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
