@@ -6,7 +6,7 @@ import time
 
 from scipy.spatial.transform.rotation import Rotation
 
-from agent.agent_dqn import Agent
+from old_agent.agent_dqn import Agent
 from field_ros import Field, Action
 from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network11, DQN_Network12
 from util.summary_writer import MySummaryWriter

@@ -2,7 +2,7 @@ import os
 import argparse
 import numpy as np
 import pickle
-from agent.random_agent_3d import RandomAgent
+from old_agent.random_agent_3d import RandomAgent
 from field_env_3d_unknown_map import Field, Action
 from memory.GridCellAccessRecord import GridCellAccessRecord
 from util.summary_writer import MySummaryWriter

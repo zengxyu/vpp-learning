@@ -400,21 +400,18 @@ class Field:
         # self.robot_pos = np.random.uniform(self.allowed_lower_bound, self.allowed_upper_bound)
         upper = np.clip(upper, np.array([0.0, 0.0, 0.0]), np.array([255.0, 255.0, 255.0]))
 
-        self.robot_pos = np.random.uniform(np.array([0.0, 0.0, 0.0]), upper)
-
+        # self.robot_pos = np.random.uniform(np.array([0.0, 0.0, 0.0]), upper)
+        self.robot_pos = np.array([0.0, 0.0, 0.0])
         # print("upper:{}; reset robot pose as:{}".format(upper, self.robot_pos))
         print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
 
-        self.robot_rot = Rotation.from_euler("xyz", np.array([0, 0, np.pi / 2]))
+        # self.robot_rot = Rotation.from_euler("xyz", np.array([0, 0, np.pi / 2]))
+        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
         self.step_count = 0
         self.found_targets = 0
         self.free_cells = 0
-        if self.is_augment_env:
-            if self.reset_count % self.augment_env_every == 0:
-                self.augment_env_every = max(self.augment_env_every - 1, 10)
-                print("augment the env!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                self.global_map = self.augment_env()
+        # if self.is_augment_env:uuut_env()
 
         if not self.headless:
             self.gui.messenger.send('reset', [], 'default')

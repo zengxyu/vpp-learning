@@ -6,7 +6,7 @@ import argparse
 
 from scipy.spatial.transform.rotation import Rotation
 
-from agent.agent_ppo_3d_unknown_map import Agent
+from old_agent.agent_ppo_3d_unknown_map import Agent
 from field_env_3d_unknown_map2 import Field, Action
 from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap6
 from util.summary_writer import MySummaryWriter
