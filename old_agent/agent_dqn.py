@@ -3,14 +3,11 @@ import random
 import os
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-
-import torch.optim as optim
-
 import numpy as np
 import torch
+import torch.optim as optim
 
 from memory.replay_buffer import PriorityReplayBuffer
-from network.network_dqn import DQN_Network, DQN_Network4
 
 
 class Agent:
@@ -108,23 +105,12 @@ class Agent:
         if True:
             tree_idx, minibatch, ISWeights = self.memory.sample()
             states, actions, rewards, next_states, dones = minibatch
-            # frames_in, robot_poses_in = states
-            # next_frames_in, next_robot_poses_in = next_states
-            # Get the action with max Q value
-            # if self.is_double:
-                # q_values = self.policy_net(next_robot_poses_in).detach()
-                # max_action_next = q_values.max(1)[1].unsqueeze(1)
-                # Q_target = self.target_net(next_frames_in, next_robot_poses_in).gather(1, max_action_next)
-                # Q_target = rewards + (self.gamma * Q_target * (1 - dones))
-                # Q_expected = self.policy_net(frames_in, robot_poses_in).gather(1, actions)
-            # else:
             q_values = self.target_net(next_states).detach()
             max_action_values = q_values.max(1)[0].unsqueeze(1)
             # If done just use reward, else update Q_target with discounted action values
             Q_target = rewards + (self.gamma * max_action_values * (1 - dones))
             Q_action_values = self.policy_net(states)
             Q_expected = Q_action_values.gather(1, actions)
-            # self.update_q_action_values(Q_action_values, robot_poses_in)
 
             self.optimizer.zero_grad()
             loss = self.weighted_mse_loss(Q_expected, Q_target, ISWeights)

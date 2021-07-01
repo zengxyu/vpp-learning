@@ -30,7 +30,7 @@ struct Observation {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(d3d920ef8fc94d08, 3, 6)
+    CAPNP_DECLARE_STRUCT_HEADER(d3d920ef8fc94d08, 4, 6)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -83,6 +83,8 @@ public:
 
   inline bool hasRobotJoints() const;
   inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getRobotJoints() const;
+
+  inline  ::uint32_t getTotalRoiCells() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -173,6 +175,9 @@ public:
   inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initRobotJoints(unsigned int size);
   inline void adoptRobotJoints(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
   inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownRobotJoints();
+
+  inline  ::uint32_t getTotalRoiCells();
+  inline void setTotalRoiCells( ::uint32_t value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -500,6 +505,20 @@ inline void Observation::Builder::adoptRobotJoints(
 inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> Observation::Builder::disownRobotJoints() {
   return ::capnp::_::PointerHelpers< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
       ::capnp::bounded<5>() * ::capnp::POINTERS));
+}
+
+inline  ::uint32_t Observation::Reader::getTotalRoiCells() const {
+  return _reader.getDataField< ::uint32_t>(
+      ::capnp::bounded<6>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint32_t Observation::Builder::getTotalRoiCells() {
+  return _builder.getDataField< ::uint32_t>(
+      ::capnp::bounded<6>() * ::capnp::ELEMENTS);
+}
+inline void Observation::Builder::setTotalRoiCells( ::uint32_t value) {
+  _builder.setDataField< ::uint32_t>(
+      ::capnp::bounded<6>() * ::capnp::ELEMENTS, value);
 }
 
 }  // namespace
