@@ -56,7 +56,7 @@ params = {
     # folder params
 
     # output
-    'output_folder': "output_dqn_try_world19",
+    'output_folder': "output_reset_and_random",
     'log_folder': 'log',
     'model_folder': 'model',
     'memory_config_dir': "memory_config",
@@ -85,6 +85,8 @@ player = Agent(params, summary_writer, model_path=model_path if os.path.exists(m
 all_mean_rewards = []
 all_mean_losses = []
 
+randomize_every_episode = 20
+
 
 def main_loop():
     time_step = 0
@@ -94,6 +96,7 @@ def main_loop():
     print("shape:", observed_map.shape)
     for i_episode in range(params['num_episodes']):
         print("\nInfo:{}; episode {}".format(params['print_info'], i_episode))
+
         done = False
         rewards = []
         found_targets = []
@@ -101,6 +104,15 @@ def main_loop():
         e_start_time = time.time()
         step_count = 0
         zero_reward_consistant_count = 0
+        player.reset()
+        # observed_map, robot_pose = field.reset_and_randomize()
+
+        global randomize_every_episode
+        if i_episode % randomize_every_episode == 0:
+            observed_map, robot_pose = field.reset_and_randomize()
+            randomize_every_episode = max(randomize_every_episode - 1, 5)
+        else:
+            observed_map, robot_pose = field.reset()
         while not done:
             step_count += 1
             # robot direction
@@ -163,10 +175,6 @@ def main_loop():
                 print("actions:{}".format(np.array(actions)))
                 print("rewards:{}".format(np.array(rewards)))
                 # print("mean rewards2:{}; new visit cell num: {}".format(np.sum(rewards2), np.sum(rewards2) / r_ratio))
-                player.reset()
-                observed_map, robot_pose = field.reset()
-                rewards = []
-                rewards2 = []
 
                 if (i_episode + 1) % 3 == 0:
                     # plt.cla()

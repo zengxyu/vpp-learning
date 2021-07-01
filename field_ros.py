@@ -128,12 +128,12 @@ class Field:
 
         relative_pose = np.append(relative_move * self.MOVE_STEP, relative_rot).tolist()
         start_time = time.time()
-        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells = self.client.sendRelativePose(
+        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
             relative_pose)
         # print("sendRelativeTime:{}".format(time.time() - start_time))
         self.found_targets += reward
         self.step_count += 1
-        done = self.step_count >= self.max_steps or self.found_targets >= totalRoiCells
+        done = self.step_count >= self.max_steps
         # unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
@@ -142,6 +142,23 @@ class Field:
         return map, robotPose, reward, done
 
     def reset(self):
+        print("reset!")
+        self.reset_count += 1
+        self.known_map = np.zeros(self.shape)
+
+        self.step_count = 0
+        self.found_targets = 0
+        self.free_cells = 0
+        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendReset()
+        # unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells = self.client.sendReset()
+        # print("total roi cells:{}".format(totalRoiCells))
+
+        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
+
+        return map, robotPose
+
+    def reset_and_randomize(self):
+        print("reset and randomize!")
         self.reset_count += 1
         self.known_map = np.zeros(self.shape)
 
@@ -149,8 +166,9 @@ class Field:
         self.found_targets = 0
         self.free_cells = 0
 
-        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells = self.client.sendReset()
-        print("total roi cells:{}".format(totalRoiCells))
+        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendResetAndRandomize(
+            [-1, -1, -0.1], [1, 1, 0.1], 0.4)
+        # print("total roi cells:{}".format(totalRoiCells))
 
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 

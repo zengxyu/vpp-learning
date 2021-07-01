@@ -3,12 +3,10 @@ import os
 import time
 import zmq
 import capnp
-
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "capnp"))
 import action_capnp
 import observation_capnp
 import numpy as np
-
 
 class EnvironmentClient:
     def __init__(self):
@@ -25,18 +23,16 @@ class EnvironmentClient:
 
         robotPose = self.poseToNumpyArray(obs_msg.robotPose)
         robotJoints = np.array(obs_msg.robotJoints)
-        totalRoiCells = obs_msg.totalRoiCells
-        if obs_msg.planningTime > 0:
-            reward = obs_msg.foundRois
-            # reward = obs_msg.foundRois / obs_msg.planningTime
-        else:
-            reward = 0
 
-        return unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells
+        # if obs_msg.planningTime > 0:
+        #     reward = obs_msg.foundRois
+        # else:
+        #     reward = 0
+        reward = obs_msg.foundRois
+        return unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward
 
     def poseToNumpyArray(self, pose):
-        return np.array([pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y,
-                         pose.orientation.z, pose.orientation.w])
+        return np.array([pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
 
     def encodeGoalPose(self, action_msg, data):
         action_msg.init("goalPose")
@@ -57,6 +53,16 @@ class EnvironmentClient:
         action_msg.relativePose.orientation.y = data[4]
         action_msg.relativePose.orientation.z = data[5]
         action_msg.relativePose.orientation.w = data[6]
+
+    def encodeRandomizationParameters(self, action_msg, min_point, max_point, min_dist):
+        action_msg.init("resetAndRandomize")
+        action_msg.resetAndRandomize.min.x = min_point[0]
+        action_msg.resetAndRandomize.min.y = min_point[1]
+        action_msg.resetAndRandomize.min.z = min_point[2]
+        action_msg.resetAndRandomize.max.x = max_point[0]
+        action_msg.resetAndRandomize.max.y = max_point[1]
+        action_msg.resetAndRandomize.max.z = max_point[2]
+        action_msg.resetAndRandomize.minDist = min_dist
 
     def sendAction(self, action_msg):
         self.socket.send(action_msg.to_bytes())
@@ -91,13 +97,16 @@ class EnvironmentClient:
         action_msg.reset = None
         return self.sendAction(action_msg)
 
+    def sendResetAndRandomize(self, min_point, max_point, min_dist):
+        action_msg = action_capnp.Action.new_message()
+        self.encodeRandomizationParameters(action_msg, min_point, max_point, min_dist)
+        return self.sendAction(action_msg)
+
 
 def main(args):
     client = EnvironmentClient()
-    # unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells = client.sendRelativeJointTarget(
-    #     [-0.1, 0, 0, 0, 0, 0])  # client.sendRelativePose([0.1, 0, 0, 0, 0, 0, 1])
-    unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells = client.sendRelativePose(
-        [-0.1, 0, 0, 0, 0, 0,1])  # client.sendRelativePose([0.1, 0, 0, 0, 0, 0, 1])
+
+    unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0]) # client.sendRelativePose([0.1, 0, 0, 0, 0, 0, 1])
     print("unknownCount")
     print(unknownCount)
     print("freeCount")
@@ -111,8 +120,7 @@ def main(args):
     print("robotJoints")
     print(robotJoints)
     print("Reward", reward)
-    print("totalRoiCells", totalRoiCells)
-
+    client.sendResetAndRandomize([-1, -1, -0.1], [1, 1, 0.1], 0.4)
 
 if __name__ == '__main__':
     main(sys.argv)

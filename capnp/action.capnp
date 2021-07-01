@@ -3,7 +3,14 @@
 using Cxx = import "/capnp/c++.capnp";
 $Cxx.namespace("vpp_msg");
 
+using import "pose.capnp".Point;
 using import "pose.capnp".Pose;
+
+struct RandomizationParameters {
+  min @0 :Point;
+  max @1 :Point;
+  minDist @2 :Float64;
+}
 
 struct Action {
   union {
@@ -13,5 +20,6 @@ struct Action {
     absoluteJointTarget @3 :List(Float64);
     goalPose @4 :Pose;
     relativePose @5 :Pose;
+    resetAndRandomize @6 :RandomizationParameters;
   }
 }
