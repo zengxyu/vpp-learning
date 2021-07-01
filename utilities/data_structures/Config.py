@@ -1,5 +1,9 @@
+from utilities.data_structures.Constant import ExplorationStrategy
+
+
 class Config(object):
     """Object to hold the config requirements for an agent/game"""
+
     def __init__(self):
         self.seed = None
         self.environment = None

@@ -36,6 +36,8 @@ class Base_Agent_DQN:
         net = Model(action_size=self.hyperparameters['action_size']).to(self.device)
         return net
 
+
+
     # def create_NN(self, input_dim=4, output_dim=2, key_to_use=None, override_seed=None, hyperparameters=None):
     #     """Creates a neural network for the agents to use"""
     #     if hyperparameters is None: hyperparameters = self.hyperparameters
@@ -45,22 +47,6 @@ class Base_Agent_DQN:
     #     else:
     #         seed = self.config.seed
 
-    # default_hyperparameter_choices = {"output_activation": None, "hidden_activations": "relu", "dropout": 0.0,
-    #                                   "initialiser": "default", "batch_norm": False,
-    #                                   "columns_of_data_to_be_embedded": [],
-    #                                   "embedding_dimensions": [], "y_range": ()}
-    #
-    # for key in default_hyperparameter_choices:
-    #     if key not in hyperparameters.keys():
-    #         hyperparameters[key] = default_hyperparameter_choices[key]
-    #
-    # return NN(input_dim=input_dim, layers_info=hyperparameters["linear_hidden_units"] + [output_dim],
-    #           output_activation=hyperparameters["final_layer_activation"],
-    #           batch_norm=hyperparameters["batch_norm"], dropout=hyperparameters["dropout"],
-    #           hidden_activations=hyperparameters["hidden_activations"], initialiser=hyperparameters["initialiser"],
-    #           columns_of_data_to_be_embedded=hyperparameters["columns_of_data_to_be_embedded"],
-    #           embedding_dimensions=hyperparameters["embedding_dimensions"], y_range=hyperparameters["y_range"],
-    #           random_seed=seed).to(self.device)
 
     def load_model(self, net, file_path, map_location):
         state_dict = torch.load(file_path, map_location=map_location)

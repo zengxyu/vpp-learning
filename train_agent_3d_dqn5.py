@@ -1,8 +1,6 @@
 import sys
 import os
 
-from utilities.data_structures.Config import Config
-
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 import argparse
@@ -11,11 +9,11 @@ import numpy as np
 
 from scipy.spatial.transform.rotation import Rotation
 from agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay import DDQN_With_Prioritised_Experience_Replay
-from old_agent.agent_dqn import Agent
 from field_ros import Field, Action
 from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network11, DQN_Network12, \
     DQN_Network11_Dueling
 from util.summary_writer import MySummaryWriter
+from utilities.data_structures.Config import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
@@ -29,7 +27,7 @@ random starting point, gradually increase the range, fix starting robot rotation
 
 config = Config()
 config.seed = 1
-config.num_episodes_to_run = 450
+config.num_episodes_to_run = 40000
 config.file_to_save_data_results = "results/data_and_graphs/Cart_Pole_Results_Data.pkl"
 config.file_to_save_results_graph = "results/data_and_graphs/Cart_Pole_Results_Graph.png"
 config.show_solution_score = False
@@ -54,8 +52,10 @@ config.hyperparameters = {
         "learning_rate": 1e-4,
         "batch_size": 128,
         "buffer_size": 40000,
-        "epsilon": 1.0,
+        'exploration_strategy': ExplorationStrategy.EXPONENT_STRATEGY,
+
         "epsilon_decay_rate_denominator": 1,
+
         "discount_rate": 0.90,
         "tau": 0.01,
         "alpha_prioritised_replay": 0.6,
@@ -71,85 +71,19 @@ config.hyperparameters = {
         'action_size': len(Action)
 
     },
-    "Stochastic_Policy_Search_Agents": {
-        "policy_network_type": "Linear",
-        "noise_scale_start": 1e-2,
-        "noise_scale_min": 1e-3,
-        "noise_scale_max": 2.0,
-        "noise_scale_growth_factor": 2.0,
-        "stochastic_action_decision": False,
-        "num_policies": 10,
-        "episodes_per_policy": 1,
-        "num_policies_to_keep": 5,
-        "clip_rewards": False
-    },
-    "Policy_Gradient_Agents": {
-        "learning_rate": 0.05,
-        "linear_hidden_units": [20, 20],
-        "final_layer_activation": "SOFTMAX",
-        "learning_iterations_per_round": 5,
-        "discount_rate": 0.99,
-        "batch_norm": False,
-        "clip_epsilon": 0.1,
-        "episodes_per_learning_round": 4,
-        "normalise_rewards": True,
-        "gradient_clipping_norm": 7.0,
-        "mu": 0.0,  # only required for continuous action games
-        "theta": 0.0,  # only required for continuous action games
-        "sigma": 0.0,  # only required for continuous action games
-        "epsilon_decay_rate_denominator": 1.0,
-        "clip_rewards": False
-    },
-
-    "Actor_Critic_Agents": {
-
-        "learning_rate": 0.005,
-        "linear_hidden_units": [20, 10],
-        "final_layer_activation": ["SOFTMAX", None],
-        "gradient_clipping_norm": 5.0,
-        "discount_rate": 0.99,
-        "epsilon_decay_rate_denominator": 1.0,
-        "normalise_rewards": True,
-        "exploration_worker_difference": 2.0,
-        "clip_rewards": False,
-
-        "Actor": {
-            "learning_rate": 0.0003,
-            "linear_hidden_units": [64, 64],
-            "final_layer_activation": "Softmax",
-            "batch_norm": False,
-            "tau": 0.005,
-            "gradient_clipping_norm": 5,
-            "initialiser": "Xavier"
-        },
-
-        "Critic": {
-            "learning_rate": 0.0003,
-            "linear_hidden_units": [64, 64],
-            "final_layer_activation": None,
-            "batch_norm": False,
-            "buffer_size": 1000000,
-            "tau": 0.005,
-            "gradient_clipping_norm": 5,
-            "initialiser": "Xavier"
-        },
-
-        "min_steps_before_learning": 400,
-        "batch_size": 256,
-        "discount_rate": 0.99,
-        "mu": 0.0,  # for O-H noise
-        "theta": 0.15,  # for O-H noise
-        "sigma": 0.25,  # for O-H noise
-        "action_noise_std": 0.2,  # for TD3
-        "action_noise_clipping_range": 0.5,  # for TD3
-        "update_every_n_steps": 1,
-        "learning_updates_per_learning_session": 1,
-        "automatically_tune_entropy_hyperparameter": True,
-        "entropy_term_weight": None,
-        "add_extra_noise": False,
-        "do_evaluation_iterations": True
-    }
 }
+
+exploration_strategy_config = {ExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
+                                                                      'epsilon_decay_denominator': 1.0},
+                               ExplorationStrategy.EXPONENT_STRATEGY: {"epsilon": 0.5,
+                                                                       "epsilon_decay_rate": 0.99999,
+                                                                       "epsilon_min": 0.15},
+                               ExplorationStrategy.CYCLICAL_STRATEGY: {"exploration_cycle_episodes_length": 100}
+                               }
+
+config.hyperparameters['DQN_Agents'].update(
+    exploration_strategy_config[config.hyperparameters['DQN_Agents']['exploration_strategy']])
+
 config.log_folder = os.path.join(config.output_folder, config.log_folder)
 config.model_folder = os.path.join(config.output_folder, config.model_folder)
 if not os.path.exists(config.log_folder):
@@ -161,7 +95,7 @@ model_path = ""
 
 summary_writer = MySummaryWriter(config.log_folder)
 
-field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=500,
+field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
 
 player = config.agent(config)
@@ -239,7 +173,6 @@ def main_loop():
             if not args.headless:
                 threading.Thread.considerYield()
 
-            # rewards.append(reward)
             if done:
                 print("\nepisode {} over".format(i_episode))
                 print("mean rewards1:{}".format(np.sum(rewards)))
@@ -247,10 +180,7 @@ def main_loop():
                 print("actions:{}".format(np.array(actions)))
                 print("rewards:{}".format(np.array(rewards)))
 
-                rewards = []
-
                 if (i_episode + 1) % 3 == 0:
-                    # plt.cla()
                     model_save_path = os.path.join(config.model_folder,
                                                    "Agent_dqn_state_dict_%d.mdl" % (i_episode + 1))
                     player.store_model(model_save_path)
