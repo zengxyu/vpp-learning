@@ -14,6 +14,7 @@ from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Ne
     DQN_Network_Dueling_CartPole
 from util.summary_writer import MySummaryWriter
 from utilities.data_structures.Config import Config
+from utilities.data_structures.Constant import ExplorationStrategy
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -27,7 +28,7 @@ if not args.headless:
 
 config = Config()
 config.seed = 1
-config.num_episodes_to_run = 50000
+config.num_episodes_to_run = 4000
 config.file_to_save_data_results = "results/data_and_graphs/Cart_Pole_Results_Data.pkl"
 config.file_to_save_results_graph = "results/data_and_graphs/Cart_Pole_Results_Graph.png"
 config.show_solution_score = False
@@ -43,7 +44,7 @@ config.model = DQN_Network11_Dueling
 config.agent = DDQN_With_Prioritised_Experience_Replay
 config.is_train = True
 
-config.output_folder = "output_dqn_21_28_06_dueling"
+config.output_folder = "output_ddqn_prb_dueling"
 config.log_folder = "log"
 config.model_folder = "model"
 
@@ -52,8 +53,9 @@ config.hyperparameters = {
         "learning_rate": 1e-4,
         "batch_size": 128,
         "buffer_size": 40000,
-        "epsilon": 1.0,
+        'exploration_strategy': ExplorationStrategy.EXPONENT_STRATEGY,
         "epsilon_decay_rate_denominator": 1,
+
         "discount_rate": 0.90,
         "tau": 0.01,
         "alpha_prioritised_replay": 0.6,
@@ -69,94 +71,25 @@ config.hyperparameters = {
         'action_size': len(Action)
 
     },
-    "Stochastic_Policy_Search_Agents": {
-        "policy_network_type": "Linear",
-        "noise_scale_start": 1e-2,
-        "noise_scale_min": 1e-3,
-        "noise_scale_max": 2.0,
-        "noise_scale_growth_factor": 2.0,
-        "stochastic_action_decision": False,
-        "num_policies": 10,
-        "episodes_per_policy": 1,
-        "num_policies_to_keep": 5,
-        "clip_rewards": False
-    },
-    "Policy_Gradient_Agents": {
-        "learning_rate": 0.05,
-        "linear_hidden_units": [20, 20],
-        "final_layer_activation": "SOFTMAX",
-        "learning_iterations_per_round": 5,
-        "discount_rate": 0.99,
-        "batch_norm": False,
-        "clip_epsilon": 0.1,
-        "episodes_per_learning_round": 4,
-        "normalise_rewards": True,
-        "gradient_clipping_norm": 7.0,
-        "mu": 0.0,  # only required for continuous action games
-        "theta": 0.0,  # only required for continuous action games
-        "sigma": 0.0,  # only required for continuous action games
-        "epsilon_decay_rate_denominator": 1.0,
-        "clip_rewards": False
-    },
-
-    "Actor_Critic_Agents": {
-
-        "learning_rate": 0.005,
-        "linear_hidden_units": [20, 10],
-        "final_layer_activation": ["SOFTMAX", None],
-        "gradient_clipping_norm": 5.0,
-        "discount_rate": 0.99,
-        "epsilon_decay_rate_denominator": 1.0,
-        "normalise_rewards": True,
-        "exploration_worker_difference": 2.0,
-        "clip_rewards": False,
-
-        "Actor": {
-            "learning_rate": 0.0003,
-            "linear_hidden_units": [64, 64],
-            "final_layer_activation": "Softmax",
-            "batch_norm": False,
-            "tau": 0.005,
-            "gradient_clipping_norm": 5,
-            "initialiser": "Xavier"
-        },
-
-        "Critic": {
-            "learning_rate": 0.0003,
-            "linear_hidden_units": [64, 64],
-            "final_layer_activation": None,
-            "batch_norm": False,
-            "buffer_size": 1000000,
-            "tau": 0.005,
-            "gradient_clipping_norm": 5,
-            "initialiser": "Xavier"
-        },
-
-        "min_steps_before_learning": 400,
-        "batch_size": 256,
-        "discount_rate": 0.99,
-        "mu": 0.0,  # for O-H noise
-        "theta": 0.15,  # for O-H noise
-        "sigma": 0.25,  # for O-H noise
-        "action_noise_std": 0.2,  # for TD3
-        "action_noise_clipping_range": 0.5,  # for TD3
-        "update_every_n_steps": 1,
-        "learning_updates_per_learning_session": 1,
-        "automatically_tune_entropy_hyperparameter": True,
-        "entropy_term_weight": None,
-        "add_extra_noise": False,
-        "do_evaluation_iterations": True
-    }
 }
+
+exploration_strategy_config = {ExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
+                                                                      'epsilon_decay_denominator': 1.0},
+                               ExplorationStrategy.EXPONENT_STRATEGY: {"epsilon": 0.5,
+                                                                       "epsilon_decay_rate": 0.99999,
+                                                                       "epsilon_min": 0.15},
+                               ExplorationStrategy.CYCLICAL_STRATEGY: {"exploration_cycle_episodes_length": 100}
+                               }
+
+config.hyperparameters['DQN_Agents'].update(
+    exploration_strategy_config[config.hyperparameters['DQN_Agents']['exploration_strategy']])
+
 config.log_folder = os.path.join(config.output_folder, config.log_folder)
 config.model_folder = os.path.join(config.output_folder, config.model_folder)
 if not os.path.exists(config.log_folder):
     os.makedirs(config.log_folder)
 if not os.path.exists(config.model_folder):
     os.makedirs(config.model_folder)
-
-# model_path = os.path.join(params['output_folder'], "model", "Agent_dqn_state_dict_1600.mdl")
-# model_path = os.path.join("output_dqn2", "model", "Agent_dqn_state_dict_54.mdl")
 
 summary_writer = MySummaryWriter(config.log_folder)
 
@@ -166,7 +99,6 @@ player = config.agent(config)
 
 all_mean_rewards = []
 all_mean_losses = []
-
 
 
 def main_loop():
