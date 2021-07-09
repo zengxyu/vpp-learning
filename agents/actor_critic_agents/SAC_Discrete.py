@@ -76,7 +76,7 @@ class SAC_Discrete(SAC):
             action = self.actor_pick_action(state=state, eval=True)
         elif self.global_step_number < self.hyperparameters["min_steps_before_learning"]:
             # action = np.random.rand(self.action_size) * 2 - 1
-            action = np.random.randint(0, self.action_size, 1)
+            action = np.random.randint(0, self.action_size)
             # action = self.action_space.sample()
         else:
             action = self.actor_pick_action(state=state)
