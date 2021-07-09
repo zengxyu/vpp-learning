@@ -14,6 +14,6 @@ output*
 __pycache__
 log
 log_bak
-buffer.obj
+output_reset_and_random3/experience/buffer.obj
 buffer_bak.obj
 model

@@ -223,11 +223,15 @@ def main(env, agent, Episode, batch_size):
 
     for episode in range(Episode):
         score = 0
+
         state = env.reset()
         for i in range(300):
             action = agent.get_action(state)
             # action output range[-1,1],expand to allowable range
-            action_in =  action * (action_range[1] - action_range[0]) / 2.0 +  (action_range[1] + action_range[0]) / 2.0
+            a = action_range[1] - action_range[0]
+            b = (action_range[1] + action_range[0]) / 2.0
+            action_in = action * a / 2.0 + b
+            # action_in =  action * (action_range[1] - action_range[0]) / 2.0 +  (action_range[1] + action_range[0]) / 2.0
 
             next_state, reward, done, _ = env.step(action_in)
             # print("reward:{}".format(reward))

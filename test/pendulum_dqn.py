@@ -21,8 +21,8 @@ class DQN():
 
         self.model = self.build_model()
         self.env = gym.make('CartPole-v0')
-        if not os.path.exists('model'):
-            os.mkdir('model')
+        if not os.path.exists('../model'):
+            os.mkdir('../model')
 
         if not os.path.exists('history'):
             os.mkdir('history')

@@ -33,12 +33,12 @@ class ReplayBuffer:
         Sample randomly and return (state, action, reward, next_state, done) tuple as torch tensors
         """
         "do normalization"
-
-        experiences = random.sample(self.memory, k=self.batch_size)
+        num = self.__len__() if self.__len__() < self.batch_size else self.batch_size
+        experiences = random.sample(self.memory, k=num)
 
         # Convert to torch tensors
         actions = torch.from_numpy(
-            np.vstack([experience.action for experience in experiences if experience is not None])).long().to(
+            np.vstack([experience.action for experience in experiences if experience is not None])).float().to(
             self.device)
         rewards = torch.from_numpy(
             np.vstack([experience.reward for experience in experiences if experience is not None])).float().to(
@@ -115,6 +115,17 @@ class PriorityReplayBuffer:
         self.tree.add(max_p, transition)  # set the max p for new p
         self.size += 1
 
+    def preload_experiences(self, experience):
+        vs, transitions = experience
+        for v, transition in zip(vs, transitions):
+            self.tree.add(v, transition)
+            self.size += 1
+
+    def get_all_experiences(self):
+        vs = self.tree.tree[-self.tree.capacity:]
+        transitions = self.tree.data[-self.tree.capacity:]
+        return vs[:self.size], transitions[:self.size]
+
     def sample(self, num_experiences=None):
         # Draws a random sample of experience from the replay buffer
         batch_size = self.batch_size if num_experiences is None else num_experiences
@@ -138,9 +149,6 @@ class PriorityReplayBuffer:
             b_idx[i], b_memory[i, :] = idx, data
 
         b_memory = self.to_tensor(b_memory)
-        if self.normalizer is not None:
-            print("normalize it")
-            b_memory = self.normalizer.normalize_mini_batch(b_memory)
         return torch.from_numpy(b_idx).to(self.device), b_memory, torch.from_numpy(ISWeights).to(self.device)
 
     def to_tensor(self, mini_batch):

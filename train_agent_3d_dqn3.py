@@ -78,7 +78,7 @@ summary_writer = MySummaryWriter(log_dir)
 
 field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
               init_file='VG07_6.binvox', headless=args.headless)
-replay_buffer_file = "buffer.obj"
+replay_buffer_file = "output_reset_and_random3/experience/buffer.obj"
 player = Agent(params, summary_writer,
                replay_buffer_file=replay_buffer_file if os.path.exists(replay_buffer_file) else "")
 

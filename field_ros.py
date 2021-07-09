@@ -73,7 +73,8 @@ class Field:
         self.reset_count = 0
         self.upper_scale = 1
         self.ratio = 0.1
-        self.client = EnvironmentClient()
+        self.client = EnvironmentClient(handle_simulation=True)
+        self.client.startSimulation()
 
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
@@ -142,7 +143,7 @@ class Field:
         return map, robotPose, reward, done
 
     def reset(self):
-        print("reset!")
+        print("-----------------------------------reset!-------------------------------------------")
         self.reset_count += 1
         self.known_map = np.zeros(self.shape)
 
@@ -158,7 +159,7 @@ class Field:
         return map, robotPose
 
     def reset_and_randomize(self):
-        print("reset and randomize!")
+        print("-------------------------------reset and randomize!-----------------------------------")
         self.reset_count += 1
         self.known_map = np.zeros(self.shape)
 
@@ -173,3 +174,11 @@ class Field:
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
         return map, robotPose
+
+    def shutdown_environment(self):
+        print('-----------------------------------SHUTDOWN--------------------------------')
+        self.client.shutdownSimulation()
+
+    def start_environment(self):
+        print('-----------------------------------RESTART---------------------------------')
+        self.client.startSimulation()

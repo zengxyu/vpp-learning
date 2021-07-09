@@ -95,7 +95,9 @@ class SAC(Base_Agent_AC):
         if eval_ep:
             action = self.actor_pick_action(state=state, eval=True)
         elif self.global_step_number < self.hyperparameters["min_steps_before_learning"]:
+            # action = np.random.rand(self.action_size)
             action = np.random.rand(self.action_size) * 2 - 1
+
             # action = self.action_space.sample()
             # print("Picking random action ", action)
         else:
@@ -142,7 +144,8 @@ class SAC(Base_Agent_AC):
 
     def learn(self):
         """Runs a learning iteration for the actor, both critics and (if specified) the temperature parameter"""
-        if self.enough_experiences_to_learn_from():
+        if True:
+            # print("learn")
             state_batch, action_batch, reward_batch, next_state_batch, mask_batch = self.sample_experiences()
 
             qf1_loss, qf2_loss = self.calculate_critic_losses(state_batch, action_batch, reward_batch, next_state_batch,
@@ -167,13 +170,13 @@ class SAC(Base_Agent_AC):
          term is taken into account"""
         with torch.no_grad():
             next_state_action, next_state_log_pi, _ = self.produce_action_and_action_info(next_state_batch)
-            qf1_next_target = self.critic_target(torch.cat((next_state_batch, next_state_action), 1))
-            qf2_next_target = self.critic_target_2(torch.cat((next_state_batch, next_state_action), 1))
+            qf1_next_target = self.critic_target(next_state_batch[0], next_state_batch[1], next_state_action)
+            qf2_next_target = self.critic_target_2(next_state_batch[0], next_state_batch[1], next_state_action)
             min_qf_next_target = torch.min(qf1_next_target, qf2_next_target) - self.alpha * next_state_log_pi
             next_q_value = reward_batch + (1.0 - mask_batch) * self.hyperparameters["discount_rate"] * (
                 min_qf_next_target)
-        qf1 = self.critic_local(torch.cat((state_batch, action_batch), 1))
-        qf2 = self.critic_local_2(torch.cat((state_batch, action_batch), 1))
+        qf1 = self.critic_local(state_batch[0], state_batch[1], action_batch)
+        qf2 = self.critic_local_2(state_batch[0], state_batch[1], action_batch)
         qf1_loss = F.mse_loss(qf1, next_q_value)
         qf2_loss = F.mse_loss(qf2, next_q_value)
         return qf1_loss, qf2_loss
@@ -181,8 +184,8 @@ class SAC(Base_Agent_AC):
     def calculate_actor_loss(self, state_batch):
         """Calculates the loss for the actor. This loss includes the additional entropy term"""
         action, log_pi, _ = self.produce_action_and_action_info(state_batch)
-        qf1_pi = self.critic_local(torch.cat((state_batch, action), 1))
-        qf2_pi = self.critic_local_2(torch.cat((state_batch, action), 1))
+        qf1_pi = self.critic_local(state_batch[0], state_batch[1], action)
+        qf2_pi = self.critic_local_2(state_batch[0], state_batch[1], action)
         min_qf_pi = torch.min(qf1_pi, qf2_pi)
         policy_loss = ((self.alpha * log_pi) - min_qf_pi).mean()
         return policy_loss, log_pi

@@ -98,6 +98,7 @@ def run_episode(environment):
         while True:
             environment.render()
             action = select_action(FloatTensor([state]))
+            print(action)
             action_np = action.detach().cpu().numpy()
             next_state, reward, done, _ = environment.step(action_np[0, 0])
             # negative reward when attempt ends
