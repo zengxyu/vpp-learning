@@ -95,7 +95,7 @@ class SAC(Base_Agent_AC):
         if eval_ep:
             action = self.actor_pick_action(state=state, eval=True)
         elif self.global_step_number < self.hyperparameters["min_steps_before_learning"]:
-            action = np.random.rand(self.action_size) * 2 - 1
+            action = np.rnn_andom.rand(self.action_size) * 2 - 1
             # action = self.action_space.sample()
             # print("Picking random action ", action)
         else:
