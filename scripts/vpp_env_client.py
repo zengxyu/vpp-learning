@@ -3,16 +3,38 @@ import os
 import time
 import zmq
 import capnp
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "capnp"))
 import action_capnp
 import observation_capnp
 import numpy as np
+import roslaunch
+
 
 class EnvironmentClient:
-    def __init__(self):
+    def __init__(self, handle_simulation=False):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
-        self.socket.connect("tcp://localhost:5555")
+        self.socket.bind("tcp://*:5555")
+
+        if handle_simulation:
+            self.uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+            roslaunch.configure_logging(self.uuid)
+            self.launch_file = roslaunch.rlutil.resolve_launch_arguments(['vpp_learning_ros', 'ur_with_cam.launch'])
+            self.launch_args = ['world_name:=world19', 'base:=retractable', 'gui:=false']
+            self.launch_files = [(self.launch_file[0], self.launch_args)]
+
+    def startSimulation(self):
+        self.parent = roslaunch.parent.ROSLaunchParent(self.uuid, self.launch_files)
+        self.parent.start()
+
+    def spinSimulationEventLoop(self):
+        self.parent.spin_once()
+
+    def shutdownSimulation(self):
+        print('Shutting down')
+        self.parent.shutdown()
+        print('Shutdown complete')
 
     def decodeObservation(self, obs_msg):
         shape = (obs_msg.layers, obs_msg.height, obs_msg.width)
@@ -24,15 +46,16 @@ class EnvironmentClient:
         robotPose = self.poseToNumpyArray(obs_msg.robotPose)
         robotJoints = np.array(obs_msg.robotJoints)
 
-        # if obs_msg.planningTime > 0:
-        #     reward = obs_msg.foundRois
-        # else:
-        #     reward = 0
-        reward = obs_msg.foundRois
+        if obs_msg.planningTime > 0:
+            reward = obs_msg.foundRois
+        else:
+            reward = 0
+
         return unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward
 
     def poseToNumpyArray(self, pose):
-        return np.array([pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
+        return np.array([pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y,
+                         pose.orientation.z, pose.orientation.w])
 
     def encodeGoalPose(self, action_msg, data):
         action_msg.init("goalPose")
@@ -104,23 +127,44 @@ class EnvironmentClient:
 
 
 def main(args):
-    client = EnvironmentClient()
+    # client = EnvironmentClient()
+    # unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0]) # client.sendRelativePose([0.1, 0, 0, 0, 0, 0, 1])
+    # print("unknownCount")
+    # print(unknownCount)
+    # print("freeCount")
+    # print(freeCount)
+    # print("occupiedCount")
+    # print(occupiedCount)
+    # print("roiCount")
+    # print(roiCount)
+    # print("robotPose")
+    # print(robotPose)
+    # print("robotJoints")
+    # print(robotJoints)
+    # print("Reward", reward)
+    # client.sendResetAndRandomize([-1, -1, -0.1], [1, 1, 0.1], 0.4)
 
-    unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0]) # client.sendRelativePose([0.1, 0, 0, 0, 0, 0, 1])
-    print("unknownCount")
-    print(unknownCount)
-    print("freeCount")
-    print(freeCount)
-    print("occupiedCount")
-    print(occupiedCount)
-    print("roiCount")
-    print(roiCount)
-    print("robotPose")
-    print(robotPose)
-    print("robotJoints")
-    print(robotJoints)
-    print("Reward", reward)
-    client.sendResetAndRandomize([-1, -1, -0.1], [1, 1, 0.1], 0.4)
+    client = EnvironmentClient(handle_simulation=True)
+    client.startSimulation()
+    print('SEND_RESET_1')
+    observation = client.sendResetAndRandomize([-1, -1, -0.1], [1, 1, 0.1], 0.4)
+    print('SEND_MOVE1_1')
+    observation = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0])
+    print('SEND_MOVE2_1')
+    observation = client.sendRelativeJointTarget([0, 0.1, 0, 0, 0, 0])
+    print('SHUTDOWN_1')
+    client.shutdownSimulation()
+    print('RESTART')
+    client.startSimulation()
+    print('SEND_RESET_2')
+    observation = client.sendResetAndRandomize([-1, -1, -0.1], [1, 1, 0.1], 0.4)
+    print('SEND_MOVE1_2')
+    observation = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0])
+    print('SEND_MOVE2_2')
+    observation = client.sendRelativeJointTarget([0, 0.1, 0, 0, 0, 0])
+    print('SHUTDOWN_2')
+    client.shutdownSimulation()
+
 
 if __name__ == '__main__':
     main(sys.argv)

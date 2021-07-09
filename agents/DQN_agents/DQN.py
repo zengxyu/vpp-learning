@@ -1,10 +1,8 @@
 from collections import Counter
 
 import torch
-import random
 import torch.optim as optim
 import torch.nn.functional as F
-import numpy as np
 from agents.Base_Agent_DQN import Base_Agent_DQN
 from exploration_strategies.Epsilon_Greedy_Exploration import Epsilon_Greedy_Exploration
 from memory.replay_buffer import ReplayBuffer
@@ -47,60 +45,6 @@ class DQN(Base_Agent_DQN):
                                                                                     "episode_number": self.episode_number})
 
         return action
-
-        # if state is None: state = self.state
-        # if isinstance(state, np.int64) or isinstance(state, int): state = np.array([state])
-        # state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
-        # if len(state.shape) < 2: state = state.unsqueeze(0)
-        # self.q_network_local.eval()  # puts network in evaluation mode
-        # with torch.no_grad():
-        #     action_values = self.q_network_local(state)
-        # self.q_network_local.train()  # puts network back in training mode
-        # action = self.exploration_strategy.perturb_action_for_exploration_purposes({"action_values": action_values,
-        #                                                                             "turn_off_exploration": self.turn_off_exploration,
-        #                                                                             "episode_number": self.episode_number})
-        # self.logger.info("Q values {} -- Action chosen {}".format(action_values, action))
-        # return action
-
-    # def pick_action(self, state):
-    #     if isinstance(state, list):
-    #         # print("state is a list")
-    #         frame, robot_pose = state
-    #         rnd = random.random()
-    #         self.eps = 0.5
-    #         eps_decay = 0.99999
-    #         eps_min = 0.15
-    #         self.eps = max(self.eps * eps_decay, eps_min)
-    #         if rnd < self.eps:
-    #             return np.random.randint(self.hyperparameters['action_size'])
-    #         else:
-    #             frame_in = torch.Tensor([frame]).to(self.device)
-    #             robot_pose_in = torch.Tensor([robot_pose]).to(self.device)
-    #
-    #             self.q_network_local.eval()
-    #             with torch.no_grad():
-    #                 q_val = self.q_network_local([frame_in, robot_pose_in])
-    #             self.q_network_local.train()
-    #             action = np.argmax(q_val.cpu().data.numpy())
-    #         return action
-    #     else:
-    #         # print("state is not a list")
-    #         rnd = random.random()
-    #         self.eps = 0.5
-    #         eps_decay = 0.99999
-    #         eps_min = 0.15
-    #         self.eps = max(self.eps * eps_decay, eps_min)
-    #         if rnd < self.eps:
-    #             return np.random.randint(self.hyperparameters['action_size'])
-    #         else:
-    #             state = torch.FloatTensor([state]).to(self.device)
-    #             self.q_network_local.eval()
-    #             with torch.no_grad():
-    #                 q_val = self.q_network_local(state)
-    #             self.q_network_local.train()
-    #             action = np.argmax(q_val.cpu().data.numpy())
-    #         # action = float(action)
-    #         return action
 
     def learn(self, experiences=None):
         """Runs a learning iteration for the Q network"""
@@ -154,6 +98,11 @@ class DQN(Base_Agent_DQN):
     def locally_save_policy(self):
         """Saves the policy"""
         torch.save(self.q_network_local.state_dict(), "Models/{}_local_network.pt".format(self.agent_name))
+
+    def reset(self):
+        self.episode_number += 1
+        # print("epsilon:{}".format(
+        #     self.exploration_strategy.perturb_action_for_exploration_purposes({"episode_number": self.episode_number})))
 
     # def reset_game(self):
     #     super(DQN, self).reset_game()

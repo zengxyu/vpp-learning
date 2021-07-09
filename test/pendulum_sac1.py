@@ -6,6 +6,7 @@ import collections
 import numpy as np
 import torch.nn.functional as F
 import torch.optim as optim
+import matplotlib.pyplot as plt
 from torch.distributions import Normal
 
 
@@ -140,8 +141,8 @@ class SAC:
     def __init__(self, env, gamma, tau, buffer_maxlen, value_lr, q_lr, policy_lr):
 
         self.env = env
-        self.state_dim = 4
-        self.action_dim = 2
+        self.state_dim = env.observation_space.shape[0]
+        self.action_dim = env.action_space.shape[0]
 
         # hyperparameters
         self.gamma = gamma
@@ -243,17 +244,16 @@ def main(env, agent, Episode, batch_size):
         print("episode:{}, Return:{}, buffer_capacity:{}".format(episode, score, agent.buffer.buffer_len()))
         Return.append(score)
         score = 0
-    # env.close()
-    # plt.plot(Return)
-    # plt.ylabel('Return')
-    # plt.xlabel("Episode")
-    # plt.grid(True)
-    # plt.show()
+    env.close()
+    plt.plot(Return)
+    plt.ylabel('Return')
+    plt.xlabel("Episode")
+    plt.grid(True)
+    plt.show()
 
 
 if __name__ == '__main__':
-    env = gym.make('CartPole-v0')
-    # env = gym.make("Pendulum-v0")
+    env = gym.make("Pendulum-v0")
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
     # Params

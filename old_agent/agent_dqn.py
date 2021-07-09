@@ -11,7 +11,7 @@ from memory.replay_buffer import PriorityReplayBuffer
 
 
 class Agent:
-    def __init__(self, params, summary_writer, model_path="", replay_buffer_file=""):
+    def __init__(self, params, summary_writer, model_in_pth="", exp_in_path=""):
         self.name = "grid world"
         self.params = params
         self.update_every = params['update_every']
@@ -21,7 +21,7 @@ class Agent:
         self.buffer_size = params['buffer_size']
         self.batch_size = params['batch_size']
         self.gamma = params['gamma']
-        self.is_double = params['is_double']
+        self.exp_in_path = exp_in_path
         self.seed = random.seed(42)
 
         self.action_size = params['action_size']
@@ -31,37 +31,37 @@ class Agent:
         print("gamma:", self.gamma)
         # 目标target
 
-        self.Model = params['model']
-        self.policy_net = self.Model(self.action_size).to(self.device)
-        self.target_net = self.Model(self.action_size).to(self.device)
-        if not model_path == "":
+        self.Network = params['network']
+        self.policy_net = self.Network(self.action_size).to(self.device)
+        self.target_net = self.Network(self.action_size).to(self.device)
+        if not model_in_pth == "":
             print("resume model")
-            self.load_model(file_path=model_path, map_location=self.device)
+            self.load_model(model_pth=model_in_pth, map_location=self.device)
             self.update_target_network()
             if not params['is_train']:
                 # 如果不是训练状态的话，不更新
                 self.update_every = 1000000000000000000
         print(self.policy_net)
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=1e-4)
-        if replay_buffer_file == "":
+        if exp_in_path == "":
             self.memory = PriorityReplayBuffer(buffer_size=self.buffer_size, batch_size=self.batch_size,
                                                device=self.device,
                                                normalizer=None, seed=self.seed)
         else:
-            self.memory = pickle.load(open(replay_buffer_file, 'rb'))
+            self.memory = pickle.load(open(exp_in_path, 'rb'))
             print("loaded replay buffer size:{}".format(self.memory.size))
         self.time_step = 0
 
     def step(self, state, action, reward, next_state, done):
         self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
         self.time_step += 1
-        # if self.time_step % 100 == 0:
-        #     print("save replay buffer to disk")
-        #     f = open("buffer.obj", 'wb')
-        #     pickle.dump(self.memory, f)
+        if self.time_step % 100 == 0:
+            print("save replay buffer to disk")
+            f = open(os.path.join(self.params['exp_sv'], 'buffer.obj'), 'wb')
+            pickle.dump(self.memory, f)
 
-    def load_model(self, file_path, map_location):
-        state_dict = torch.load(file_path, map_location=map_location)
+    def load_model(self, model_pth, map_location):
+        state_dict = torch.load(model_pth, map_location=map_location)
         self.policy_net.load_state_dict(state_dict)
 
     def store_model(self, file_path):
