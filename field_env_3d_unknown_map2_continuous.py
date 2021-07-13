@@ -345,15 +345,15 @@ class Field:
         rot = Rotation.from_rotvec(np.radians(angle) * axis)
         self.robot_rot = rot * self.robot_rot
 
-    def rotate_robot_aa(self, axis_angle):
-        rot = Rotation.from_rotvec(axis_angle)
+    def rotate_robot_aa(self, angle):
+        rot = Rotation.from_euler("xyz", angle)
         self.robot_rot = rot * self.robot_rot
 
     def step(self, action):
 
         self.move_robot(action[:3] * self.MOVE_STEP)
 
-        self.rotate_robot_aa(action[3:])
+        self.rotate_robot_aa(action[3:] * self.ROT_STEP)
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         new_targets_found, new_free_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,

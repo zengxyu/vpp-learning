@@ -10,7 +10,7 @@ import time
 import numpy as np
 
 from scipy.spatial.transform.rotation import Rotation
-from util.summary_writer import MySummaryWriter
+from utilities.summary_writer import MySummaryWriter
 from utilities.data_structures.Config import *
 from network.network_ac_discrete import *
 from agents.actor_critic_agents.SAC_Discrete import SAC_Discrete

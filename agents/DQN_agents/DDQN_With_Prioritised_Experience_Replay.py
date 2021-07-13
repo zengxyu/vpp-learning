@@ -15,12 +15,12 @@ class DDQN_With_Prioritised_Experience_Replay(DDQN):
         print(self.q_network_local)
         self.memory = PriorityReplayBuffer(buffer_size=self.hyperparameters['buffer_size'],
                                            batch_size=self.hyperparameters['batch_size'],
-                                           device=self.device, seed=self.seed)
+                                           device=self.device, is_discrete=True, seed=self.seed)
 
     def learn(self):
         """Runs a learning iteration for the Q network after sampling from the replay buffer in a prioritised way"""
         # sampled_experiences, importance_sampling_weights = self.memory.sample()
-        tree_idx, minibatch, ISWeights = self.memory.sample()
+        tree_idx, minibatch, ISWeights = self.memory.sample(is_vpp=self.config.environment['is_vpp'])
         states, actions, rewards, next_states, dones = minibatch
         # states, actions, rewards, next_states, dones = sampled_experiences
         loss, td_errors = self.compute_loss_and_td_errors(states, next_states, rewards, actions, dones, ISWeights)

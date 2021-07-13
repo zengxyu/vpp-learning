@@ -1,5 +1,4 @@
 import os
-from enum import IntEnum
 
 import numpy as np
 import argparse
@@ -8,10 +7,9 @@ from scipy.spatial.transform.rotation import Rotation
 
 from old_agent.agent_ppo_3d_unknown_map import Agent
 from field_env_3d_unknown_map import Field, Action
-from memory.GridCellAccessRecord import GridCellAccessRecord
-from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap2, PPOPolicy3DUnknownMap4, PPOPolicy3DUnknownMap5
-from util.summary_writer import MySummaryWriter
-from util.util import get_eu_distance
+from network.network_ppo_3d_unknown_map import PPOPolicy3DUnknownMap5
+from utilities.summary_writer import MySummaryWriter
+from utilities.util import get_eu_distance
 
 """
 robot_pose_input includes  np.concatenate([direction, diff_direction, robot_pose], axis=0)

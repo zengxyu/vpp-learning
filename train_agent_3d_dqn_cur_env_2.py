@@ -1,6 +1,4 @@
-import random
 import sys
-import os
 import argparse
 import time
 
@@ -8,9 +6,9 @@ from scipy.spatial.transform.rotation import Rotation
 
 from old_agent.agent_dqn import Agent
 from field_ros import Field, Action
-from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network11, DQN_Network12
-from util.summary_writer import SummaryWriterLogger
-from util.util import *
+from network.network_dqn import DQN_Network11
+from utilities.summary_writer import SummaryWriterLogger
+from utilities.util import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -175,9 +173,7 @@ def main_loop():
 
                 if (i_episode + 1) % 3 == 0:
                     # plt.cla()
-                    model_save_path = os.path.join(params['model_sv'],
-                                                   "Agent_dqn_state_dict_%d.mdl" % (i_episode + 1))
-                    player.store_model(model_save_path)
+                    save_model(player, config.foler, i_episode)
 
                 e_end_time = time.time()
                 print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))

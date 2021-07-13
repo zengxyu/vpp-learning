@@ -6,8 +6,8 @@ from scipy.spatial.transform.rotation import Rotation
 
 from old_agent.agent_dqn import Agent
 from field_env_3d_unknown_map2 import Field, Action
-from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network11
-from util.summary_writer import MySummaryWriter
+from network.network_dqn import DQN_Network11
+from utilities.summary_writer import MySummaryWriter
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -49,7 +49,7 @@ params = {
     'num_episodes': 5000000,
     'scale': 15,
     'use_gpu': False,
-    'model': DQN_Network11,
+    'network': DQN_Network11,
 
     # folder params
 

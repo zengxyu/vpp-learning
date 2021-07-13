@@ -96,6 +96,7 @@ class Field:
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
+        self.actions = Action
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         self.is_augment_env = is_augment_env

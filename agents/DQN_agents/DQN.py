@@ -99,7 +99,7 @@ class DQN(Base_Agent_DQN):
         """Saves the policy"""
         torch.save(self.q_network_local.state_dict(), "Models/{}_local_network.pt".format(self.agent_name))
 
-    def reset(self):
+    def reset(self, rolling_reward):
         self.episode_number += 1
         # print("epsilon:{}".format(
         #     self.exploration_strategy.perturb_action_for_exploration_purposes({"episode_number": self.episode_number})))
