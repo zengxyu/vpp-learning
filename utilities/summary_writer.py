@@ -73,10 +73,11 @@ class MySummaryWriter:
 
 
 class SummaryWriterLogger:
-    def __init__(self, log_sv_dir, lr_sv_dir, lr_in_dir="", save_every=1, smooth_every=200):
+    def __init__(self, config, log_sv_dir, lr_sv_dir, lr_in_dir="", save_every=1, smooth_every=200):
         assert log_sv_dir is not None, "Please input path to save log..."
         assert lr_sv_dir is not None, "Please input path to save loss and reward record..."
         self.writer = SummaryWriter(log_dir=log_sv_dir)
+        self.config = config
         self.lr_sv_path = lr_sv_dir
 
         self.save_every = save_every
@@ -86,6 +87,7 @@ class SummaryWriterLogger:
         self.ep_reward_ll = []
 
         self.init(lr_in_dir)
+        self.info(config)
 
     def init(self, lr_in_pth, verbose=True):
         """load the file from local"""
@@ -100,10 +102,22 @@ class SummaryWriterLogger:
                 self.update(ep_losses[i], ep_rewards[i], i, verbose=verbose)
             print("Loading done!")
 
-    def update(self, ep_loss, ep_reward, i_episode, verbose=True):
+    def info(self, config):
+        attrs = config.__dict__
+        count = 0
+        for key, value in attrs.items():
+            string = str(key) + ":" + str(value)
+            print(string)
+
+            self.writer.add_text('Info', string, count)
+            count += 1
+
+    def update(self, ep_loss, ep_reward, i_episode, verbose=True, n_smooth=30):
         """
         # ep_loss : mean loss of this episode
         # ep_reward : sum reward of this episode
+        return : mean ep_loss of last n episodes
+                mean ep_reward of last n episodes
         """
         self.ep_loss_ll.append(ep_loss)
         self.ep_reward_ll.append(ep_reward)
@@ -121,6 +135,11 @@ class SummaryWriterLogger:
 
         if i_episode % self.save_every == 0:
             self.save()
+
+        mean_loss_last_n_ep = np.mean(self.ep_loss_ll[max(0, i_episode - n_smooth):])
+        mean_reward_last_n_ep = np.mean(self.ep_reward_ll[max(0, i_episode - n_smooth):])
+
+        return mean_loss_last_n_ep, mean_reward_last_n_ep
 
     def save(self):
         """save ep_loss_ll and ep_reward_ll"""

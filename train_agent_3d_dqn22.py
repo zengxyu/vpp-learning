@@ -4,13 +4,10 @@ import argparse
 
 from scipy.spatial.transform.rotation import Rotation
 
-from agents.Base_Agent_DQN import Base_Agent_DQN
-from agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay import DDQN_With_Prioritised_Experience_Replay
 from agents.DQN_agents.DQN import DQN
-from agents.DQN_agents.DQN_With_Fixed_Q_Targets import DQN_With_Fixed_Q_Targets
 from field_env_3d_unknown_map2 import Field, Action
-from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network11
-from util.summary_writer import MySummaryWriter
+from network.network_dqn import DQN_Network11
+from utilities.summary_writer import MySummaryWriter
 from utilities.data_structures.Config import Config
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))

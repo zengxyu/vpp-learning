@@ -11,8 +11,9 @@ class Epsilon_Greedy_Exploration(Base_Exploration_Strategy):
     def __init__(self, hyperparameters):
         super().__init__(hyperparameters)
 
-        self.exploration_strategy = self.hyperparameters['exploration_strategy']
-        print("Using exploration strategy : {}".format(ExplorationStrategys.get(self.exploration_strategy)))
+        self.eps_exploration_strategy = self.hyperparameters['eps_exploration_strategy']
+        print("Using exploration strategy : {}".format(
+            EpsExplorationStrategies.get(self.eps_exploration_strategy)))
 
         if "random_episodes_to_run" in self.hyperparameters.keys():
             self.random_episodes_to_run = self.hyperparameters["random_episodes_to_run"]
@@ -24,10 +25,10 @@ class Epsilon_Greedy_Exploration(Base_Exploration_Strategy):
 
     def is_exploration_hyperparameters_valid(self):
         """validate whether the hyperparameters are valid"""
-        if self.exploration_strategy == ExplorationStrategy.INVERSE_STRATEGY:
+        if self.eps_exploration_strategy == EpsExplorationStrategy.INVERSE_STRATEGY:
             assert "epsilon" in self.hyperparameters.keys()
             assert "epsilon_decay_denominator" in self.hyperparameters.keys()
-        elif self.exploration_strategy == ExplorationStrategy.EXPONENT_STRATEGY:
+        elif self.eps_exploration_strategy == EpsExplorationStrategy.EXPONENT_STRATEGY:
             assert "epsilon" in self.hyperparameters.keys()
             assert "epsilon_decay_rate" in self.hyperparameters.keys()
             assert "epsilon_min" in self.hyperparameters.keys()
@@ -57,10 +58,10 @@ class Epsilon_Greedy_Exploration(Base_Exploration_Strategy):
 
         episode_number = action_info["episode_number"]
 
-        if self.exploration_strategy == ExplorationStrategy.INVERSE_STRATEGY:
+        if self.eps_exploration_strategy == EpsExplorationStrategy.INVERSE_STRATEGY:
             epsilon = calculate_epsilon_with_inverse_strategy(self.hyperparameters['epsilon'], episode_number,
                                                               self.hyperparameters['epsilon_decay_denominator'])
-        elif self.exploration_strategy == ExplorationStrategy.EXPONENT_STRATEGY:
+        elif self.eps_exploration_strategy == EpsExplorationStrategy.EXPONENT_STRATEGY:
             epsilon = calculate_epsilon_with_exponent_strategy(self.hyperparameters['epsilon'], episode_number,
                                                                self.hyperparameters['epsilon_decay_rate'],
                                                                self.hyperparameters['epsilon_min'])

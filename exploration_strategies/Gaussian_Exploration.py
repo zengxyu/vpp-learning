@@ -2,15 +2,15 @@ from exploration_strategies.Base_Exploration_Strategy import Base_Exploration_St
 import torch
 from torch.distributions.normal import Normal
 
+
 class Gaussian_Exploration(Base_Exploration_Strategy):
-
     """Gaussian noise exploration strategy"""
-    def __init__(self, config):
-        super().__init__(config)
-        self.action_noise_std = self.config.hyperparameters["action_noise_std"]
-        self.action_noise_distribution = Normal(torch.Tensor([0.0]), torch.Tensor([self.action_noise_std]))
-        self.action_noise_clipping_range = self.config.hyperparameters["action_noise_clipping_range"]
 
+    def __init__(self, hyperparameters):
+        super().__init__(hyperparameters)
+        self.action_noise_std = self.hyperparameters["action_noise_std"]
+        self.action_noise_distribution = Normal(torch.Tensor([0.0]), torch.Tensor([self.action_noise_std]))
+        self.action_noise_clipping_range = self.hyperparameters["action_noise_clipping_range"]
 
     def perturb_action_for_exploration_purposes(self, action_info):
         """Perturbs the action of the agent to encourage exploration"""
@@ -29,4 +29,3 @@ class Gaussian_Exploration(Base_Exploration_Strategy):
     def reset(self):
         """Resets the noise process"""
         pass
-

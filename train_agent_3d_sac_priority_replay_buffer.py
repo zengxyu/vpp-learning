@@ -1,7 +1,7 @@
 import sys
 import os
 
-from field_env_3d_unknown_map2_continuous import Action, Field
+from field_env_3d_unknown_map2_continuous import Field
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -10,10 +10,10 @@ import time
 import numpy as np
 
 from scipy.spatial.transform.rotation import Rotation
-from util.summary_writer import MySummaryWriter
+from utilities.summary_writer import MySummaryWriter
 from utilities.data_structures.Config import *
 from network.network_ac_continuous import *
-from agents.actor_critic_agents.SAC2 import SAC
+from agents.actor_critic_agents.SAC_Prioritised_Experience_Replay import SAC_Prioritised_Experience_Replay
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
@@ -48,7 +48,7 @@ config.save_model = False
 config.actor_network = SAC_PolicyNet3
 config.critic_network = SAC_QNetwork3
 
-config.agent = SAC
+config.agent = SAC_Prioritised_Experience_Replay
 config.is_train = True
 
 config.output_folder = "output_sac001"
@@ -167,6 +167,7 @@ def main_loop():
 
             action = player.pick_action([observed_map, robot_pose_input])
             time3 = time.time()
+            # print(action.shape)
             observed_map_next, robot_pose_next, reward, done = field.step(action)
 
             found_target = reward

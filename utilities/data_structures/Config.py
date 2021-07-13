@@ -1,4 +1,4 @@
-from utilities.data_structures.Constant import ExplorationStrategy
+from utilities.data_structures.Constant import EpsExplorationStrategy
 
 
 class Config(object):
@@ -7,20 +7,16 @@ class Config(object):
     def __init__(self):
         self.seed = None
         self.environment = None
-        self.requirements_to_solve_game = None
-        self.num_episodes_to_run = None
-        self.file_to_save_data_results = None
-        self.file_to_save_results_graph = None
-        self.runs_per_agent = None
-        self.visualise_overall_results = None
-        self.visualise_individual_results = None
+        self.agent = None
+
         self.hyperparameters = None
+        self.folder = None
+
+        self.learn_every = None
+        self.save_model_every = None
+
         self.use_GPU = None
-        self.overwrite_existing_results_file = None
-        self.save_model = False
-        self.standard_deviation_results = 1.0
-        self.randomise_random_seed = True
-        self.show_solution_score = False
-        self.debug_mode = False
+        self.debug_mode = None
+        self.is_train = None
 
-
+        self.num_episodes_to_run = None

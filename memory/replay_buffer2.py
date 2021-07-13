@@ -95,18 +95,18 @@ class PriorityReplayBuffer:
     beta_increment_per_sampling = 0.001
     abs_err_upper = 1.  # clipped abs error
 
-    def __init__(self, buffer_size, batch_size, device, is_discrete, seed=1337):
+    def __init__(self, buffer_size, batch_size, device, normalizer=None, seed=1337):
         self.tree = SumTree(buffer_size)
         self.buffer_size = buffer_size
         self.size = 0
         self.batch_size = batch_size
         self.device = device
-        self.is_discrete = is_discrete
+        self.normalizer = normalizer
         self.seed = random.seed(seed)
 
     def add_experience(self, state, action, reward, next_state, done):
         if isinstance(state, list):
-            transition = np.hstack(([state[0], state[1], action], reward, next_state, done))
+            transition = np.hstack((state, action, reward, next_state, done))
         else:
             transition = np.array([state, action, reward, next_state, done], dtype=object)
         max_p = np.max(self.tree.tree[-self.tree.capacity:])
@@ -126,7 +126,7 @@ class PriorityReplayBuffer:
         transitions = self.tree.data[-self.tree.capacity:]
         return vs[:self.size], transitions[:self.size]
 
-    def sample(self, is_vpp, num_experiences=None):
+    def sample(self, num_experiences=None):
         # Draws a random sample of experience from the replay buffer
         batch_size = self.batch_size if num_experiences is None else num_experiences
         b_idx, b_memory, ISWeights = np.empty((batch_size,), dtype=np.int32), np.empty(
@@ -148,42 +148,35 @@ class PriorityReplayBuffer:
             ISWeights[i, 0] = np.power(prob / min_prob, -self.beta)
             b_idx[i], b_memory[i, :] = idx, data
 
-        b_memory = self.to_tensor(b_memory, is_vpp)
+        b_memory = self.to_tensor(b_memory)
         return torch.from_numpy(b_idx).to(self.device), b_memory, torch.from_numpy(ISWeights).to(self.device)
 
-    def to_tensor(self, mini_batch, is_vpp):
+    def to_tensor(self, mini_batch):
         mini_batch = mini_batch.T
-        if is_vpp:
+        if mini_batch.shape[0] == 7:
             frames_in, robot_poses_in, actions, rewards, next_frames_in, next_robot_poses_in, dones = mini_batch
-            frames_in = self.to_float_tensor(frames_in)
-            robot_poses_in = self.to_float_tensor(robot_poses_in)
-
-            next_frames_in = self.to_float_tensor(next_frames_in)
-            next_robot_poses_in = self.to_float_tensor(next_robot_poses_in)
-            state_in = [frames_in, robot_poses_in]
-            next_state_in = [next_frames_in, next_robot_poses_in]
+            frames_in = self.to_float_tensor(frames_in).squeeze(1)
+            robot_poses_in = self.to_float_tensor(robot_poses_in).squeeze(1)
+            actions = self.to_long_tensor(actions)
+            rewards = self.to_float_tensor(rewards)
+            next_frames_in = self.to_float_tensor(next_frames_in).squeeze(1)
+            next_robot_poses_in = self.to_float_tensor(next_robot_poses_in).squeeze(1)
+            dones = self.to_long_tensor(dones)
+            return [[frames_in, robot_poses_in], actions, rewards, [next_frames_in, next_robot_poses_in], dones]
         else:
             state_in, actions, rewards, next_state_in, dones = mini_batch
-            state_in = self.to_float_tensor(state_in)
-            next_state_in = self.to_float_tensor(next_state_in)
-        actions = self.to_float_tensor(actions)
-        rewards = self.to_float_tensor(rewards)
-        dones = self.to_long_tensor(dones)
-        if self.is_discrete:
-            actions = actions.long()
-        if len(actions.shape) == 1:
-            actions = actions.unsqueeze(1)
-        if len(rewards.shape) == 1:
-            rewards = rewards.unsqueeze(1)
-        if len(dones.shape) == 1:
-            dones = dones.unsqueeze(1)
-        return [state_in, actions, rewards, next_state_in, dones]
+            state_in = self.to_float_tensor(state_in).squeeze(1)
+            actions = self.to_long_tensor(actions)
+            rewards = self.to_float_tensor(rewards)
+            next_state_in = self.to_float_tensor(next_state_in).squeeze(1)
+            dones = self.to_long_tensor(dones)
+            return [state_in, actions, rewards, next_state_in, dones]
 
     def to_float_tensor(self, object_array):
-        return torch.FloatTensor(np.array(object_array.tolist()).astype(np.float)).to(self.device)
+        return torch.FloatTensor(np.array(object_array.tolist()).astype(np.float)).unsqueeze(1).to(self.device)
 
     def to_long_tensor(self, object_array):
-        return torch.LongTensor(np.array(object_array.tolist()).astype(np.long)).to(self.device)
+        return torch.LongTensor(np.array(object_array.tolist()).astype(np.long)).unsqueeze(1).to(self.device)
 
     def batch_update(self, tree_idx, abs_errors):
         # Update the priority of the given index

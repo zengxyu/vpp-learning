@@ -1,3 +1,5 @@
+import random
+
 from agents.Base_Agent_AC import Base_Agent_AC
 from memory.replay_buffer import ReplayBuffer
 from utilities.OU_Noise import OU_Noise
@@ -68,19 +70,9 @@ class SAC(Base_Agent_AC):
 
         self.do_evaluation_iterations = self.hyperparameters["do_evaluation_iterations"]
 
-    def create_actor_network(self, state_dim, action_dim, output_dim):
-        ActorNetwork = self.config.actor_network
-        net = ActorNetwork(state_dim=state_dim, action_dim=action_dim)
-        return net
-
-    def create_critic_network(self, state_dim, action_dim, output_dim):
-        CriticNetwork = self.config.critic_network
-        net = CriticNetwork(state_dim=state_dim, action_dim=action_dim)
-        return net
-
     def step(self, state, action, reward, next_state, done):
-        self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
         self.global_step_number += 1
+        self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
 
     def pick_action(self, state, eval_ep=False):
         """Picks an action using one of three methods: 1) Randomly if we haven't passed a certain number of steps,
@@ -95,9 +87,7 @@ class SAC(Base_Agent_AC):
         if eval_ep:
             action = self.actor_pick_action(state=state, eval=True)
         elif self.global_step_number < self.hyperparameters["min_steps_before_learning"]:
-            action = np.rnn_andom.rand(self.action_size) * 2 - 1
-            # action = self.action_space.sample()
-            # print("Picking random action ", action)
+            action = np.random.rand(self.action_size) * 2 - 1
         else:
             action = self.actor_pick_action(state=state)
         if self.add_extra_noise:
@@ -167,13 +157,13 @@ class SAC(Base_Agent_AC):
          term is taken into account"""
         with torch.no_grad():
             next_state_action, next_state_log_pi, _ = self.produce_action_and_action_info(next_state_batch)
-            qf1_next_target = self.critic_target(torch.cat((next_state_batch, next_state_action), 1))
-            qf2_next_target = self.critic_target_2(torch.cat((next_state_batch, next_state_action), 1))
+            qf1_next_target = self.critic_target(next_state_batch, next_state_action)
+            qf2_next_target = self.critic_target_2(next_state_batch, next_state_action)
             min_qf_next_target = torch.min(qf1_next_target, qf2_next_target) - self.alpha * next_state_log_pi
             next_q_value = reward_batch + (1.0 - mask_batch) * self.hyperparameters["discount_rate"] * (
                 min_qf_next_target)
-        qf1 = self.critic_local(torch.cat((state_batch, action_batch), 1))
-        qf2 = self.critic_local_2(torch.cat((state_batch, action_batch), 1))
+        qf1 = self.critic_local(state_batch, action_batch)
+        qf2 = self.critic_local_2(state_batch, action_batch)
         qf1_loss = F.mse_loss(qf1, next_q_value)
         qf2_loss = F.mse_loss(qf2, next_q_value)
         return qf1_loss, qf2_loss
@@ -181,8 +171,8 @@ class SAC(Base_Agent_AC):
     def calculate_actor_loss(self, state_batch):
         """Calculates the loss for the actor. This loss includes the additional entropy term"""
         action, log_pi, _ = self.produce_action_and_action_info(state_batch)
-        qf1_pi = self.critic_local(torch.cat((state_batch, action), 1))
-        qf2_pi = self.critic_local_2(torch.cat((state_batch, action), 1))
+        qf1_pi = self.critic_local(state_batch, action)
+        qf2_pi = self.critic_local_2(state_batch, action)
         min_qf_pi = torch.min(qf1_pi, qf2_pi)
         policy_loss = ((self.alpha * log_pi) - min_qf_pi).mean()
         return policy_loss, log_pi

@@ -10,9 +10,8 @@ import numpy as np
 from scipy.spatial.transform.rotation import Rotation
 from agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay import DDQN_With_Prioritised_Experience_Replay
 from field_ros import Field, Action
-from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network11, DQN_Network12, \
-    DQN_Network11_Dueling
-from util.summary_writer import MySummaryWriter
+from network.network_dqn import DQN_Network11_Dueling
+from utilities.summary_writer import MySummaryWriter
 from utilities.data_structures.Config import *
 
 parser = argparse.ArgumentParser()
@@ -43,7 +42,7 @@ config.model = DQN_Network11_Dueling
 config.agent = DDQN_With_Prioritised_Experience_Replay
 config.is_train = True
 
-config.output_folder = "output_ros_ddqn_prb_dueling"
+config.output_folder = "output_ros_ddqn_prb_dueling222"
 config.log_folder = "log"
 config.model_folder = "model"
 
@@ -52,7 +51,7 @@ config.hyperparameters = {
         "learning_rate": 1e-4,
         "batch_size": 128,
         "buffer_size": 40000,
-        'exploration_strategy': ExplorationStrategy.EXPONENT_STRATEGY,
+        'exploration_strategy': EpsExplorationStrategy.EXPONENT_STRATEGY,
 
         "epsilon_decay_rate_denominator": 1,
 
@@ -73,12 +72,12 @@ config.hyperparameters = {
     },
 }
 
-exploration_strategy_config = {ExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
+exploration_strategy_config = {EpsExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
                                                                       'epsilon_decay_denominator': 1.0},
-                               ExplorationStrategy.EXPONENT_STRATEGY: {"epsilon": 0.5,
+                               EpsExplorationStrategy.EXPONENT_STRATEGY: {"epsilon": 0.5,
                                                                        "epsilon_decay_rate": 0.997,
                                                                        "epsilon_min": 0.10},
-                               ExplorationStrategy.CYCLICAL_STRATEGY: {"exploration_cycle_episodes_length": 100}
+                               EpsExplorationStrategy.CYCLICAL_STRATEGY: {"exploration_cycle_episodes_length": 100}
                                }
 
 config.hyperparameters['DQN_Agents'].update(

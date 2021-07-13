@@ -7,8 +7,8 @@ from scipy.spatial.transform.rotation import Rotation
 
 from old_agent.agent_dqn import Agent
 from field_joint_ros import Field, Action
-from network.network_dqn import DQN_Network6, DQN_Network8, DQN_Network9, DQN_Network11, DQN_Network12, DQN_Network13
-from util.summary_writer import MySummaryWriter
+from network.network_dqn import DQN_Network13
+from utilities.summary_writer import MySummaryWriter
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 

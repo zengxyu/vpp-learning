@@ -1,27 +1,32 @@
 import sys
+
 import gym
+
 import agents
 import network
+from config.config_ac import config
 from utilities.summary_writer import *
 from utilities.util import *
-from config.config_ac import config
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
+""" 收敛 : 20个Epsodes的时候开始出现收敛的迹象 reward = 700 reward稳定上升, 42个episode收敛到350"""
+
 # network
-config.actor_network = network.network_ac_continuous.SAC_PolicyNet
-config.critic_network = network.network_ac_continuous.SAC_QNetwork
-config.agent = agents.actor_critic_agents.SAC2.SAC
+config.actor_network = network.network_ac_continuous.TD3_PolicyNet
+config.critic_network = network.network_ac_continuous.TD3_QNetwork
+config.agent = agents.actor_critic_agents.TD3.TD3
 config.field = 'Pendulum-v0'
 
 # output
-config.folder['out_folder'] = "output_pendulum_sac"
+config.folder['out_folder'] = "output_pendulum_td3"
 config.folder['in_folder'] = ""
 config.folder = create_save_folder(config.folder)
 
 # Environment : Run in headless mode
 env = gym.make(config.field)
 config.environment = {
+    "reward_threshold": 0,
     "state_size": get_state_size(env),
     "action_size": get_action_size(env, "CONTINUOUS"),
     "action_shape": get_action_shape(env),
@@ -38,13 +43,12 @@ config.save_model_every = 50
 # summary writer
 summary_writer = SummaryWriterLogger(config, config.folder['log_sv'], config.folder['lr_sv'])
 
-
 action_range = [env.action_space.low, env.action_space.high]
 
 
 def main_loop():
     time_step = 0
-
+    mean_reward_last_n_ep = 0
     for i_episode in range(config.num_episodes_to_run):
         print("\nepisode {} start!".format(i_episode))
         done = False
@@ -52,12 +56,12 @@ def main_loop():
         rewards = []
         actions = []
         state = env.reset()
-        player.reset()
+        player.reset(mean_reward_last_n_ep)
         loss = 0
 
         while not done:
 
-            action = player.pick_action(state, eval_ep=False)
+            action = player.pick_action(state)
             action_in = (action - (-1)) * (action_range[1] - action_range[0]) / 2.0 + action_range[0]
             state_next, reward, done, _ = env.step(action_in)
             if done:
@@ -77,7 +81,7 @@ def main_loop():
             time_step += 1
 
             if done:
-                summary_writer.update(np.mean(losses), np.sum(rewards), i_episode)
+                _, mean_reward_last_n_ep = summary_writer.update(np.mean(losses), np.sum(rewards), i_episode)
                 print("episode {} over".format(i_episode))
 
     print('Complete')

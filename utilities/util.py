@@ -30,6 +30,11 @@ def create_save_folder(params):
 
     return params
 
+
+def save_model(player, params, i_episode):
+    player.store_model(model_sv_folder=params['model_sv'], i_episode=i_episode)
+
+
 def get_state_size(environment):
     """Gets the state_size for the gym env into the correct shape for a neural network"""
     random_state = environment.reset()
@@ -51,4 +56,3 @@ def get_action_size(environment, action_types):
 
 def get_action_shape(environment):
     return environment.action_space.shape
-
