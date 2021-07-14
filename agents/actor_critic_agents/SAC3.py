@@ -1,7 +1,5 @@
-import random
-
 from agents.Base_Agent_AC import Base_Agent_AC
-from memory.replay_buffer import ReplayBuffer, PriorityReplayBuffer
+from memory.replay_buffer import ReplayBuffer
 from utilities.OU_Noise import OU_Noise
 from torch.optim import Adam
 import torch
@@ -15,7 +13,7 @@ TRAINING_EPISODES_PER_EVAL_EPISODE = 10
 EPSILON = 1e-6
 
 
-class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
+class SAC(Base_Agent_AC):
     """Soft Actor-Critic model based on the 2018 paper https://arxiv.org/abs/1812.05905 and on this github implementation
       https://github.com/pranz24/pytorch-soft-actor-critic. It is an actor-critic algorithm where the agent is also trained
       to maximise the entropy of their actions as well as their cumulative reward"""
@@ -45,9 +43,9 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
                                                           action_dim=self.action_size, output_dim=1)
         Base_Agent_AC.copy_model_over(self.critic_local, self.critic_target)
         Base_Agent_AC.copy_model_over(self.critic_local_2, self.critic_target_2)
-        self.memory = PriorityReplayBuffer(buffer_size=self.hyperparameters['buffer_size'],
-                                           batch_size=self.hyperparameters['batch_size'],
-                                           device=self.device, seed=self.seed, is_discrete=False)
+        self.memory = ReplayBuffer(buffer_size=self.hyperparameters['buffer_size'],
+                                   batch_size=self.hyperparameters['batch_size'],
+                                   device=self.device, seed=self.seed)
         self.actor_local = self.create_actor_network(state_dim=self.state_size,
                                                      action_dim=self.action_size,
                                                      output_dim=self.action_size * 2)
@@ -81,8 +79,8 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
         return net
 
     def step(self, state, action, reward, next_state, done):
-        self.global_step_number += 1
         self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
+        self.global_step_number += 1
 
     def pick_action(self, state, eval_ep=False):
         """Picks an action using one of three methods: 1) Randomly if we haven't passed a certain number of steps,
@@ -97,18 +95,17 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
         if eval_ep:
             action = self.actor_pick_action(state=state, eval=True)
         elif self.global_step_number < self.hyperparameters["min_steps_before_learning"]:
+            # action = np.random.rand(self.action_size)
             action = np.random.rand(self.action_size) * 2 - 1
+
+            # action = self.action_space.sample()
+            # print("Picking random action ", action)
         else:
             action = self.actor_pick_action(state=state)
         if self.add_extra_noise:
             action += self.noise.sample()
         # print(action)
         return action
-
-    def calculate_epsilon_with_exponent_strategy(self, epsilon, episode_number, epsilon_decay, epsilon_min):
-        """Calculate epsilon according to an exponent of episode_number strategy"""
-        epsilon = max(epsilon * epsilon_decay ** episode_number, epsilon_min)
-        return epsilon
 
     def actor_pick_action(self, state=None, eval=False):
         """Uses actor to pick an action in one of two ways: 1) If eval = False and we aren't in eval mode then it picks
@@ -147,49 +144,60 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
 
     def learn(self):
         """Runs a learning iteration for the actor, both critics and (if specified) the temperature parameter"""
-        tree_idx, minibatch, ISWeights = self.memory.sample(is_vpp=self.config.environment['is_vpp'])
-        state_batch, action_batch, reward_batch, next_state_batch, mask_batch = minibatch
-        qf1_loss, td1_error, qf2_loss, td2_error = self.calculate_critic_losses(state_batch, action_batch,
-                                                                                reward_batch, next_state_batch,
-                                                                                mask_batch, ISWeights)
-        td_errors = torch.abs(td1_error) + torch.abs(td2_error)
+        if True:
+            # print("learn")
+            state_batch, action_batch, reward_batch, next_state_batch, mask_batch = self.sample_experiences()
 
-        self.update_critic_parameters(qf1_loss, qf2_loss)
-        self.update_memory_batch_errors(tree_idx, td_errors, reward_batch)
+            qf1_loss, qf2_loss = self.calculate_critic_losses(state_batch, action_batch, reward_batch, next_state_batch,
+                                                              mask_batch)
+            self.update_critic_parameters(qf1_loss, qf2_loss)
 
-        policy_loss, log_pi = self.calculate_actor_loss(state_batch)
-        if self.automatic_entropy_tuning:
-            alpha_loss = self.calculate_entropy_tuning_loss(log_pi)
-        else:
-            alpha_loss = None
-        self.update_actor_parameters(policy_loss, alpha_loss)
+            policy_loss, log_pi = self.calculate_actor_loss(state_batch)
+            if self.automatic_entropy_tuning:
+                alpha_loss = self.calculate_entropy_tuning_loss(log_pi)
+            else:
+                alpha_loss = None
+            self.update_actor_parameters(policy_loss, alpha_loss)
 
-        return qf1_loss.detach().cpu().numpy(), qf2_loss.detach().cpu().numpy(), policy_loss.detach().cpu().numpy()
+            return qf1_loss.detach().cpu().numpy(), qf2_loss.detach().cpu().numpy(), policy_loss.detach().cpu().numpy()
+        return 0, 0, 0
 
-    def calculate_critic_losses(self, state_batch, action_batch, reward_batch, next_state_batch, mask_batch, ISWeights):
+    def sample_experiences(self):
+        return self.memory.sample()
+
+    def calculate_critic_losses(self, state_batch, action_batch, reward_batch, next_state_batch, mask_batch):
         """Calculates the losses for the two critics. This is the ordinary Q-learning loss except the additional entropy
          term is taken into account"""
-
         with torch.no_grad():
             next_state_action, next_state_log_pi, _ = self.produce_action_and_action_info(next_state_batch)
-            qf1_next_target = self.critic_target(next_state_batch, next_state_action)
-            qf2_next_target = self.critic_target_2(next_state_batch, next_state_action)
+            qf1_next_target = self.critic_target(next_state_batch[0], next_state_batch[1], next_state_action)
+            qf2_next_target = self.critic_target_2(next_state_batch[0], next_state_batch[1], next_state_action)
             min_qf_next_target = torch.min(qf1_next_target, qf2_next_target) - self.alpha * next_state_log_pi
             next_q_value = reward_batch + (1.0 - mask_batch) * self.hyperparameters["discount_rate"] * (
                 min_qf_next_target)
-        qf1 = self.critic_local(state_batch, action_batch)
-        qf2 = self.critic_local_2(state_batch, action_batch)
-        qf1_loss = self.weighted_mse_loss(qf1, next_q_value, ISWeights)
-        qf2_loss = self.weighted_mse_loss(qf2, next_q_value, ISWeights)
+        qf1 = self.critic_local(state_batch[0], state_batch[1], action_batch)
+        qf2 = self.critic_local_2(state_batch[0], state_batch[1], action_batch)
+        qf1_loss = F.mse_loss(qf1, next_q_value)
+        qf2_loss = F.mse_loss(qf2, next_q_value)
+        return qf1_loss, qf2_loss
 
-        td1_errors = qf1 - next_q_value
-        td2_errors = qf2 - next_q_value
+    def calculate_actor_loss(self, state_batch):
+        """Calculates the loss for the actor. This loss includes the additional entropy term"""
+        action, log_pi, _ = self.produce_action_and_action_info(state_batch)
+        qf1_pi = self.critic_local(state_batch[0], state_batch[1], action)
+        qf2_pi = self.critic_local_2(state_batch[0], state_batch[1], action)
+        min_qf_pi = torch.min(qf1_pi, qf2_pi)
+        policy_loss = ((self.alpha * log_pi) - min_qf_pi).mean()
+        return policy_loss, log_pi
 
-        return qf1_loss, td1_errors, qf2_loss, td2_errors
+    def calculate_entropy_tuning_loss(self, log_pi):
+        """Calculates the loss for the entropy temperature parameter. This is only relevant if self.automatic_entropy_tuning
+        is True."""
+        alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy).detach()).mean()
+        return alpha_loss
 
     def update_critic_parameters(self, critic_loss_1, critic_loss_2):
         """Updates the parameters for both critics"""
-
         self.take_optimisation_step(self.critic_optimizer, self.critic_local, critic_loss_1,
                                     self.hyperparameters["Critic"]["gradient_clipping_norm"])
         self.take_optimisation_step(self.critic_optimizer_2, self.critic_local_2, critic_loss_2,
@@ -206,31 +214,6 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
         if alpha_loss is not None:
             self.take_optimisation_step(self.alpha_optim, None, alpha_loss, None)
             self.alpha = self.log_alpha.exp()
-
-    def update_memory_batch_errors(self, tree_idx, td_errors, rewards):
-        loss_reward_each_item = td_errors + rewards
-        loss_reward_each_item = loss_reward_each_item.detach().cpu().numpy()
-        tree_idx = tree_idx[:, np.newaxis]
-
-        self.memory.batch_update(tree_idx, loss_reward_each_item)
-
-    def weighted_mse_loss(self, input, target, weight):
-        return torch.sum(weight * (input - target) ** 2)
-
-    def calculate_actor_loss(self, state_batch):
-        """Calculates the loss for the actor. This loss includes the additional entropy term"""
-        action, log_pi, _ = self.produce_action_and_action_info(state_batch)
-        qf1_pi = self.critic_local(state_batch, action)
-        qf2_pi = self.critic_local_2(state_batch, action)
-        min_qf_pi = torch.min(qf1_pi, qf2_pi)
-        policy_loss = ((self.alpha * log_pi) - min_qf_pi).mean()
-        return policy_loss, log_pi
-
-    def calculate_entropy_tuning_loss(self, log_pi):
-        """Calculates the loss for the entropy temperature parameter. This is only relevant if self.automatic_entropy_tuning
-        is True."""
-        alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy).detach()).mean()
-        return alpha_loss
 
     def print_summary_of_latest_evaluation_episode(self):
         """Prints a summary of the latest episode"""

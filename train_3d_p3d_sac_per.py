@@ -12,15 +12,14 @@ from utilities.summary_writer import SummaryWriterLogger
 from utilities.util import *
 from config.config_ac import config
 
-"""不收敛 : DDPG奖励全是0"""
 # network
-config.actor_network = network.network_ac_continuous.DDPG_PolicyNet3
-config.critic_network = network.network_ac_continuous.DDPG_QNetwork3
-config.agent = agents.actor_critic_agents.DDPG.DDPG
+config.actor_network = network.network_ac_continuous.SAC_PER_PolicyNet3
+config.critic_network = network.network_ac_continuous.SAC_PER_QNetwork3
+config.agent = agents.actor_critic_agents.SAC_Prioritised_Experience_Replay.SAC_Prioritised_Experience_Replay
 config.field = field_env_3d_unknown_map2_continuous.Field
 
 # output
-config.folder['out_folder'] = "output_p3d_ddpg"
+config.folder['out_folder'] = "output_p3d_sac_per"
 config.folder['in_folder'] = ""
 config.folder = create_save_folder(config.folder)
 summary_writer = SummaryWriterLogger(config, config.folder['log_sv'], config.folder['lr_sv'])
@@ -34,6 +33,7 @@ field = config.field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.
                      init_file='VG07_6.binvox', headless=headless)
 
 config.environment = {
+    "is_vpp": True,
     "reward_threshold": 70000,
     "state_size": None,
     "action_size": 6,

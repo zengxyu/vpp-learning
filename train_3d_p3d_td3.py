@@ -89,19 +89,14 @@ def main_loop():
             rewards.append(reward)
             losses.append(loss)
             time_step += 1
-            # print(
-            #     "{}-th episode : {}-th step takes {} secs; action:{}; found target:{}; sum found targets:{}; reward:{}; sum reward:{}".format(
-            #         i_episode,
-            #         step_count,
-            #         time.time() - time3,
-            #         action, found_target, np.sum(found_targets) + found_target, reward,
-            #         np.sum(rewards) + reward))
+            print(
+                "{}-th episode :action:{}; reward:{}; sum reward:{}".format(i_episode, action, reward,
+                                                                            np.sum(rewards)))
             # record
             if not headless:
                 threading.Thread.considerYield()
 
             if done:
-
                 print("\nepisode {} over".format(i_episode))
                 print("robot pose: {}".format(robot_pose[:3]))
                 print("actions:{}".format(np.array(actions)))
@@ -109,8 +104,8 @@ def main_loop():
                 mean_loss_last_n_ep, mean_reward_last_n_ep = summary_writer.update(np.mean(losses), np.sum(rewards),
                                                                                    i_episode)
 
-                if (i_episode + 1) % config.save_model_every == 0:
-                    save_model(player, config.folder, i_episode)
+                # if (i_episode + 1) % config.save_model_every == 0:
+                #     save_model(player, config.folder, i_episode)
                 e_end_time = time.time()
                 print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
     print('Complete')

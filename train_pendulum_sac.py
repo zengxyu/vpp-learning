@@ -22,6 +22,7 @@ config.folder = create_save_folder(config.folder)
 # Environment : Run in headless mode
 env = gym.make(config.field)
 config.environment = {
+    "reward_threshold": 0,
     "state_size": get_state_size(env),
     "action_size": get_action_size(env, "CONTINUOUS"),
     "action_shape": get_action_shape(env),
@@ -38,7 +39,6 @@ config.save_model_every = 50
 # summary writer
 summary_writer = SummaryWriterLogger(config, config.folder['log_sv'], config.folder['lr_sv'])
 
-
 action_range = [env.action_space.low, env.action_space.high]
 
 
@@ -52,7 +52,7 @@ def main_loop():
         rewards = []
         actions = []
         state = env.reset()
-        player.reset()
+        player.reset(0)
         loss = 0
 
         while not done:

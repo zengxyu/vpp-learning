@@ -12,15 +12,14 @@ from utilities.summary_writer import SummaryWriterLogger
 from utilities.util import *
 from config.config_ac import config
 
-"""不收敛 : DDPG奖励全是0"""
 # network
-config.actor_network = network.network_ac_continuous.DDPG_PolicyNet3
-config.critic_network = network.network_ac_continuous.DDPG_QNetwork3
-config.agent = agents.actor_critic_agents.DDPG.DDPG
+config.actor_network = network.network_ac_continuous.TD3_PolicyNet3
+config.critic_network = network.network_ac_continuous.TD3_QNetwork3
+config.agent = agents.actor_critic_agents.TD3.TD3
 config.field = field_env_3d_unknown_map2_continuous.Field
 
 # output
-config.folder['out_folder'] = "output_p3d_ddpg"
+config.folder['out_folder'] = "output_p3d_td3"
 config.folder['in_folder'] = ""
 config.folder = create_save_folder(config.folder)
 summary_writer = SummaryWriterLogger(config, config.folder['log_sv'], config.folder['lr_sv'])
