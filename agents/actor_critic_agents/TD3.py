@@ -29,6 +29,12 @@ class TD3(DDPG):
                                              lr=self.hyperparameters["Critic"]["learning_rate"], eps=1e-4)
         self.exploration_strategy_critic = Gaussian_Exploration(self.hyperparameters)
 
+    def learn(self):
+        state_batch, action_batch, reward_batch, next_state_batch, mask_batch = self.sample_experiences()
+        critic_loss = self.critic_learn(state_batch, action_batch, reward_batch, next_state_batch, mask_batch)
+        if self.global_step_number % 3 == 0:
+            actor_loss = self.actor_learn(state_batch)
+        return critic_loss.detach().cpu().numpy()
 
     def compute_critic_values_for_next_states(self, next_states):
         """Computes the critic values for next states to be used in the loss for the critic"""
@@ -38,8 +44,7 @@ class TD3(DDPG):
                 {"action": actions_next})
             critic_targets_next_1 = self.critic_target(next_states, actions_next_with_noise)
             critic_targets_next_2 = self.critic_target_2(next_states, actions_next_with_noise)
-            critic_targets_next = torch.min(torch.cat((critic_targets_next_1, critic_targets_next_2), 1), dim=1)[
-                0].unsqueeze(-1)
+            critic_targets_next = torch.min(critic_targets_next_1, critic_targets_next_2)
         return critic_targets_next
 
     def critic_learn(self, states, actions, rewards, next_states, dones):

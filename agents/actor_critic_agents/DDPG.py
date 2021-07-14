@@ -129,7 +129,8 @@ class DDPG(Base_Agent_AC):
     def calculate_actor_loss(self, states):
         """Calculates the loss for the actor"""
         actions_pred = self.actor_local(states)
-        actor_loss = -self.critic_local(states, actions_pred).mean()
+        q_v = self.critic_local(states, actions_pred)
+        actor_loss = -q_v.mean()
         return actor_loss
 
     def reset(self, rolling_reward):

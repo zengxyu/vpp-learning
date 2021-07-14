@@ -14,7 +14,6 @@ config.hyperparameters = {
         "linear_hidden_units": [20, 10],
         "final_layer_activation": ["SOFTMAX", None],
         "gradient_clipping_norm": 5.0,
-        "discount_rate": 0.99,
         "epsilon_decay_rate_denominator": 1.0,
         "normalise_rewards": True,
         "exploration_worker_difference": 2.0,
