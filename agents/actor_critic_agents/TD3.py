@@ -28,9 +28,10 @@ class TD3(DDPG):
         self.critic_optimizer_2 = optim.Adam(self.critic_local_2.parameters(),
                                              lr=self.hyperparameters["Critic"]["learning_rate"], eps=1e-4)
         self.exploration_strategy_critic = Gaussian_Exploration(self.hyperparameters)
+        self.model_dict, self.optimizer_dict = self.__build_model_and_optimizer_dict()
 
     def learn(self):
-        state_batch, action_batch, reward_batch, next_state_batch, mask_batch = self.sample_experiences()
+        state_batch, action_batch, reward_batch, next_state_batch, mask_batch = self.memory.sample()
         critic_loss = self.critic_learn(state_batch, action_batch, reward_batch, next_state_batch, mask_batch)
         if self.global_step_number % 3 == 0:
             actor_loss = self.actor_learn(state_batch)
@@ -68,3 +69,18 @@ class TD3(DDPG):
                                            self.hyperparameters["Critic"]["tau"])
 
         return critic_loss_1
+
+    def __build_model_and_optimizer_dict(self):
+        model_dict = {"critic_local": self.critic_local,
+                      "critic_target": self.critic_target,
+                      "critic_local_2": self.critic_local_2,
+                      "critic_target_2": self.critic_target_2,
+                      "actor_local": self.actor_local,
+                      "actor_target": self.actor_target,
+
+                      }
+        optimizer_dict = {"critic_optimizer", self.critic_optimizer,
+                          "critic_optimizer_2", self.critic_optimizer_2,
+                          "actor_optimizer", self.actor_optimizer
+                          }
+        return model_dict, optimizer_dict

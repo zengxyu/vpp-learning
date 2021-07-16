@@ -1,0 +1,3 @@
+class ActionType:
+    DISCRETE = "DISCRETE"
+    CONTINUOUS = "CONTINUOUS"

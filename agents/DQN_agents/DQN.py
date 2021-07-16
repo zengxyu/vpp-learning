@@ -14,17 +14,16 @@ class DQN(Base_Agent_DQN):
 
     def __init__(self, config):
         Base_Agent_DQN.__init__(self, config)
-        self.memory = ReplayBuffer(buffer_size=self.hyperparameters['buffer_size'],
-                                   batch_size=self.hyperparameters['batch_size'],
+        self.memory = ReplayBuffer(buffer_size=self.hyper_parameters['buffer_size'],
+                                   batch_size=self.hyper_parameters['batch_size'],
                                    device=self.device, seed=self.seed)
         self.q_network_local = self.create_NN()
         self.q_network_optimizer = optim.Adam(self.q_network_local.parameters(),
-                                              lr=self.hyperparameters["learning_rate"], eps=1e-4)
-        self.exploration_strategy = Epsilon_Greedy_Exploration(self.hyperparameters)
+                                              lr=self.hyper_parameters["learning_rate"], eps=1e-4)
+        self.exploration_strategy = Epsilon_Greedy_Exploration(self.hyper_parameters)
+        self.model_dict, self.optimizer_dict = self.__build_model_and_optimizer_dict()
 
-    def step(self, state, action, reward, next_state, done):
-        self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
-        self.global_step_number += 1
+
 
     def pick_action(self, state):
         """Uses the local Q network and an epsilon greedy policy to pick an action"""
@@ -59,7 +58,7 @@ class DQN(Base_Agent_DQN):
 
             self.logger.info("Action counts {}".format(Counter(actions_list)))
             self.take_optimisation_step(self.q_network_optimizer, self.q_network_local, loss,
-                                        self.hyperparameters["gradient_clipping_norm"])
+                                        self.hyper_parameters["gradient_clipping_norm"])
             return loss.detach().cpu().numpy()
         return 0
 
@@ -86,7 +85,7 @@ class DQN(Base_Agent_DQN):
 
     def compute_q_values_for_current_states(self, rewards, Q_targets_next, dones):
         """Computes the q_values for current state we will use to create the loss to train the Q network"""
-        Q_targets_current = rewards + (self.hyperparameters["discount_rate"] * Q_targets_next * (1 - dones))
+        Q_targets_current = rewards + (self.hyper_parameters["discount_rate"] * Q_targets_next * (1 - dones))
         return Q_targets_current
 
     def compute_expected_q_values(self, states, actions):
@@ -99,20 +98,7 @@ class DQN(Base_Agent_DQN):
         """Saves the policy"""
         torch.save(self.q_network_local.state_dict(), "Models/{}_local_network.pt".format(self.agent_name))
 
-    def reset(self, rolling_reward):
-        self.episode_number += 1
-        # print("epsilon:{}".format(
-        #     self.exploration_strategy.perturb_action_for_exploration_purposes({"episode_number": self.episode_number})))
-
-    # def reset_game(self):
-    #     super(DQN, self).reset_game()
-    #     self.update_learning_rate(self.hyperparameters["learning_rate"], self.q_network_optimizer)
-
-    # def time_for_q_network_to_learn(self):
-    #     """Returns boolean indicating whether enough steps have been taken for learning to begin and there are
-    #     enough experiences in the replay buffer to learn from"""
-    #     return self.right_amount_of_steps_taken() and self.enough_experiences_to_learn_from()
-    #
-    # def right_amount_of_steps_taken(self):
-    #     """Returns boolean indicating whether enough steps have been taken for learning to begin"""
-    #     return self.global_step_number % self.hyperparameters["update_every_n_steps"] == 0
+    def __build_model_and_optimizer_dict(self):
+        model_dict = {"q_network_local": self.q_network_local}
+        optimizer_dict = {"q_network_optimizer", self.q_network_optimizer}
+        return model_dict, optimizer_dict

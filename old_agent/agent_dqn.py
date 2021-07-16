@@ -45,7 +45,7 @@ class Agent:
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=1e-4)
         if exp_in_path == "":
             self.memory = PriorityReplayBuffer(buffer_size=self.buffer_size, batch_size=self.batch_size,
-                                               device=self.device, seed=self.seed, is_continuous=False)
+                                               device=self.device, seed=self.seed, is_discrete=True)
         else:
             self.memory = pickle.load(open(exp_in_path, 'rb'))
             print("loaded replay buffer size:{}".format(self.memory.size))

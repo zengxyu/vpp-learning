@@ -126,7 +126,7 @@ class PriorityReplayBuffer:
         transitions = self.tree.data[-self.tree.capacity:]
         return vs[:self.size], transitions[:self.size]
 
-    def sample(self, is_vpp, num_experiences=None):
+    def sample(self, is_vpp=True, num_experiences=None):
         # Draws a random sample of experience from the replay buffer
         batch_size = self.batch_size if num_experiences is None else num_experiences
         b_idx, b_memory, ISWeights = np.empty((batch_size,), dtype=np.int32), np.empty(

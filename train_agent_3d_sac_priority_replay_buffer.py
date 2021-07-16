@@ -11,7 +11,7 @@ import numpy as np
 
 from scipy.spatial.transform.rotation import Rotation
 from utilities.summary_writer import MySummaryWriter
-from utilities.data_structures.Config import *
+from config.Config import *
 from network.network_ac_continuous import *
 from agents.actor_critic_agents.SAC_Prioritised_Experience_Replay import SAC_Prioritised_Experience_Replay
 

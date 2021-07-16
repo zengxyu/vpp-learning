@@ -7,14 +7,12 @@ def get_eu_distance(v1, v2):
 
 
 def create_save_folder(params):
-    params['log_sv'] = os.path.join(params['out_folder'], params['log_sv'])
+    # output: to save
     params['model_sv'] = os.path.join(params['out_folder'], params['model_sv'])
     params['exp_sv'] = os.path.join(params['out_folder'], params['exp_sv'])
-    params['lr_sv'] = os.path.join(params['out_folder'], params['lr_sv'])
-
-    if not os.path.exists(params['log_sv']):
-        print("Create folder:{}", params['log_sv'])
-        os.makedirs(params['log_sv'])
+    params['tb_log_sv'] = os.path.join(params['out_folder'], params['tb_log_sv'])
+    params['tb_l_r_sv'] = os.path.join(params['out_folder'], params['tb_l_r_sv'])
+    params['bl_log_sv'] = os.path.join(params['out_folder'], params['bl_log_sv'])
 
     if not os.path.exists(params['model_sv']):
         print("Create folder:{}", params['model_sv'])
@@ -24,9 +22,17 @@ def create_save_folder(params):
         print("Create folder:{}", params['exp_sv'])
         os.makedirs(params['exp_sv'])
 
-    if not os.path.exists(params['lr_sv']):
-        print("Create folder:{}", params['lr_sv'])
-        os.makedirs(params['lr_sv'])
+    if not os.path.exists(params['tb_log_sv']):
+        print("Create folder:{}", params['tb_log_sv'])
+        os.makedirs(params['tb_log_sv'])
+
+    if not os.path.exists(params['tb_l_r_sv']):
+        print("Create folder:{}", params['tb_l_r_sv'])
+        os.makedirs(params['tb_l_r_sv'])
+
+    if not os.path.exists(params['bl_log_sv']):
+        print("Create folder:{}", params['bl_log_sv'])
+        os.makedirs(params['bl_log_sv'])
 
     return params
 

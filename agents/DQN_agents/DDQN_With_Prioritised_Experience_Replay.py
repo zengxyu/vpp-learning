@@ -11,10 +11,8 @@ class DDQN_With_Prioritised_Experience_Replay(DDQN):
 
     def __init__(self, config):
         DDQN.__init__(self, config)
-        # self.memory = PriorityReplayBuffer(self.hyperparameters, config.seed)
-        print(self.q_network_local)
-        self.memory = PriorityReplayBuffer(buffer_size=self.hyperparameters['buffer_size'],
-                                           batch_size=self.hyperparameters['batch_size'],
+        self.memory = PriorityReplayBuffer(buffer_size=self.hyper_parameters['buffer_size'],
+                                           batch_size=self.hyper_parameters['batch_size'],
                                            device=self.device, is_discrete=True, seed=self.seed)
 
     def learn(self):
@@ -25,17 +23,13 @@ class DDQN_With_Prioritised_Experience_Replay(DDQN):
         # states, actions, rewards, next_states, dones = sampled_experiences
         loss, td_errors = self.compute_loss_and_td_errors(states, next_states, rewards, actions, dones, ISWeights)
         self.take_optimisation_step(self.q_network_optimizer, self.q_network_local, loss,
-                                    self.hyperparameters["gradient_clipping_norm"])
+                                    self.hyper_parameters["gradient_clipping_norm"])
 
         self.update_memory_batch_errors(tree_idx, td_errors, rewards)
         # self.soft_update_of_target_network(self.q_network_local, self.q_network_target, self.hyperparameters["tau"])
-
-        if self.global_step_number % 10 == 0:
-            self.update_target_network()
+        self.skipping_step_update_of_target_network(self.q_network_local, self.q_network_target,
+                                                    self.hyper_parameters["update_every_n_steps"])
         return loss.detach().cpu().numpy()
-
-    def update_target_network(self):
-        self.q_network_target.load_state_dict(self.q_network_local.state_dict())
 
     def update_memory_batch_errors(self, tree_idx, td_errors, rewards):
         loss_each_item = torch.abs(td_errors)

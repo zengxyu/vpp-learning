@@ -10,8 +10,8 @@ from agents.DQN_agents.Dueling_DDQN import Dueling_DDQN
 # from agents.actor_critic_agents.SAC_Discrete import SAC_Discrete
 # from agents.actor_critic_agents.A3C import A3C
 # from agents.policy_gradient_agents.PPO import PPO
-from agents.Trainer import Trainer
-from utilities.data_structures.Config import Config
+from train.Trainer import Trainer
+from config.Config import Config
 from agents.DQN_agents.DDQN import DDQN
 from agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay import DDQN_With_Prioritised_Experience_Replay
 from agents.DQN_agents.DQN import DQN

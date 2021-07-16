@@ -1,11 +1,8 @@
-import random
-
 from agents.Base_Agent_AC import Base_Agent_AC
 from memory.replay_buffer import ReplayBuffer, PriorityReplayBuffer
 from utilities.OU_Noise import OU_Noise
 from torch.optim import Adam
 import torch
-import torch.nn.functional as F
 from torch.distributions import Normal
 import numpy as np
 
@@ -23,9 +20,6 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
 
     def __init__(self, config):
         Base_Agent_AC.__init__(self, config)
-        # assert self.action_types == "CONTINUOUS", "Action types must be continuous. Use SAC Discrete instead for discrete actions"
-        # assert self.config.hyperparameters["Actor"][
-        #            "final_layer_activation"] != "Softmax", "Final actor layer must not be softmax"
         self.state_size = config.environment['state_size']
         self.action_size = config.environment['action_size']
         self.action_shape = config.environment['action_shape']
@@ -80,10 +74,6 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
         net = CriticNetwork(state_dim=state_dim, action_dim=action_dim)
         return net
 
-    def step(self, state, action, reward, next_state, done):
-        self.global_step_number += 1
-        self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
-
     def pick_action(self, state, eval_ep=False):
         """Picks an action using one of three methods: 1) Randomly if we haven't passed a certain number of steps,
          2) Using the actor in evaluation mode if eval_ep is True  3) Using the actor in training mode if eval_ep is False.
@@ -127,8 +117,6 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
         """Given the state, produces an action, the log probability of the action, and the tanh of the mean action"""
         # print("produce action state size:{}".format(state.shape))
         mean, log_std = self.actor_local(state)
-        # print("action size:{}".format(self.action_size))
-        # mean, log_std = actor_output[:, :self.action_size], actor_output[:, self.action_size:]
         std = log_std.exp()
         normal = Normal(mean, std)
         x_t = normal.rsample()  # rsample means it is sampled using reparameterisation trick
@@ -231,10 +219,3 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
         is True."""
         alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy).detach()).mean()
         return alpha_loss
-
-    def print_summary_of_latest_evaluation_episode(self):
-        """Prints a summary of the latest episode"""
-        print(" ")
-        print("----------------------------")
-        print("Episode score {} ".format(self.total_episode_score_so_far))
-        print("----------------------------")

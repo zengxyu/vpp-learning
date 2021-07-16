@@ -17,7 +17,7 @@ class A3C(Base_Agent):
         self.num_processes = multiprocessing.cpu_count()
         self.worker_processes = max(1, self.num_processes - 2)
         self.actor_critic = self.create_NN(input_dim=self.state_size, output_dim=[self.action_size, 1])
-        self.actor_critic_optimizer = SharedAdam(self.actor_critic.parameters(), lr=self.hyperparameters["learning_rate"], eps=1e-4)
+        self.actor_critic_optimizer = SharedAdam(self.actor_critic.parameters(), lr=self.hyper_parameters["learning_rate"], eps=1e-4)
 
     def run_n_episodes(self):
         """Runs game to completion n times and then summarises results and saves model (if asked to)"""
@@ -36,10 +36,10 @@ class A3C(Base_Agent):
 
         for process_num in range(self.worker_processes):
             worker = Actor_Critic_Worker(process_num, copy.deepcopy(self.environment), self.actor_critic, episode_number, self.optimizer_lock,
-                                    self.actor_critic_optimizer, self.config, episodes_per_process,
-                                    self.hyperparameters["epsilon_decay_rate_denominator"],
-                                    self.action_size, self.action_types,
-                                    results_queue, copy.deepcopy(self.actor_critic), gradient_updates_queue)
+                                         self.actor_critic_optimizer, self.config, episodes_per_process,
+                                         self.hyper_parameters["epsilon_decay_rate_denominator"],
+                                         self.action_size, self.action_types,
+                                         results_queue, copy.deepcopy(self.actor_critic), gradient_updates_queue)
             worker.start()
             processes.append(worker)
         self.print_results(episode_number, results_queue)
@@ -81,9 +81,9 @@ class Actor_Critic_Worker(torch.multiprocessing.Process):
         self.config = config
         self.worker_num = worker_num
 
-        self.gradient_clipping_norm = self.config.hyperparameters["gradient_clipping_norm"]
-        self.discount_rate = self.config.hyperparameters["discount_rate"]
-        self.normalise_rewards = self.config.hyperparameters["normalise_rewards"]
+        self.gradient_clipping_norm = self.config.hyper_parameters["gradient_clipping_norm"]
+        self.discount_rate = self.config.hyper_parameters["discount_rate"]
+        self.normalise_rewards = self.config.hyper_parameters["normalise_rewards"]
 
         self.action_size = action_size
         self.set_seeds(self.worker_num)
@@ -95,7 +95,7 @@ class Actor_Critic_Worker(torch.multiprocessing.Process):
         self.shared_optimizer = shared_optimizer
         self.episodes_to_run = episodes_to_run
         self.epsilon_decay_denominator = epsilon_decay_denominator
-        self.exploration_worker_difference = self.config.hyperparameters["exploration_worker_difference"]
+        self.exploration_worker_difference = self.config.hyper_parameters["exploration_worker_difference"]
         self.action_types = action_types
         self.results_queue = results_queue
         self.episode_number = 0

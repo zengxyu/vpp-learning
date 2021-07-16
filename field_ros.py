@@ -54,7 +54,7 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False, scale=0.05):
+    def __init__(self, shape, sensor_range, hfov, vfov, max_steps):
         self.found_targets = 0
         self.free_cells = 0
         self.sensor_range = sensor_range
@@ -64,7 +64,6 @@ class Field:
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         self.max_steps = max_steps
-        self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         self.MOVE_STEP = 0.1

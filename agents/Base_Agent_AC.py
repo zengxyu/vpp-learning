@@ -8,7 +8,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 class Base_Agent_AC(Base_Agent):
     def __init__(self, config):
         super(Base_Agent_AC, self).__init__(config)
-        self.hyperparameters = config.hyperparameters['Actor_Critic_Agents']
+        self.hyperparameters = config.hyper_parameters['Actor_Critic_Agents']
 
     def create_actor_network(self, state_dim, action_dim, output_dim):
         ActorNetwork = self.config.actor_network

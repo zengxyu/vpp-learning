@@ -12,7 +12,7 @@ from agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay import DDQN_With_
 from field_ros import Field, Action
 from network.network_dqn import DQN_Network11_Dueling
 from utilities.summary_writer import MySummaryWriter
-from utilities.data_structures.Config import *
+from config.Config import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")

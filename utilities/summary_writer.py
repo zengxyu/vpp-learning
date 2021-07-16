@@ -5,6 +5,8 @@ import pickle
 
 from torch.utils.tensorboard import SummaryWriter
 
+from utilities.basic_logger import BasicLogger
+
 
 class MySummaryWriter:
     def __init__(self, log_dir):
@@ -73,46 +75,51 @@ class MySummaryWriter:
 
 
 class SummaryWriterLogger:
-    def __init__(self, config, log_sv_dir, lr_sv_dir, lr_in_dir="", save_every=1, smooth_every=200):
-        assert log_sv_dir is not None, "Please input path to save log..."
-        assert lr_sv_dir is not None, "Please input path to save loss and reward record..."
-        self.writer = SummaryWriter(log_dir=log_sv_dir)
-        self.config = config
-        self.lr_sv_path = lr_sv_dir
+    def __init__(self, config):
+        self.tb_log_sv_dir = config.folder['tb_log_sv']
+        self.tb_l_r_sv_dir = config.folder['tb_l_r_sv']
+        self.tb_l_r_in_dir = config.folder['tb_l_r_in']
+        self.tb_save_l_r_every_n_episode = config.tb_save_l_r_every_n_episode
+        self.tb_smooth_l_r_every_n_episode = config.tb_smooth_l_r_every_n_episode
 
-        self.save_every = save_every
-        self.smooth_every = smooth_every
+        assert self.tb_log_sv_dir is not None, "Please input path to saved log..."
+        assert self.tb_l_r_sv_dir is not None, "Please input path to saved loss and reward record..."
+        assert self.tb_l_r_in_dir is not None, "Please input path to save loss and reward record..."
+        self.writer = SummaryWriter(log_dir=self.tb_log_sv_dir)
+        self.logger = BasicLogger.setup_console_logging(config)
 
         self.ep_loss_ll = []
         self.ep_reward_ll = []
 
-        self.init(lr_in_dir)
-        self.info(config)
+        self.init(self.tb_l_r_in_dir)
+        self.show_config(config)
 
-    def init(self, lr_in_pth, verbose=True):
+    def init(self, verbose=True):
         """load the file from local"""
-        if not os.path.exists(lr_in_pth):
+        if not os.path.exists(self.tb_l_r_in_dir):
             return
         else:
-            print("Load the file from {}".format(lr_in_pth))
-            file = open(os.path.join(lr_in_pth, "loss_reward.obj"), 'rb')
+            print("Load the file from {}".format(self.tb_l_r_in_dir))
+            file = open(os.path.join(self.tb_l_r_in_dir, "loss_reward.obj"), 'rb')
             ep_losses, ep_rewards = pickle.load(file)
 
             for i in range(len(ep_losses)):
                 self.update(ep_losses[i], ep_rewards[i], i, verbose=verbose)
             print("Loading done!")
 
-    def info(self, config):
-        attrs = config.__dict__
+    def show_config(self, config):
+        """
+        display the configs by text in tensorboard
+        """
         count = 0
-        for key, value in attrs.items():
+        for key, value in config.__dict__.items():
             string = str(key) + ":" + str(value)
             print(string)
 
             self.writer.add_text('Info', string, count)
             count += 1
 
-    def update(self, ep_loss, ep_reward, i_episode, verbose=True, n_smooth=30):
+    def update(self, ep_loss, ep_reward, i_episode, verbose=True):
         """
         # ep_loss : mean loss of this episode
         # ep_reward : sum reward of this episode
@@ -129,21 +136,23 @@ class SummaryWriterLogger:
             print("Episode : {} | Mean loss : {} | Reward : {}".format(i_episode, ep_loss, ep_reward))
 
         self.writer.add_scalar('train/ep_loss_smoothed',
-                               np.mean(self.ep_loss_ll[max(0, i_episode - self.smooth_every):]), i_episode)
+                               np.mean(self.ep_loss_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):]),
+                               i_episode)
         self.writer.add_scalar('train/ep_reward_smoothed',
-                               np.mean(self.ep_reward_ll[max(0, i_episode - self.smooth_every):]), i_episode)
+                               np.mean(self.ep_reward_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):]),
+                               i_episode)
 
-        if i_episode % self.save_every == 0:
-            self.save()
+        if i_episode % self.tb_save_l_r_every_n_episode == 0:
+            self.save_loss_reward()
 
-        mean_loss_last_n_ep = np.mean(self.ep_loss_ll[max(0, i_episode - n_smooth):])
-        mean_reward_last_n_ep = np.mean(self.ep_reward_ll[max(0, i_episode - n_smooth):])
+        mean_loss_last_n_ep = np.mean(self.ep_loss_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):])
+        mean_reward_last_n_ep = np.mean(self.ep_reward_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):])
 
         return mean_loss_last_n_ep, mean_reward_last_n_ep
 
-    def save(self):
+    def save_loss_reward(self):
         """save ep_loss_ll and ep_reward_ll"""
-        print("Save ep_loss_ll and ep_reward_ll to {} !".format(self.lr_sv_path))
-        file = open(os.path.join(self.lr_sv_path, "loss_reward.obj"), 'wb')
+        print("Save ep_loss_ll and ep_reward_ll to {} !".format(self.tb_l_r_sv_dir))
+        file = open(os.path.join(self.tb_l_r_sv_dir, "loss_reward.obj"), 'wb')
         obj = [self.ep_loss_ll, self.ep_reward_ll]
         pickle.dump(obj, file)
