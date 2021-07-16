@@ -42,19 +42,17 @@ class DDPG(Base_Agent_AC):
         self.exploration_strategy = OU_Noise_Exploration(self.hyperparameters, self.action_size, self.seed)
         # self.noise = OU_Noise(self.action_size, self.config.seed, self.hyperparameters["mu"],
         #                       self.hyperparameters["theta"], self.hyperparameters["sigma"])
+        self.model_dict, self.optimizer_dict = self.__build_model_and_optimizer_dict()
 
     def step(self, state, action, reward, next_state, done):
         self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
         self.global_step_number += 1
 
     def learn(self):
-        state_batch, action_batch, reward_batch, next_state_batch, mask_batch = self.sample_experiences()
+        state_batch, action_batch, reward_batch, next_state_batch, mask_batch = self.memory.sample()
         critic_loss = self.critic_learn(state_batch, action_batch, reward_batch, next_state_batch, mask_batch)
         actor_loss = self.actor_learn(state_batch)
         return critic_loss.detach().cpu().numpy()
-
-    def sample_experiences(self):
-        return self.memory.sample()
 
     def pick_action(self, state):
         """Picks an action using the actor network and then adds some noise to it to ensure exploration"""
@@ -133,8 +131,13 @@ class DDPG(Base_Agent_AC):
         actor_loss = -q_v.mean()
         return actor_loss
 
-    def reset(self, rolling_reward):
-        super(DDPG, self).reset(rolling_reward)
-        # we only update the learning rate at end of each episode
-        # self.update_learning_rate(self.hyperparameters["Actor"]["learning_rate"], self.actor_optimizer,
-        #                           rolling_reward)
+    def __build_model_and_optimizer_dict(self):
+        model_dict = {"critic_local": self.critic_local,
+                      "critic_target": self.critic_target,
+                      "actor_local": self.actor_local,
+                      "actor_target": self.actor_target
+                      }
+        optimizer_dict = {"critic_optimizer", self.critic_optimizer,
+                          "actor_optimizer", self.actor_optimizer
+                          }
+        return model_dict, optimizer_dict

@@ -120,6 +120,9 @@ class Field:
         if init_file:
             self.read_env_from_file(init_file, scale)
 
+    def get_action_size(self):
+        return len(self.robot_pos) + len(self.robot_rot.as_euler('xyz'))
+
     def trim_zeros(self, arr):
         slices = tuple(slice(idx.min(), idx.max() + 1) for idx in np.nonzero(arr))
         return arr[slices]

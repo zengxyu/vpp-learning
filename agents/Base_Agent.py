@@ -1,28 +1,23 @@
 import logging
 import os
-import sys
-import gym
 import random
-import numpy as np
 import torch
-import time
-# import tensorflow as tf
-# from tensorboardX import SummaryWriter
-from torch.optim import optimizer
+
+from agents.Model_Helper import ModelHelper
+from utilities.basic_logger import BasicLogger
 
 
-class Base_Agent(object):
+class Base_Agent(ModelHelper):
     def __init__(self, config):
         self.name = "grid world"
         self.seed = random.seed(42)
-        self.logger = self.setup_logger()
         self.config = config
         self.debug_mode = config.debug_mode
+        self.logger = BasicLogger.setup_console_logging(config)
 
         self.device = torch.device("cuda") if torch.cuda.is_available() and config.use_GPU else torch.device("cpu")
         print("device:", self.device)
-
-        self.hyperparameters = None
+        self.hyper_parameters = None
 
         self.memory = None
 
@@ -30,6 +25,18 @@ class Base_Agent(object):
         self.turn_off_exploration = False
         self.global_step_number = 0
         self.episode_number = 0
+        self.model_dict, self.optimizer_dict = self.__build_model_and_optimizer_dict()
+
+    def __build_model_and_optimizer_dict(self):
+        return None, None
+
+    def store_model(self):
+        print("Save model to path : {}".format(self.config.folder['model_sv']))
+        self.store_model_optimizer(self.model_dict, self.optimizer_dict, self.config.folder['model_sv'], "Agent",
+                                   self.episode_number)
+
+    def load_model(self, index):
+        self.load_model_optimizer(self.model_dict, self.optimizer_dict, self.config.folder['model_sv'], "Agent", index)
 
     def take_optimisation_step(self, optimizer, network, loss, clipping_norm=None):
         """Takes an optimisation step by calculating gradients given the loss and then updating the parameters"""
@@ -37,7 +44,8 @@ class Base_Agent(object):
         optimizer.zero_grad()  # reset gradients to 0
         loss.backward()  # this calculates the gradients
         self.logger.info("Loss -- {}".format(loss.item()))
-        if self.debug_mode: self.log_gradient_and_weight_information(network, optimizer)
+        if self.debug_mode:
+            self.log_gradient_and_weight_information(network, optimizer)
         if clipping_norm is not None:
             for p in network.parameters():
                 p.grad.data.clamp_(-1, 1)
@@ -46,39 +54,13 @@ class Base_Agent(object):
             #                                    clipping_norm)  # clip gradients to help stabilise training
         optimizer.step()
 
-    def reset(self, rolling_reward):
-        self.episode_number += 1
-
-    def setup_logger(self):
-        """Sets up the logger"""
-        filename = "Training.log"
-        try:
-            if os.path.isfile(filename):
-                os.remove(filename)
-        except:
-            pass
-
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.INFO)
-        # create a file handler
-        handler = logging.FileHandler(filename)
-        handler.setLevel(logging.INFO)
-        # create a logging format
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        # add the handlers to the logger
-        logger.addHandler(handler)
-        return logger
+    def step(self, state, action, reward, next_state, done):
+        self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
+        self.global_step_number += 1
 
     def enough_experiences_to_learn_from(self):
         """Boolean indicated whether there are enough experiences in the memory buffer to learn from"""
-        return len(self.memory) > self.hyperparameters["batch_size"]
-
-    def soft_update_of_target_network(self, local_model, target_model, tau):
-        """Updates the target network in the direction of the local network but by taking a step size
-        less than one so the target network's parameter values trail the local networks. This helps stabilise training"""
-        for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
-            target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
+        return len(self.memory) > self.hyper_parameters["batch_size"]
 
     def log_gradient_and_weight_information(self, network, optimizer):
 
@@ -111,8 +93,12 @@ class Base_Agent(object):
             g['lr'] = new_lr
         if random.random() < 0.001: self.logger.info("Learning rate {}".format(new_lr))
 
-    @staticmethod
-    def copy_model_over(from_model, to_model):
-        """Copies model parameters from from_model to to_model"""
-        for to_model, from_model in zip(to_model.parameters(), from_model.parameters()):
-            to_model.data.copy_(from_model.data.clone())
+    def print_summary_of_latest_evaluation_episode(self):
+        """Prints a summary of the latest episode"""
+        print(" ")
+        print("----------------------------")
+        print("Episode score {} ".format(self.total_episode_score_so_far))
+        print("----------------------------")
+
+    def reset(self, rolling_reward):
+        self.episode_number += 1

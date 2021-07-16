@@ -121,6 +121,9 @@ class Field:
         if init_file:
             self.read_env_from_file(init_file, scale)
 
+    def get_action_size(self):
+        return len(self.actions)
+
     def trim_zeros(self, arr):
         slices = tuple(slice(idx.min(), idx.max() + 1) for idx in np.nonzero(arr))
         return arr[slices]
@@ -386,7 +389,7 @@ class Field:
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
 
         return map, np.concatenate(
-            (self.robot_pos, self.robot_rot.as_quat())), new_targets_found, new_free_cells, done
+            (self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
 
     def reset(self):
         self.reset_count += 1

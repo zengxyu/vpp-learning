@@ -45,7 +45,7 @@ class Tensorboard:
 
     def log_image(self, tag, img, global_step):
         s = io.BytesIO()
-        Image.fromarray(img).save(s, format='png')
+        Image.fromarray(img).save_loss_reward(s, format='png')
 
         img_summary = tf.Summary.Image(encoded_image_string=s.getvalue(),
                                        height=img.shape[0],

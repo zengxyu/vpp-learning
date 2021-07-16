@@ -6,7 +6,6 @@ import numpy as np
 
 from agents.Base_Agent_AC import Base_Agent_AC
 from memory.replay_buffer import ReplayBuffer
-from utilities.data_structures.Replay_Buffer import Replay_Buffer
 from agents.actor_critic_agents.SAC import SAC
 
 

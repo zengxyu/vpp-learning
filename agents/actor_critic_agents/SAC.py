@@ -1,3 +1,4 @@
+import os
 import random
 
 from agents.Base_Agent_AC import Base_Agent_AC
@@ -23,9 +24,6 @@ class SAC(Base_Agent_AC):
 
     def __init__(self, config):
         Base_Agent_AC.__init__(self, config)
-        # assert self.action_types == "CONTINUOUS", "Action types must be continuous. Use SAC Discrete instead for discrete actions"
-        # assert self.config.hyperparameters["Actor"][
-        #            "final_layer_activation"] != "Softmax", "Final actor layer must not be softmax"
         self.state_size = config.environment['state_size']
         self.action_size = config.environment['action_size']
         self.action_shape = config.environment['action_shape']
@@ -69,10 +67,7 @@ class SAC(Base_Agent_AC):
                                   self.hyperparameters["theta"], self.hyperparameters["sigma"])
 
         self.do_evaluation_iterations = self.hyperparameters["do_evaluation_iterations"]
-
-    def step(self, state, action, reward, next_state, done):
-        self.global_step_number += 1
-        self.memory.add_experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
+        self.model_dict, self.optimizer_dict = self.__build_model_and_optimizer_dict()
 
     def pick_action(self, state, eval_ep=False):
         """Picks an action using one of three methods: 1) Randomly if we haven't passed a certain number of steps,
@@ -112,8 +107,6 @@ class SAC(Base_Agent_AC):
         """Given the state, produces an action, the log probability of the action, and the tanh of the mean action"""
         # print("produce action state size:{}".format(state.shape))
         mean, log_std = self.actor_local(state)
-        # print("action size:{}".format(self.action_size))
-        # mean, log_std = actor_output[:, :self.action_size], actor_output[:, self.action_size:]
         std = log_std.exp()
         normal = Normal(mean, std)
         x_t = normal.rsample()  # rsample means it is sampled using reparameterisation trick
@@ -132,25 +125,21 @@ class SAC(Base_Agent_AC):
 
     def learn(self):
         """Runs a learning iteration for the actor, both critics and (if specified) the temperature parameter"""
-        if self.enough_experiences_to_learn_from():
-            state_batch, action_batch, reward_batch, next_state_batch, mask_batch = self.sample_experiences()
+        # print("learn")
+        state_batch, action_batch, reward_batch, next_state_batch, mask_batch = self.memory.sample()
 
-            qf1_loss, qf2_loss = self.calculate_critic_losses(state_batch, action_batch, reward_batch, next_state_batch,
-                                                              mask_batch)
-            self.update_critic_parameters(qf1_loss, qf2_loss)
+        qf1_loss, qf2_loss = self.calculate_critic_losses(state_batch, action_batch, reward_batch, next_state_batch,
+                                                          mask_batch)
+        self.update_critic_parameters(qf1_loss, qf2_loss)
 
-            policy_loss, log_pi = self.calculate_actor_loss(state_batch)
-            if self.automatic_entropy_tuning:
-                alpha_loss = self.calculate_entropy_tuning_loss(log_pi)
-            else:
-                alpha_loss = None
-            self.update_actor_parameters(policy_loss, alpha_loss)
+        policy_loss, log_pi = self.calculate_actor_loss(state_batch)
+        if self.automatic_entropy_tuning:
+            alpha_loss = self.calculate_entropy_tuning_loss(log_pi)
+        else:
+            alpha_loss = None
+        self.update_actor_parameters(policy_loss, alpha_loss)
 
-            return qf1_loss.detach().cpu().numpy(), qf2_loss.detach().cpu().numpy(), policy_loss.detach().cpu().numpy()
-        return 0, 0, 0
-
-    def sample_experiences(self):
-        return self.memory.sample()
+        return qf1_loss.detach().cpu().numpy(), qf2_loss.detach().cpu().numpy(), policy_loss.detach().cpu().numpy()
 
     def calculate_critic_losses(self, state_batch, action_batch, reward_batch, next_state_batch, mask_batch):
         """Calculates the losses for the two critics. This is the ordinary Q-learning loss except the additional entropy
@@ -202,9 +191,17 @@ class SAC(Base_Agent_AC):
             self.take_optimisation_step(self.alpha_optim, None, alpha_loss, None)
             self.alpha = self.log_alpha.exp()
 
-    def print_summary_of_latest_evaluation_episode(self):
-        """Prints a summary of the latest episode"""
-        print(" ")
-        print("----------------------------")
-        print("Episode score {} ".format(self.total_episode_score_so_far))
-        print("----------------------------")
+    def __build_model_and_optimizer_dict(self):
+        model_dict = {"critic_local": self.critic_local,
+                      "critic_target": self.critic_target,
+                      "critic_local_2": self.critic_local_2,
+                      "critic_target_2": self.critic_target_2,
+                      "actor_local": self.actor_local,
+
+                      }
+        optimizer_dict = {"critic_optimizer", self.critic_optimizer,
+                          "critic_optimizer_2", self.critic_optimizer_2,
+                          "actor_optimizer", self.actor_optimizer
+                          }
+        return model_dict, optimizer_dict
+

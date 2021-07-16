@@ -16,7 +16,7 @@ from config.config_ac import config
 config.actor_network = network.network_ac_continuous.TD3_PolicyNet3
 config.critic_network = network.network_ac_continuous.TD3_QNetwork3
 config.agent = agents.actor_critic_agents.TD3.TD3
-config.field = field_env_3d_unknown_map2_continuous.Field
+config.Field = field_env_3d_unknown_map2_continuous.Field
 
 # output
 config.folder['out_folder'] = "output_p3d_td3"
@@ -29,7 +29,7 @@ headless = True
 if not headless:
     from direct.stdpy import threading
 
-field = config.field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
+field = config.Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05, max_steps=300,
                      init_file='VG07_6.binvox', headless=headless)
 
 config.environment = {
