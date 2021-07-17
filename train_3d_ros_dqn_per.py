@@ -2,6 +2,7 @@ import logging
 import sys
 import os
 
+import action_space
 import agents
 import network
 import field_ros
@@ -14,6 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 network = network.network_dqn.DQN_Network11
 Agent = agents.DQN_agents.DQN.DQN
 Field = field_ros.Field
+Action = action_space.ActionMoRo12
 
 out_folder = "output_ros_ddqn_per"
 in_folder = ""
@@ -27,6 +29,6 @@ config = ConfigDQN(network=network,
                    file_logging_level=logging.WARNING,
                    )
 
-trainer = RosTrainer(config=config, Agent=Agent, Field=Field)
+trainer = RosTrainer(config=config, Agent=Agent, Field=Field, Action=Action)
 
 trainer.train()
