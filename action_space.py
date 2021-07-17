@@ -90,6 +90,23 @@ class ActionMoRo12(IntEnum):
         return 12
 
 
+# class ActionMoRoMultiplier36(IntEnum):
+#
+#     def __init__(self, a, b):
+#         self.a = a
+#         self.step = b
+#
+#     def build_actions():
+#         action_space = []
+#         for action in Action:
+
+
+class Multiplier(IntEnum):
+    LARGE_STEP = 0
+    MEDIUM_STEP = 1
+    SMALL_STEP = 2
+
+
 class ActionMo6(IntEnum):
     MOVE_FORWARD = 0
     MOVE_BACKWARD = 1

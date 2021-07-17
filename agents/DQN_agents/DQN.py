@@ -23,8 +23,6 @@ class DQN(Base_Agent_DQN):
         self.exploration_strategy = Epsilon_Greedy_Exploration(self.hyper_parameters)
         self.model_dict, self.optimizer_dict = self.__build_model_and_optimizer_dict()
 
-
-
     def pick_action(self, state):
         """Uses the local Q network and an epsilon greedy policy to pick an action"""
         # PyTorch only accepts mini-batches and not single observations so we have to use unsqueeze to add
@@ -58,10 +56,7 @@ class DQN(Base_Agent_DQN):
         self.logger.info("Action counts {}".format(Counter(actions_list)))
         self.take_optimisation_step(self.q_network_optimizer, self.q_network_local, loss,
                                     self.hyper_parameters["gradient_clipping_norm"])
-        self.skipping_step_update_of_target_network(self.q_network_local, self.q_network_target,
-                                                    global_step_number=self.global_step_number,
-                                                    update_every_n_steps=self.hyper_parameters[
-                                                        "update_every_n_steps"])
+
         return loss.detach().cpu().numpy()
 
     def compute_loss(self, states, next_states, rewards, actions, dones):
