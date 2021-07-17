@@ -1,6 +1,6 @@
 import logging
 
-from config.Config import Config
+from config.config import Config
 from utilities.data_structures.Constant import EpsExplorationStrategy
 
 

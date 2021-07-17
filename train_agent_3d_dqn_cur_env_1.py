@@ -9,10 +9,10 @@ import numpy as np
 
 from scipy.spatial.transform.rotation import Rotation
 from agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay import DDQN_With_Prioritised_Experience_Replay
-from field_ros import Field, Action
+from field_ros import Field, ActionMoRo12
 from network.network_dqn import DQN_Network11_Dueling
 from utilities.summary_writer import MySummaryWriter
-from config.Config import *
+from config.config import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
@@ -67,7 +67,7 @@ config.hyperparameters = {
         "gradient_clipping_norm": 0.7,
         "learning_iterations": 1,
         "clip_rewards": False,
-        'action_size': len(Action)
+        'action_size': len(ActionMoRo12)
 
     },
 }

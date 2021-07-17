@@ -5,36 +5,8 @@ from enum import IntEnum
 from scipy.spatial.transform import Rotation
 import time
 
+from action_space import ActionMoRo12
 from scripts.vpp_env_client import EnvironmentClient
-
-
-# class Action(IntEnum):
-#     MOVE_FORWARD = 0
-#     MOVE_BACKWARD = 1
-#     MOVE_LEFT = 2
-#     MOVE_RIGHT = 3
-#     MOVE_UP = 4
-#     MOVE_DOWN = 5
-#     ROTATE_ROLL_P = 7
-#     ROTATE_ROLL_N = 8
-#     ROTATE_PITCH_P = 9
-#     ROTATE_PITCH_N = 10
-#     ROTATE_YAW_P = 11
-#     ROTATE_YAW_N = 12
-
-class Action(IntEnum):
-    MOVE_FORWARD = 0
-    MOVE_BACKWARD = 1
-    MOVE_LEFT = 2
-    MOVE_RIGHT = 3
-    MOVE_UP = 4
-    MOVE_DOWN = 5
-    ROTATE_ROLL_P = 6
-    ROTATE_ROLL_N = 7
-    ROTATE_PITCH_P = 8
-    ROTATE_PITCH_N = 9
-    ROTATE_YAW_P = 10
-    ROTATE_YAW_N = 11
 
 
 class FieldValues(IntEnum):
@@ -61,7 +33,7 @@ class Field:
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
-        self.actions = Action
+        self.actions = ActionMoRo12
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         self.max_steps = max_steps
@@ -98,52 +70,18 @@ class Field:
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
-        relative_move = np.array([0, 0, 0])
-        relative_rot = np.array([0, 0, 0, 1.0])
-        if action == Action.MOVE_FORWARD:
-            relative_move = np.array([1.0, 0, 0])
-        elif action == Action.MOVE_BACKWARD:
-            relative_move = np.array([-1.0, 0, 0])
-        elif action == Action.MOVE_LEFT:
-            relative_move = np.array([0, 1.0, 0])
-        elif action == Action.MOVE_RIGHT:
-            relative_move = np.array([0, -1.0, 0])
-        elif action == Action.MOVE_UP:
-            relative_move = np.array([0, 0, 1.0])
-        elif action == Action.MOVE_DOWN:
-            relative_move = np.array([0, 0, -1.0])
-        elif action == Action.ROTATE_ROLL_P:
-            r = Rotation.from_euler('x', self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_ROLL_N:
-            r = Rotation.from_euler('x', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_PITCH_P:
-            r = Rotation.from_euler('y', self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_PITCH_N:
-            r = Rotation.from_euler('y', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_YAW_P:
-            r = Rotation.from_euler('z', self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_YAW_N:
-            r = Rotation.from_euler('z', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-
-        relative_pose = np.append(relative_move * self.MOVE_STEP, relative_rot).tolist()
-        start_time = time.time()
+        relative_move, relative_rot = ActionMoRo12.get_relative_move_rot2(axes, action, self.MOVE_STEP, self.ROT_STEP)
+        relative_pose = np.append(relative_move, relative_rot.as_quat()).tolist()
         unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
             relative_pose)
-        # print("sendRelativeTime:{}".format(time.time() - start_time))
         self.found_targets += reward
         self.step_count += 1
         done = self.step_count >= self.max_steps
-        # unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
-        # return map, np.concatenate(
-        #     (self.robot_pos, self.robot_rot.as_quat())), reward, 0, done
+        self.robot_pos = np.array(robotPose[:3])
+        self.robot_rot = Rotation.from_quat(robotPose[3:])
+
         return map, robotPose, reward, done
 
     def reset(self):

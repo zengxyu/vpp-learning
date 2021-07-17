@@ -1,7 +1,7 @@
 import logging
 
 from utilities.basic_logger import BasicLogger
-from config.Config import Config
+from config.config import Config
 
 
 class ConfigAC(Config):
