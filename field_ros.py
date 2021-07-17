@@ -33,7 +33,7 @@ class Field:
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
-        self.Action = Action
+        self.action_instance = Action()
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         self.max_steps = max_steps
@@ -54,7 +54,7 @@ class Field:
         print("rot step:", self.ROT_STEP)
 
     def get_action_size(self):
-        return self.Action.get_action_size()
+        return self.action_instance.get_action_size()
 
     def move_robot(self, direction):
         self.robot_pos += direction
@@ -70,7 +70,8 @@ class Field:
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = ActionMoRo12.get_relative_move_rot2(axes, action, self.MOVE_STEP, self.ROT_STEP)
+        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
+                                                                                  self.ROT_STEP)
         relative_pose = np.append(relative_move, relative_rot.as_quat()).tolist()
         unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
             relative_pose)
