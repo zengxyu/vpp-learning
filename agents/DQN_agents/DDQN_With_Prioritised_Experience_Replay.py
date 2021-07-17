@@ -28,7 +28,8 @@ class DDQN_With_Prioritised_Experience_Replay(DDQN):
         self.update_memory_batch_errors(tree_idx, td_errors, rewards)
         # self.soft_update_of_target_network(self.q_network_local, self.q_network_target, self.hyperparameters["tau"])
         self.skipping_step_update_of_target_network(self.q_network_local, self.q_network_target,
-                                                    self.hyper_parameters["update_every_n_steps"])
+                                                    global_step_number=self.global_step_number,
+                                                    update_every_n_steps=self.hyper_parameters["update_every_n_steps"])
         return loss.detach().cpu().numpy()
 
     def update_memory_batch_errors(self, tree_idx, td_errors, rewards):
