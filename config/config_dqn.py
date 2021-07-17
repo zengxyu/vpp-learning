@@ -29,7 +29,7 @@ class ConfigDQN(Config):
                 "buffer_size": 40000,
                 'eps_exploration_strategy': EpsExplorationStrategy.EXPONENT_STRATEGY,
                 "epsilon_decay_rate_denominator": 1,
-                "discount_rate": 0.90,
+                "discount_rate": 0.98,
                 "tau": 0.01,
                 "update_every_n_steps": 10,
                 "gradient_clipping_norm": 0.7,
