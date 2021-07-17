@@ -1,4 +1,4 @@
-from utilities.util import create_save_folder
+from utilities.util import create_save_folder, build_in_folder
 
 
 class Config(object):
@@ -23,9 +23,9 @@ class Config(object):
 
         # folder config
         self.folder = None
-        self.setup_output_folder(out_folder, in_folder)
+        self.setup_folder(out_folder, in_folder)
 
-    def setup_output_folder(self, out_folder, in_folder):
+    def setup_folder(self, out_folder, in_folder):
         self.folder = {
             'out_folder': out_folder,
             'in_folder': in_folder,
@@ -43,3 +43,4 @@ class Config(object):
             'tb_l_r_in': "loss_reward",
         }
         self.folder = create_save_folder(self.folder)
+        self.folder = build_in_folder(self.folder)

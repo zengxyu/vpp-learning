@@ -48,10 +48,14 @@ class ModelHelper(object):
         #     print("Trained model is loaded from path : {}".format(optimizer_pth))
 
     @staticmethod
-    def load_model_optimizer(model_dict, optimizer_dict, model_ld_folder, predix, index):
+    def load_model_optimizer(model_dict, optimizer_dict, model_ld_folder, predix, index, device):
         for key, model in model_dict.items():
             model_name = predix + "_" + key + "_%d.mdl" % index
+            model_name = "Agent_dqn_state_dict" + "_%d.mdl" % index
+
             model_pth = os.path.join(model_ld_folder, model_name)
             if not os.path.exists(model_pth):
                 print("Path to trained model to be loaded does not exist | Path : {}".format(model_pth))
-            torch.save(model.state_dict(), model_pth)
+                raise FileNotFoundError
+            ModelHelper.load_state_dict(policy_net=model, model_pth=model_pth, map_location=device)
+            print("Trained model is loaded from path : {}".format(model_pth))

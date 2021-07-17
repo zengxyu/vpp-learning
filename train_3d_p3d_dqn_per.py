@@ -13,7 +13,7 @@ from config.config_dqn import ConfigDQN
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 network = network.network_dqn.DQN_Network11
-Agent = agents.DQN_agents.DQN.DQN
+Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
 Field = field_env_3d_unknown_map2.Field
 
 out_folder = "output_p3d_ddqn_per"

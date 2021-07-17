@@ -32,6 +32,7 @@ class RosRandomTrainer(object):
         initial_direction = np.array([[1], [0], [0]])
         for i_episode in range(self.config.num_episodes_to_run):
             print("\nepisode {}".format(i_episode))
+            step_count = 0
             e_start_time = time.time()
             done = False
             rewards = []
@@ -77,14 +78,11 @@ class RosRandomTrainer(object):
                 loss = self.agent.learn()
 
                 time_step += 1
+                step_count += 1
 
-                # print(
-                #     "{}-th episode : {}-th step takes {} secs; action:{}; found target:{}; sum found targets:{}; reward:{}; sum reward:{}".format(
-                #         i_episode,
-                #         step_count,
-                #         time.time() - time3,
-                #         action, found_target, np.sum(found_targets) + found_target, reward,
-                #         np.sum(rewards) + reward))
+                print(
+                    "{}-th episode : {}-th step takes {} secs; action:{};reward:{}; sum reward:{}".format(
+                        i_episode, step_count, time.time() - e_start_time, action, reward, np.sum(rewards) + reward))
                 # record
 
                 actions.append(action)
