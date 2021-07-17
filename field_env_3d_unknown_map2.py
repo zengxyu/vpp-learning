@@ -50,12 +50,13 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False, is_augment_env=False,
+    def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
+                 is_augment_env=False,
                  scale=0.05):
         self.found_targets = 0
         self.free_cells = 0
         self.sensor_range = sensor_range
-        self.Action = Action
+        self.action_instance = Action()
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
@@ -84,7 +85,7 @@ class Field:
             self.read_env_from_file(init_file, scale)
 
     def get_action_size(self):
-        return self.Action.get_action_size()
+        return self.action_instance.get_action_size()
 
     def trim_zeros(self, arr):
         slices = tuple(slice(idx.min(), idx.max() + 1) for idx in np.nonzero(arr))
@@ -312,7 +313,8 @@ class Field:
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = ActionMoRo12.get_relative_move_rot2(axes, action, self.MOVE_STEP, self.ROT_STEP)
+        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
+                                                                                  self.ROT_STEP)
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
