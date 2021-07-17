@@ -47,20 +47,22 @@ class DQN(Base_Agent_DQN):
 
     def learn(self, experiences=None):
         """Runs a learning iteration for the Q network"""
-        if self.enough_experiences_to_learn_from():
-            if experiences is None:
-                states, actions, rewards, next_states, dones = self.memory.sample()  # Sample experiences
-            else:
-                states, actions, rewards, next_states, dones = experiences
-            loss = self.compute_loss(states, next_states, rewards, actions, dones)
+        if experiences is None:
+            states, actions, rewards, next_states, dones = self.memory.sample()  # Sample experiences
+        else:
+            states, actions, rewards, next_states, dones = experiences
+        loss = self.compute_loss(states, next_states, rewards, actions, dones)
 
-            actions_list = [action_X.item() for action_X in actions]
+        actions_list = [action_X.item() for action_X in actions]
 
-            self.logger.info("Action counts {}".format(Counter(actions_list)))
-            self.take_optimisation_step(self.q_network_optimizer, self.q_network_local, loss,
-                                        self.hyper_parameters["gradient_clipping_norm"])
-            return loss.detach().cpu().numpy()
-        return 0
+        self.logger.info("Action counts {}".format(Counter(actions_list)))
+        self.take_optimisation_step(self.q_network_optimizer, self.q_network_local, loss,
+                                    self.hyper_parameters["gradient_clipping_norm"])
+        self.skipping_step_update_of_target_network(self.q_network_local, self.q_network_target,
+                                                    global_step_number=self.global_step_number,
+                                                    update_every_n_steps=self.hyper_parameters[
+                                                        "update_every_n_steps"])
+        return loss.detach().cpu().numpy()
 
     def compute_loss(self, states, next_states, rewards, actions, dones):
         """Computes the loss required to train the Q network"""
