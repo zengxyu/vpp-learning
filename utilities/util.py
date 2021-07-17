@@ -37,6 +37,13 @@ def create_save_folder(params):
     return params
 
 
+def build_in_folder(params):
+    params['model_in'] = os.path.join(params['in_folder'], params['model_in'])
+    params['exp_in'] = os.path.join(params['in_folder'], params['exp_in'])
+    params['tb_l_r_in'] = os.path.join(params['in_folder'], params['tb_l_r_in'])
+    return params
+
+
 def save_model(player, params, i_episode):
     player.store_model(model_sv_folder=params['model_sv'], i_episode=i_episode)
 

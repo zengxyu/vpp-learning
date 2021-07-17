@@ -1,7 +1,7 @@
 import logging
 
 from config.Config import Config
-from utilities.util import create_save_folder
+from utilities.util import create_save_folder, build_in_folder
 
 
 class ConfigAC(Config):
@@ -20,25 +20,6 @@ class ConfigAC(Config):
         # parameter config
         self.hyper_parameters = None
         self.setup_hyper_parameters()
-
-    def setup_output_folder(self, out_folder, in_folder):
-        self.folder = {
-            'out_folder': out_folder,
-            'in_folder': in_folder,
-
-            # output: to save
-            'model_sv': 'model',
-            'exp_sv': 'experience',
-            'tb_l_r_sv': "loss_reward",
-            'tb_log_sv': 'tb_log',
-            'bl_log_sv': 'bl_log',
-
-            # input
-            'model_in': 'model',
-            'exp_in': 'experience',
-            'tb_l_r_in': "loss_reward",
-        }
-        self.folder = create_save_folder(self.folder)
 
     def setup_hyper_parameters(self):
         self.hyper_parameters = {

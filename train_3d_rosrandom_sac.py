@@ -13,7 +13,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 actor_network = network.network_ac_continuous.SAC_PolicyNet3
 critic_network = network.network_ac_continuous.SAC_QNetwork3
-Agent = agents.DQN_agents.DQN.DQN
+Agent = agents.actor_critic_agents.SAC.SAC
 Field = field_ros.Field
 
 out_folder = "output_ros_random_sac"

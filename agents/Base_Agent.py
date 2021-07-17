@@ -36,7 +36,10 @@ class Base_Agent(ModelHelper):
                                    self.episode_number)
 
     def load_model(self, index):
-        self.load_model_optimizer(self.model_dict, self.optimizer_dict, self.config.folder['model_sv'], "Agent", index)
+        print("Load model from path : {}".format(self.config.folder['model_in']))
+
+        self.load_model_optimizer(self.model_dict, self.optimizer_dict, self.config.folder['model_in'], "Agent", index,
+                                  self.device)
 
     def take_optimisation_step(self, optimizer, network, loss, clipping_norm=None):
         """Takes an optimisation step by calculating gradients given the loss and then updating the parameters"""
