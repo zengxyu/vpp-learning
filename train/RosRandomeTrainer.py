@@ -13,17 +13,24 @@ class RosRandomTrainer(object):
         self.Field = Field
         self.summary_writer = SummaryWriterLogger(config)
         self.logger = BasicLogger.setup_console_logging(config)
+        self.randomize_every_episode = 5
+        self.field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, max_steps=300,
+                           handle_simulation=True)
 
-        self.field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, max_steps=200)
-        self.player = Agent(config)
+        self.config.environment = {
+            "is_vpp": True,
+            "reward_threshold": 0,
+            "state_size": 0,
+            "action_size": self.field.get_action_size(),
+            "action_shape": self.field.get_action_size()
+        }
+
+        self.agent = Agent(config)
 
     def train(self):
-        self.main_loop()
-
-    def main_loop(self):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
-        for i_episode in range(20):
+        for i_episode in range(self.config.num_episodes_to_run):
             print("\nepisode {}".format(i_episode))
             e_start_time = time.time()
             done = False
@@ -31,14 +38,20 @@ class RosRandomTrainer(object):
             actions = []
             losses = []
             zero_reward_consistent_count = 0
-            self.player.reset()
-            observed_map, robot_pose = self.field.reset()
+            self.agent.reset()
+
+            if i_episode % self.randomize_every_episode == 0:
+                observed_map, robot_pose = self.field.reset_and_randomize()
+                self.randomize_every_episode = max(self.randomize_every_episode - 1, 2)
+            else:
+                observed_map, robot_pose = self.field.reset()
+
             while not done:
                 # robot direction
                 robot_direction = Rotation.from_quat(robot_pose[3:]).as_matrix() @ initial_direction
                 robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
 
-                action = self.player.pick_action([observed_map, robot_pose_input])
+                action = self.agent.pick_action([observed_map, robot_pose_input])
                 observed_map_next, robot_pose_next, reward, done = self.field.step(action)
 
                 # if robot_pose is the same with the robot_pose_next, then reward--
@@ -54,14 +67,14 @@ class RosRandomTrainer(object):
                 # diff direction
                 robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
 
-                self.player.step(state=[observed_map, robot_pose_input], action=action, reward=reward,
-                                 next_state=[observed_map_next, robot_pose_input_next], done=done)
+                self.agent.step(state=[observed_map, robot_pose_input], action=action, reward=reward,
+                                next_state=[observed_map_next, robot_pose_input_next], done=done)
 
                 # to the next state
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
                 # train
-                loss = self.player.learn()
+                loss = self.agent.learn()
 
                 time_step += 1
 
@@ -86,8 +99,14 @@ class RosRandomTrainer(object):
                     mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
                                                                                             np.sum(rewards),
                                                                                             i_episode)
+                    if np.sum(rewards) == 0:
+                        self.field.shutdown_environment()
+                        self.field.start_environment()
+                        observed_map, robot_pose = self.field.reset_and_randomize()
+
                     if (i_episode + 1) % 3 == 0:
-                        pass
+                        self.agent.store_model()
+
                     e_end_time = time.time()
                     print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
         print('Complete')

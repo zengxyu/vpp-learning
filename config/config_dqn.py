@@ -26,7 +26,7 @@ class ConfigDQN(Config):
             "DQN_Agents": {
                 "learning_rate": 1e-4,
                 "batch_size": 128,
-                "buffer_size": 40000,
+                "buffer_size": 10000,
                 'eps_exploration_strategy': EpsExplorationStrategy.EXPONENT_STRATEGY,
                 "epsilon_decay_rate_denominator": 1,
                 "discount_rate": 0.98,
@@ -45,7 +45,7 @@ class ConfigDQN(Config):
 eps_exploration_strategy_config = {EpsExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
                                                                              'epsilon_decay_denominator': 1.0},
                                    EpsExplorationStrategy.EXPONENT_STRATEGY: {"epsilon": 0.5,
-                                                                              "epsilon_decay_rate": 0.99999,
-                                                                              "epsilon_min": 0.15},
+                                                                              "epsilon_decay_rate": 0.9997,
+                                                                              "epsilon_min": 0.1},
                                    EpsExplorationStrategy.CYCLICAL_STRATEGY: {"exploration_cycle_episodes_length": 100}
                                    }

@@ -100,5 +100,5 @@ class Base_Agent(ModelHelper):
         print("Episode score {} ".format(self.total_episode_score_so_far))
         print("----------------------------")
 
-    def reset(self, rolling_reward):
+    def reset(self):
         self.episode_number += 1
