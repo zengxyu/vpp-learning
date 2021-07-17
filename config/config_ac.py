@@ -69,7 +69,7 @@ class ConfigAC(Config):
                 },
 
                 "min_steps_before_learning": 400,
-                "buffer_size": 1000000,
+                "buffer_size": 10000,
                 "batch_size": 256,
                 "discount_rate": 0.98,
                 "mu": 0.0,  # for O-H noise

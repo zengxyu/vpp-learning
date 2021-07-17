@@ -82,7 +82,7 @@ class Field:
         print("rot step:", self.ROT_STEP)
 
     def get_action_size(self):
-        return len(self.actions)
+        return len(self.robot_pos) + len(self.robot_rot.as_euler('xyz'))
 
     def move_robot(self, direction):
         self.robot_pos += direction
@@ -92,46 +92,16 @@ class Field:
         rot = Rotation.from_rotvec(np.radians(angle) * axis)
         self.robot_rot = rot * self.robot_rot
 
-    def relative_rotation(self, axis, angle):
-        rot = Rotation.from_rotvec(np.radians(angle) * axis)
-        return rot.as_quat()
+    def rotate_robot_aa(self, angle):
+        rot = Rotation.from_euler("xyz", angle)
+        self.robot_rot = rot * self.robot_rot
 
     def step(self, action):
-        axes = self.robot_rot.as_matrix().transpose()
-        relative_move = np.array([0, 0, 0])
-        relative_rot = np.array([0, 0, 0, 1.0])
-        if action == Action.MOVE_FORWARD:
-            relative_move = np.array([1.0, 0, 0])
-        elif action == Action.MOVE_BACKWARD:
-            relative_move = np.array([-1.0, 0, 0])
-        elif action == Action.MOVE_LEFT:
-            relative_move = np.array([0, 1.0, 0])
-        elif action == Action.MOVE_RIGHT:
-            relative_move = np.array([0, -1.0, 0])
-        elif action == Action.MOVE_UP:
-            relative_move = np.array([0, 0, 1.0])
-        elif action == Action.MOVE_DOWN:
-            relative_move = np.array([0, 0, -1.0])
-        elif action == Action.ROTATE_ROLL_P:
-            r = Rotation.from_euler('x', self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_ROLL_N:
-            r = Rotation.from_euler('x', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_PITCH_P:
-            r = Rotation.from_euler('y', self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_PITCH_N:
-            r = Rotation.from_euler('y', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_YAW_P:
-            r = Rotation.from_euler('z', self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == Action.ROTATE_YAW_N:
-            r = Rotation.from_euler('z', -self.ROT_STEP, degrees=True)
-            relative_rot = r.as_quat()
+        relative_move = action[:3] * self.MOVE_STEP
 
-        relative_pose = np.append(relative_move * self.MOVE_STEP, relative_rot).tolist()
+        relative_rot = Rotation.from_euler("xyz", action[3:] * self.ROT_STEP).as_quat()
+
+        relative_pose = np.append(relative_move, relative_rot).tolist()
         start_time = time.time()
         unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
             relative_pose)
