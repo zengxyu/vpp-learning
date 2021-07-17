@@ -5,7 +5,7 @@ import time
 from scipy.spatial.transform.rotation import Rotation
 
 from old_agent.agent_dqn import Agent
-from field_ros import Field, Action
+from field_ros import Field, ActionMoRo12
 from network.network_dqn import DQN_Network11
 from train.RosRandomeTrainer import RosRandomTrainer
 from utilities.summary_writer import SummaryWriterLogger
@@ -29,7 +29,7 @@ params = {
     'gamma': 0.9,
     'buffer_size': 20000,
     'batch_size': 128,
-    'action_size': len(Action),
+    'action_size': len(ActionMoRo12),
 
     'is_double': False,
     'is_priority_buffer': True,

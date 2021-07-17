@@ -96,32 +96,32 @@ class EnvironmentClient:
         return self.decodeObservation(obs_msg)
 
     def sendRelativeJointTarget(self, joint_values):
-        action_msg = action_capnp.Action.new_message()
+        action_msg = action_capnp.ActionMoRo12.new_message()
         action_msg.relativeJointTarget = joint_values
         return self.sendAction(action_msg)
 
     def sendAbsoluteJointTarget(self, joint_values):
-        action_msg = action_capnp.Action.new_message()
+        action_msg = action_capnp.ActionMoRo12.new_message()
         action_msg.absoluteJointTarget = joint_values
         return self.sendAction(action_msg)
 
     def sendGoalPose(self, goal_pose):
-        action_msg = action_capnp.Action.new_message()
+        action_msg = action_capnp.ActionMoRo12.new_message()
         self.encodeGoalPose(action_msg, goal_pose)
         return self.sendAction(action_msg)
 
     def sendRelativePose(self, relative_pose):
-        action_msg = action_capnp.Action.new_message()
+        action_msg = action_capnp.ActionMoRo12.new_message()
         self.encodeRelativePose(action_msg, relative_pose)
         return self.sendAction(action_msg)
 
     def sendReset(self):
-        action_msg = action_capnp.Action.new_message()
+        action_msg = action_capnp.ActionMoRo12.new_message()
         action_msg.reset = None
         return self.sendAction(action_msg)
 
     def sendResetAndRandomize(self, min_point, max_point, min_dist):
-        action_msg = action_capnp.Action.new_message()
+        action_msg = action_capnp.ActionMoRo12.new_message()
         self.encodeRandomizationParameters(action_msg, min_point, max_point, min_dist)
         return self.sendAction(action_msg)
 

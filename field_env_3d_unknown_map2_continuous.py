@@ -31,46 +31,6 @@ count_known_target_layer5_vectorized = np.vectorize(field_env_3d_helper.count_kn
                                                     otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
 
 
-# class Action(IntEnum):
-#     DO_NOTHING = 0,
-#     MOVE_FORWARD = 1,
-#     MOVE_BACKWARD = 2,
-#     MOVE_LEFT = 3,
-#     MOVE_RIGHT = 4,
-#     MOVE_UP = 5,
-#     MOVE_DOWN = 6,
-#     ROTATE_ROLL_P = 7,
-#     ROTATE_ROLL_N = 8,
-#     ROTATE_PITCH_P = 9,
-#     ROTATE_PITCH_N = 10,
-#     ROTATE_YAW_P = 11,
-#     ROTATE_YAW_N = 12
-
-
-class Action(IntEnum):
-    MOVE_FORWARD = 0
-    MOVE_BACKWARD = 1
-    MOVE_LEFT = 2
-    MOVE_RIGHT = 3
-    MOVE_UP = 4
-    MOVE_DOWN = 5
-    ROTATE_ROLL_P = 6
-    ROTATE_ROLL_N = 7
-    ROTATE_PITCH_P = 8
-    ROTATE_PITCH_N = 9
-    ROTATE_YAW_P = 10
-    ROTATE_YAW_N = 11
-
-
-# class Action(IntEnum):
-#     MOVE_FORWARD = 0,
-#     ROTATE_ROLL_P = 1,
-#     ROTATE_ROLL_N = 2,
-#     ROTATE_PITCH_P = 3,
-#     ROTATE_PITCH_N = 4,
-#     ROTATE_YAW_P = 5,
-#     ROTATE_YAW_N = 6
-
 class FieldValues(IntEnum):
     UNKNOWN = 0,
     FREE = 1,

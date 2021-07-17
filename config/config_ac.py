@@ -1,6 +1,6 @@
 import logging
 
-from config.Config import Config
+from config.config import Config
 from utilities.util import create_save_folder, build_in_folder
 
 

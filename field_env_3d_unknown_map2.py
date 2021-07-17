@@ -9,6 +9,8 @@ import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
+from action_space import ActionMoRo12
+
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
 
@@ -31,46 +33,6 @@ count_known_target_layer5_vectorized = np.vectorize(field_env_3d_helper.count_kn
                                                     otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
 
 
-# class Action(IntEnum):
-#     DO_NOTHING = 0,
-#     MOVE_FORWARD = 1,
-#     MOVE_BACKWARD = 2,
-#     MOVE_LEFT = 3,
-#     MOVE_RIGHT = 4,
-#     MOVE_UP = 5,
-#     MOVE_DOWN = 6,
-#     ROTATE_ROLL_P = 7,
-#     ROTATE_ROLL_N = 8,
-#     ROTATE_PITCH_P = 9,
-#     ROTATE_PITCH_N = 10,
-#     ROTATE_YAW_P = 11,
-#     ROTATE_YAW_N = 12
-
-
-class Action(IntEnum):
-    MOVE_FORWARD = 0
-    MOVE_BACKWARD = 1
-    MOVE_LEFT = 2
-    MOVE_RIGHT = 3
-    MOVE_UP = 4
-    MOVE_DOWN = 5
-    ROTATE_ROLL_P = 6
-    ROTATE_ROLL_N = 7
-    ROTATE_PITCH_P = 8
-    ROTATE_PITCH_N = 9
-    ROTATE_YAW_P = 10
-    ROTATE_YAW_N = 11
-
-
-# class Action(IntEnum):
-#     MOVE_FORWARD = 0,
-#     ROTATE_ROLL_P = 1,
-#     ROTATE_ROLL_N = 2,
-#     ROTATE_PITCH_P = 3,
-#     ROTATE_PITCH_N = 4,
-#     ROTATE_YAW_P = 5,
-#     ROTATE_YAW_N = 6
-
 class FieldValues(IntEnum):
     UNKNOWN = 0,
     FREE = 1,
@@ -88,15 +50,15 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False, is_augment_env=False,
+    def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False, is_augment_env=False,
                  scale=0.05):
         self.found_targets = 0
         self.free_cells = 0
         self.sensor_range = sensor_range
+        self.Action = Action
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
-        self.actions = Action
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         self.is_augment_env = is_augment_env
@@ -122,7 +84,7 @@ class Field:
             self.read_env_from_file(init_file, scale)
 
     def get_action_size(self):
-        return len(self.actions)
+        return self.Action.get_action_size()
 
     def trim_zeros(self, arr):
         slices = tuple(slice(idx.min(), idx.max() + 1) for idx in np.nonzero(arr))
@@ -345,38 +307,14 @@ class Field:
         self.robot_pos += direction
         self.robot_pos = np.clip(self.robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
 
-    def rotate_robot(self, axis, angle):
-        rot = Rotation.from_rotvec(np.radians(angle) * axis)
+    def rotate_robot(self, rot):
         self.robot_rot = rot * self.robot_rot
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
-
-        if action == Action.MOVE_FORWARD:
-            self.move_robot(axes[0] * self.MOVE_STEP)
-        elif action == Action.MOVE_BACKWARD:
-            self.move_robot(-axes[0] * self.MOVE_STEP)
-        elif action == Action.MOVE_LEFT:
-            self.move_robot(axes[1] * self.MOVE_STEP)
-        elif action == Action.MOVE_RIGHT:
-            self.move_robot(-axes[1] * self.MOVE_STEP)
-        elif action == Action.MOVE_UP:
-            self.move_robot(axes[2] * self.MOVE_STEP)
-        elif action == Action.MOVE_DOWN:
-            self.move_robot(-axes[2] * self.MOVE_STEP)
-        elif action == Action.ROTATE_ROLL_P:
-            self.rotate_robot(axes[0], self.ROT_STEP)
-        elif action == Action.ROTATE_ROLL_N:
-            self.rotate_robot(axes[0], -self.ROT_STEP)
-        elif action == Action.ROTATE_PITCH_P:
-            self.rotate_robot(axes[1], self.ROT_STEP)
-        elif action == Action.ROTATE_PITCH_N:
-            self.rotate_robot(axes[1], -self.ROT_STEP)
-        elif action == Action.ROTATE_YAW_P:
-            self.rotate_robot(axes[2], self.ROT_STEP)
-        elif action == Action.ROTATE_YAW_N:
-            self.rotate_robot(axes[2], -self.ROT_STEP)
-
+        relative_move, relative_rot = ActionMoRo12.get_relative_move_rot2(axes, action, self.MOVE_STEP, self.ROT_STEP)
+        self.move_robot(relative_move)
+        self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         new_targets_found, new_free_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
                                                                           ep_right_down, ep_right_up)

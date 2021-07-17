@@ -13,15 +13,16 @@ if not headless:
 
 
 class P3DTrainer(object):
-    def __init__(self, config, Agent, Field):
+    def __init__(self, config, Agent, Field, Action):
         self.config = config
         self.Agent = Agent
         self.Field = Field
+        self.Action = Action
+
         self.summary_writer = SummaryWriterLogger(config)
         # field
-        self.field = self.Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05,
-                                max_steps=300,
-                                init_file='VG07_6.binvox', headless=headless)
+        self.field = self.Field(Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05,
+                                max_steps=300, init_file='VG07_6.binvox', headless=headless)
 
         self.config.environment = {
             "is_vpp": True,
@@ -67,6 +68,7 @@ class P3DTrainer(object):
                 robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
 
                 action = self.agent.pick_action([observed_map, robot_pose_input])
+
                 observed_map_next, robot_pose_next, reward, done = self.field.step(action)
 
                 # if robot_pose is the same with the robot_pose_next, then reward--
