@@ -71,7 +71,7 @@ class ConfigAC(Config):
                 "min_steps_before_learning": 400,
                 "buffer_size": 1000000,
                 "batch_size": 256,
-                "discount_rate": 0.99,
+                "discount_rate": 0.98,
                 "mu": 0.0,  # for O-H noise
                 "theta": 0.15,  # for O-H noise
                 "sigma": 0.25,  # for O-H noise
