@@ -26,14 +26,14 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, shape, sensor_range, hfov, vfov, max_steps, handle_simulation):
+    def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, handle_simulation):
         self.found_targets = 0
         self.free_cells = 0
         self.sensor_range = sensor_range
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
-        self.actions = ActionMoRo12
+        self.Action = Action
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         self.max_steps = max_steps
@@ -54,7 +54,7 @@ class Field:
         print("rot step:", self.ROT_STEP)
 
     def get_action_size(self):
-        return len(self.actions)
+        return self.Action.get_action_size()
 
     def move_robot(self, direction):
         self.robot_pos += direction

@@ -7,14 +7,14 @@ from utilities.summary_writer import SummaryWriterLogger
 
 
 class RosRandomTrainer(object):
-    def __init__(self, config, Agent, Field):
+    def __init__(self, config, Agent, Field, Action):
         self.config = config
         self.Agent = Agent
         self.Field = Field
         self.summary_writer = SummaryWriterLogger(config)
         self.logger = BasicLogger.setup_console_logging(config)
         self.randomize_every_episode = 5
-        self.field = Field(shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, max_steps=300,
+        self.field = Field(Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, max_steps=300,
                            handle_simulation=True)
 
         self.config.environment = {
