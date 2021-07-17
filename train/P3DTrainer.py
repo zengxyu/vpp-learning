@@ -57,7 +57,7 @@ class P3DTrainer(object):
             losses = []
             rewards = []
             actions = []
-            self.agent.reset(mean_reward_last_n_ep)
+            self.agent.reset()
             observed_map, robot_pose = self.field.reset()
             while not done:
                 loss = 0
