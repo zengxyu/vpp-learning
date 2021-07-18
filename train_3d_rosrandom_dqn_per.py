@@ -22,7 +22,7 @@ in_folder = ""
 
 eps_exploration_strategy_config = {EpsExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
                                                                              'epsilon_decay_denominator': 1.0},
-                                   EpsExplorationStrategy.EXPONENT_STRATEGY: {"epsilon": 0.3,
+                                   EpsExplorationStrategy.EXPONENT_STRATEGY: {"epsilon": 0.5,
                                                                               "epsilon_decay_rate": 0.997,
                                                                               "epsilon_min": 0.1},
                                    EpsExplorationStrategy.CYCLICAL_STRATEGY: {"exploration_cycle_episodes_length": 100}
