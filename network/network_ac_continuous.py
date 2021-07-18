@@ -291,7 +291,7 @@ class SAC_PER_QNetwork3(nn.Module):
 
         self.pose_fc4 = torch.nn.Linear(128, 32)
 
-        self.linear = torch.nn.Linear(32, 1)
+        self.linear = torch.nn.Linear(32, action_dim)
         self.linear.weight.data.uniform_(-edge, edge)
         self.linear.bias.data.uniform_(-edge, edge)
 

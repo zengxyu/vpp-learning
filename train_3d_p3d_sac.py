@@ -2,6 +2,7 @@ import sys
 import os
 import logging
 
+import action_space
 import agents
 import network
 import field_env_3d_unknown_map2_continuous
@@ -17,6 +18,7 @@ actor_network = network.network_ac_continuous.SAC_PolicyNet3
 critic_network = network.network_ac_continuous.SAC_QNetwork3
 Agent = agents.actor_critic_agents.SAC.SAC
 Field = field_env_3d_unknown_map2_continuous.Field
+Action = action_space.ActionMoRoContinuous
 
 out_folder = "output_p3d_sac"
 in_folder = ""
@@ -31,6 +33,6 @@ config = ConfigAC(actor_network=actor_network,
                   file_logging_level=logging.WARNING,
                   )
 
-trainer = P3DTrainer(config=config, Agent=Agent, Field=Field)
+trainer = P3DTrainer(config=config, Agent=Agent, Field=Field, Action=Action)
 
 trainer.train()
