@@ -18,7 +18,7 @@ Field = field_ros.Field
 Action = action_space.ActionMoRo12
 
 out_folder = "output_reset_and_random6"
-in_folder = "output_reset_and_random5"
+in_folder = ""
 
 eps_exploration_strategy_config = {EpsExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
                                                                              'epsilon_decay_denominator': 1.0},
@@ -38,5 +38,5 @@ config = ConfigDQN(network=network,
                    )
 
 trainer = RosRandomTrainer(config=config, Agent=Agent, Field=Field, Action=Action)
-trainer.agent.load_model(index=36)
+# trainer.agent.load_model(index=36)
 trainer.train()

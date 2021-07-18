@@ -170,8 +170,8 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
         qf1_loss = self.weighted_mse_loss(qf1, next_q_value, ISWeights)
         qf2_loss = self.weighted_mse_loss(qf2, next_q_value, ISWeights)
 
-        td1_errors = qf1 - next_q_value
-        td2_errors = qf2 - next_q_value
+        td1_errors = torch.sum(qf1 - next_q_value)
+        td2_errors = torch.sum(qf2 - next_q_value)
 
         return qf1_loss, td1_errors, qf2_loss, td2_errors
 

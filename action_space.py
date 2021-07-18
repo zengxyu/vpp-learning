@@ -120,6 +120,11 @@ class ActionMoRoMultiplier36(object):
         return len(ActionMoRo12IntEnum) * len(MultiplierIntEnum)
 
 
+class ActionMoRoContinuous(object):
+    def get_action_size(self, robot_pos, robot_rot):
+        return len(robot_pos) + len(robot_rot)
+
+
 class ActionMoRo12IntEnum(IntEnum):
     MOVE_FORWARD = 0
     MOVE_BACKWARD = 1

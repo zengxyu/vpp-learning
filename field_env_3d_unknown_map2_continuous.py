@@ -48,7 +48,8 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False, is_augment_env=False,
+    def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
+                 is_augment_env=False,
                  scale=0.05):
         self.found_targets = 0
         self.free_cells = 0
@@ -56,6 +57,7 @@ class Field:
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
+        self.action_instance = Action()
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         self.is_augment_env = is_augment_env
@@ -81,7 +83,7 @@ class Field:
             self.read_env_from_file(init_file, scale)
 
     def get_action_size(self):
-        return len(self.robot_pos) + len(self.robot_rot.as_euler('xyz'))
+        return self.action_instance.get_action_size(self.robot_pos, self.robot_rot.as_euler('xyz'))
 
     def trim_zeros(self, arr):
         slices = tuple(slice(idx.min(), idx.max() + 1) for idx in np.nonzero(arr))
