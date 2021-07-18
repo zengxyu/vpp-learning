@@ -11,7 +11,6 @@ from train.P3DTrainer import P3DTrainer
 from config.config_ac import ConfigAC
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
-
 # network
 actor_network = network.network_ac_continuous.SAC_PER_PolicyNet3
 critic_network = network.network_ac_continuous.SAC_PER_QNetwork3
