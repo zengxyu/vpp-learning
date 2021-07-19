@@ -63,6 +63,7 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
                                   self.hyperparameters["theta"], self.hyperparameters["sigma"])
 
         self.do_evaluation_iterations = self.hyperparameters["do_evaluation_iterations"]
+        self.model_dict, self.optimizer_dict = self.__build_model_and_optimizer_dict()
 
     def create_actor_network(self, state_dim, action_dim, output_dim):
         ActorNetwork = self.config.actor_network
@@ -219,3 +220,17 @@ class SAC_Prioritised_Experience_Replay(Base_Agent_AC):
         is True."""
         alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy).detach()).mean()
         return alpha_loss
+
+    def __build_model_and_optimizer_dict(self):
+        model_dict = {"critic_local": self.critic_local,
+                      "critic_target": self.critic_target,
+                      "critic_local_2": self.critic_local_2,
+                      "critic_target_2": self.critic_target_2,
+                      "actor_local": self.actor_local,
+
+                      }
+        optimizer_dict = {"critic_optimizer", self.critic_optimizer,
+                          "critic_optimizer_2", self.critic_optimizer_2,
+                          "actor_optimizer", self.actor_optimizer
+                          }
+        return model_dict, optimizer_dict
