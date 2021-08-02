@@ -24,7 +24,6 @@ class ConfigAC(Config):
     def setup_hyper_parameters(self):
         self.hyper_parameters = {
             "Actor_Critic_Agents": {
-                "learning_rate": 0.005,
                 "linear_hidden_units": [20, 10],
                 "final_layer_activation": ["SOFTMAX", None],
                 "gradient_clipping_norm": 5.0,
@@ -66,6 +65,11 @@ class ConfigAC(Config):
                 "do_evaluation_iterations": True
             }
         }
+
+    def set_parameters(self, learning_rate, discount_rate):
+        self.hyper_parameters['Actor_Critic_Agents']["Actor"]['learning_rate'] = learning_rate
+        self.hyper_parameters['Actor_Critic_Agents']["Critic"]['learning_rate'] = learning_rate
+        self.hyper_parameters['Actor_Critic_Agents']['discount_rate'] = discount_rate
 
 # exploration_strategy_config = {ExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
 #                                                                       'epsilon_decay_denominator': 1.0},

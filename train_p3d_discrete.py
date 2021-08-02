@@ -54,7 +54,6 @@ def train_fun(tuning_param):
                        )
     trainer = P3DTrainer(config=config, Agent=Agent, Field=Field, Action=Action,
                          project_path=tuning_param["project_path"])
-    tune.report(a=1, b=3.3)
     trainer.train()
 
 

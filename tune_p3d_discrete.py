@@ -52,6 +52,8 @@ def train_fun(tuning_param):
                        console_logging_level=logging.DEBUG,
                        file_logging_level=logging.WARNING,
                        )
+    config.set_parameters(tuning_param['learning_rate'], tuning_param['discount_rate'])
+
     config.hyper_parameters['DQN_Agents']['learning_rate'] = tuning_param['learning_rate']
     config.hyper_parameters['DQN_Agents']['discount_rate'] = tuning_param['discount_rate']
     trainer = P3DTrainer(config=config, Agent=Agent, Field=Field, Action=Action,
