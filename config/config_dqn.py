@@ -28,7 +28,7 @@ class ConfigDQN(Config):
             "DQN_Agents": {
                 "learning_rate": 1e-4,
                 "batch_size": 128,
-                "buffer_size": 10000,
+                "buffer_size": 8000,
                 'eps_exploration_strategy': EpsExplorationStrategy.EXPONENT_STRATEGY,
                 "epsilon_decay_rate_denominator": 1,
                 "discount_rate": 0.98,
