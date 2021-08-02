@@ -4,7 +4,7 @@ import os
 
 import agents
 import network
-import field_ros_continuous
+from environment import field_ros_continuous
 from config.config_ac import ConfigAC
 
 from train.RosTrainer import RosTrainer

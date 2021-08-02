@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/environment python
 import random
 
+import gym
 import numpy as np
 from enum import IntEnum
 from scipy.spatial.transform import Rotation
@@ -49,7 +50,7 @@ class GuiFieldValues(IntEnum):
     TARGET_SEEN = 5
 
 
-class Field:
+class Field(gym.Env):
     def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
                  is_augment_env=False,
                  scale=0.05):
@@ -60,10 +61,14 @@ class Field:
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
+        self.action_space = gym.spaces.Discrete(self.get_action_size())
+        self.observation_space = gym.spaces.Tuple(
+            (gym.spaces.Box(low=0, high=255, shape=(15, 36, 18), dtype=np.float),
+             gym.spaces.Box(low=0, high=255, shape=(7,), dtype=np.float)))
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         self.is_augment_env = is_augment_env
-        # how often to augment the env
+        # how often to augment the environment
         self.augment_env_every = 30
         self.trim_data = None
         self.trim_data_shape = None
@@ -142,7 +147,7 @@ class Field:
         self.known_map = np.zeros(self.shape)
 
         if not self.headless:
-            from field_env_3d_gui import FieldGUI
+            from field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, scale)
 
     def compute_fov(self):
@@ -328,8 +333,8 @@ class Field:
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
 
-        return map, np.concatenate(
-            (self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
+        return (map, np.concatenate(
+            (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, done, {}
 
     def reset(self):
         self.reset_count += 1
@@ -372,4 +377,4 @@ class Field:
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         # print(unknown_map)
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
-        return map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
+        return (map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())))

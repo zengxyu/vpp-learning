@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/environment python
 import random
 
 import gym
@@ -9,8 +9,6 @@ import binvox_rw
 import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
-
-from action_space import ActionMoRo12
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
@@ -57,18 +55,15 @@ class Field(gym.Env):
         self.found_targets = 0
         self.free_cells = 0
         self.sensor_range = sensor_range
-        self.action_instance = Action()
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
-        self.action_space = gym.spaces.Discrete(self.get_action_size())
-        self.observation_space = gym.spaces.Tuple(
-            (gym.spaces.Box(low=0, high=255, shape=(15, 36, 18), dtype=np.uint),
-             gym.spaces.Box(low=0, high=255, shape=(7,), dtype=np.uint)))
+        self.action_instance = Action()
+
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         self.is_augment_env = is_augment_env
-        # how often to augment the env
+        # how often to augment the environment
         self.augment_env_every = 30
         self.trim_data = None
         self.trim_data_shape = None
@@ -76,6 +71,10 @@ class Field(gym.Env):
         self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
+        action_size = self.get_action_size()
+        self.action_space = gym.spaces.Box(low=np.ones(action_size) * 0, high=np.ones(action_size) * 255,
+                                           dtype=np.float32)
+
         self.MOVE_STEP = 10.0
         self.ROT_STEP = 15.0
 
@@ -90,7 +89,7 @@ class Field(gym.Env):
             self.read_env_from_file(init_file, scale)
 
     def get_action_size(self):
-        return self.action_instance.get_action_size()
+        return self.action_instance.get_action_size(self.robot_pos, self.robot_rot.as_euler('xyz'))
 
     def trim_zeros(self, arr):
         slices = tuple(slice(idx.min(), idx.max() + 1) for idx in np.nonzero(arr))
@@ -147,7 +146,7 @@ class Field(gym.Env):
         self.known_map = np.zeros(self.shape)
 
         if not self.headless:
-            from field_env_3d_gui import FieldGUI
+            from field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, scale)
 
     def compute_fov(self):
@@ -313,15 +312,20 @@ class Field(gym.Env):
         self.robot_pos += direction
         self.robot_pos = np.clip(self.robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
 
-    def rotate_robot(self, rot):
+    def rotate_robot(self, axis, angle):
+        rot = Rotation.from_rotvec(np.radians(angle) * axis)
+        self.robot_rot = rot * self.robot_rot
+
+    def rotate_robot_aa(self, angle):
+        rot = Rotation.from_euler("xyz", angle)
         self.robot_rot = rot * self.robot_rot
 
     def step(self, action):
-        axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
-                                                                                  self.ROT_STEP)
-        self.move_robot(relative_move)
-        self.rotate_robot(relative_rot)
+
+        self.move_robot(action[:3] * self.MOVE_STEP)
+
+        self.rotate_robot_aa(action[3:] * self.ROT_STEP)
+
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         new_targets_found, new_free_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
                                                                           ep_right_down, ep_right_up)

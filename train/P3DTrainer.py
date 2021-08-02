@@ -1,4 +1,5 @@
 import logging
+import os
 
 import numpy as np
 import time
@@ -6,6 +7,7 @@ from scipy.spatial.transform.rotation import Rotation
 
 from utilities.basic_logger import BasicLogger
 from utilities.summary_writer import SummaryWriterLogger
+from ray import tune
 
 headless = True
 if not headless:
@@ -13,16 +15,17 @@ if not headless:
 
 
 class P3DTrainer(object):
-    def __init__(self, config, Agent, Field, Action):
+    def __init__(self, config, Agent, Field, Action, project_path):
         self.config = config
         self.Agent = Agent
         self.Field = Field
         self.Action = Action
 
         self.summary_writer = SummaryWriterLogger(config)
+        init_file_path = os.path.join(project_path, 'VG07_6.binvox')
         # field
         self.field = self.Field(Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05,
-                                max_steps=300, init_file='VG07_6.binvox', headless=headless)
+                                max_steps=300, init_file=init_file_path, headless=headless)
 
         self.config.environment = {
             "is_vpp": True,
@@ -70,7 +73,7 @@ class P3DTrainer(object):
 
                 action = self.agent.pick_action([observed_map, robot_pose_input])
 
-                observed_map_next, robot_pose_next, reward, done = self.field.step(action)
+                (observed_map_next, robot_pose_next), reward, done, _ = self.field.step(action)
 
                 # if robot_pose is the same with the robot_pose_next, then reward--
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction

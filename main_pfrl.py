@@ -20,7 +20,7 @@ print('info:', info)
 
 
 # Uncomment to open a GUI window rendering the current state of the environment
-# env.render()
+# environment.render()
 class QFunction(torch.nn.Module):
 
     def __init__(self, obs_size, n_actions):
@@ -83,7 +83,7 @@ for i in range(1, n_episodes + 1):
     t = 0  # time step
     while True:
         # Uncomment to watch the behavior in a GUI window
-        # env.render()
+        # environment.render()
         action = agent.act(obs)
         obs, reward, done, _ = env.step(action)
         R += reward
@@ -105,7 +105,7 @@ with agent.eval_mode():
         t = 0
         while True:
             # Uncomment to watch the behavior in a GUI window
-            # env.render()
+            # environment.render()
             action = agent.act(obs)
             obs, r, done, _ = env.step(action)
             R += r

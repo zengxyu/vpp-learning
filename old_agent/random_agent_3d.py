@@ -1,9 +1,6 @@
-import os
-import pickle
-
 import numpy as np
 
-from field_env_3d_unknown_map import Action
+from environment.field_env_3d_unknown_map import Action
 
 
 class RandomAgent:

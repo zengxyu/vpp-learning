@@ -1,7 +1,7 @@
 import sys
 import os
 
-from field_env_3d_unknown_map2_continuous import Field
+from environment.field_env_3d_unknown_map2_continuous import Field
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 

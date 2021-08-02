@@ -4,7 +4,7 @@ import pygame as pg
 from old_agent.agent_ppo import Agent
 import argparse
 
-from field_env import Field
+from environment.field_2d import Field
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--headless", action="store_true", help="Run in headless mode")

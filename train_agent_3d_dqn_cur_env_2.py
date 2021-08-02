@@ -1,19 +1,11 @@
 import sys
-import argparse
-import time
 
-from scipy.spatial.transform.rotation import Rotation
-
-from old_agent.agent_dqn import Agent
-from field_ros import Field, ActionMoRo12
+from environment.field_ros import ActionMoRo12
 from network.network_dqn import DQN_Network11
 from train.RosRandomeTrainer import RosRandomTrainer
-from utilities.summary_writer import SummaryWriterLogger
 from utilities.util import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
-
-import numpy as np
 
 """
 random starting point, gradually increase the range, fix starting robot rotation direction,

@@ -67,7 +67,7 @@ class Network(nn.Module):
 
 
 env = gym.make('CartPole-v0')
-# env = wrappers.Monitor(env, './tmp/cartpole-v0-1')
+# environment = wrappers.Monitor(environment, './tmp/cartpole-v0-1')
 
 model = Network()
 if use_cuda:

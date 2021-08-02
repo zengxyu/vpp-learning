@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/environment python
 
 import numpy as np
 from enum import IntEnum
@@ -83,7 +83,7 @@ class Field:
         self.robot_pos = np.array(robotPose[:3])
         self.robot_rot = Rotation.from_quat(robotPose[3:])
 
-        return map, robotPose, reward, done
+        return (map, robotPose), reward, done, {}
 
     def reset(self):
         print("-----------------------------------reset!-------------------------------------------")
@@ -99,7 +99,7 @@ class Field:
 
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
-        return map, robotPose
+        return (map, robotPose)
 
     def reset_and_randomize(self):
         print("-------------------------------reset and randomize!-----------------------------------")
@@ -116,7 +116,7 @@ class Field:
 
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
-        return map, robotPose
+        return (map, robotPose)
 
     def shutdown_environment(self):
         print('-----------------------------------SHUTDOWN--------------------------------')

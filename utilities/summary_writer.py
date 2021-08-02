@@ -7,6 +7,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from utilities.basic_logger import BasicLogger
 
+from ray import tune
+
 
 class MySummaryWriter:
     def __init__(self, log_dir):
@@ -135,13 +137,11 @@ class SummaryWriterLogger:
         if verbose:
             print("Episode : {} | Mean loss : {} | Reward : {}".format(i_episode, ep_loss, ep_reward))
 
-        self.writer.add_scalar('train/ep_loss_smoothed',
-                               np.mean(self.ep_loss_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):]),
-                               i_episode)
-        self.writer.add_scalar('train/ep_reward_smoothed',
-                               np.mean(self.ep_reward_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):]),
-                               i_episode)
-
+        ep_loss_smoothed = np.mean(self.ep_loss_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):])
+        ep_reward_smoothed = np.mean(self.ep_reward_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):])
+        self.writer.add_scalar('train/ep_loss_smoothed', ep_loss_smoothed, i_episode)
+        self.writer.add_scalar('train/ep_reward_smoothed', ep_reward_smoothed, i_episode)
+        tune.report(ep_loss_smoothed=ep_loss_smoothed, ep_reward_smoothed=ep_reward_smoothed)
         if i_episode % self.tb_save_l_r_every_n_episode == 0:
             self.save_loss_reward()
 

@@ -1,5 +1,5 @@
 import pygame as pg
-from field_env import Field
+from environment.field_2d import Field
 from human_player import HumanPlayer
 
 pg.init()

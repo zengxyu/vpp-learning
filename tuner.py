@@ -30,7 +30,7 @@ def train_fun(config):
     robot = Robot(env_config, 'robot')
     robot.set_visible(config['visible'])
 
-    env: CrowdEnv = config['env']
+    env: CrowdEnv = config['environment']
     env.set_robot(robot)
     env.set_with_om(config['with_om'])
 
@@ -41,7 +41,7 @@ def train_fun(config):
     gpu = config['gpu']
     device = get_device(gpu)
 
-    # agent = build_dqn_agent(env, phi, gpu, device)
+    # agent = build_dqn_agent(environment, phi, gpu, device)
     agent = build_rainbow_agent(env, phi, gpu=gpu, device=device, n_atoms=config['n_atoms'])
     dqn_trainer.train(writer, env, agent, 4500 + config['n_atoms'] * 25, model_dir)
 
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     ray.init(local_mode=False)
 
     env_config = configparser.RawConfigParser()
-    env_config.read("configs/env.config")
+    env_config.read("configs/environment.config")
     # GPU的device_id(如：0)，只使用CPU则设为-1
     gpu = 0 if torch.cuda.is_available() else -1
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     analysis = tune.run(
         train_fun,
         config={
-            "env": env,
+            "environment": env,
             "gpu": gpu,
             "env_config": env_config,
             "n_atoms": tune.grid_search([10, 30, 51]),
