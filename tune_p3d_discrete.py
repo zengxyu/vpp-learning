@@ -60,7 +60,6 @@ def train_fun(tuning_param):
 
 
 if __name__ == '__main__':
-    # 设为True方便调试，但是只能跑一个
     ray.init(local_mode=False)
 
     project_path = project_path()
