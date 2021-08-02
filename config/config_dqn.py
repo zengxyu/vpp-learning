@@ -49,6 +49,10 @@ class ConfigDQN(Config):
             self.hyper_parameters['DQN_Agents'].update(
                 g_eps_exploration_strategy_config[self.hyper_parameters['DQN_Agents']['eps_exploration_strategy']])
 
+    def set_parameters(self, learning_rate, discount_rate):
+        self.hyper_parameters['Actor_Critic_Agents']['learning_rate'] = learning_rate
+        self.hyper_parameters['Actor_Critic_Agents']['discount_rate'] = discount_rate
+
 
 g_eps_exploration_strategy_config = {EpsExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
                                                                                'epsilon_decay_denominator': 1.0},

@@ -71,10 +71,10 @@ def get_action_shape(environment):
     return environment.action_space.shape
 
 
-def project_path():
+def get_project_path():
     cur_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     return cur_dir
 
 
 if __name__ == '__main__':
-    print(project_path())
+    print(get_project_path())

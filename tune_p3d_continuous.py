@@ -5,12 +5,14 @@ import logging
 import action_space
 import agents
 import network
+import ray
+from ray import tune
 
 from train.P3DTrainer import P3DTrainer
 
 from config.config_ac import ConfigAC
 from environment import field_p3d_continuous
-from utilities.util import project_path
+from utilities.util import get_project_path
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -90,7 +92,26 @@ def train_func(tuning_param):
     trainer.train()
 
 
-if __name__ == '__main__':
-    project_path = project_path()
+def train():
+    project_path = get_project_path()
 
     train_func({"project_path": project_path, "alg": "sac_per", "learning_rate": 1e-2, "discount_rate": 0.9})
+
+
+if __name__ == '__main__':
+    ray.init(local_mode=False)
+    project_path = get_project_path()
+
+    print("project path:{}".format(project_path))
+    analysis = tune.run(
+        train_func,
+        config={
+            "learning_rate": tune.grid_search([1e-3, 1e-4]),
+            "discount_rate": tune.grid_search([0.9, 0.95, 0.98]),
+            "project_path": project_path,
+            "alg": tune.grid_search(["sac", "sac_per"])
+        },
+        log_to_file=True,
+        resources_per_trial={'cpu': 1, 'gpu': 0}
+    )
+    # train()
