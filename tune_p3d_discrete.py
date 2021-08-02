@@ -72,5 +72,5 @@ if __name__ == '__main__':
             "project_path": project_path
         },
         log_to_file=True,
-        resources_per_trial={'cpu': 6, 'gpu': 0}
+        resources_per_trial={'cpu': 1, 'gpu': 0}
     )
