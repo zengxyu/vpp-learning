@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/environment python
 
 import numpy as np
 from enum import IntEnum

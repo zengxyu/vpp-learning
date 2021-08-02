@@ -49,7 +49,7 @@ def save_model(player, params, i_episode):
 
 
 def get_state_size(environment):
-    """Gets the state_size for the gym env into the correct shape for a neural network"""
+    """Gets the state_size for the gym environment into the correct shape for a neural network"""
     random_state = environment.reset()
     if isinstance(random_state, dict):
         state_size = random_state["observation"].shape[0] + random_state["desired_goal"].shape[0]
@@ -59,7 +59,7 @@ def get_state_size(environment):
 
 
 def get_action_size(environment, action_types):
-    """Gets the action_size for the gym env into the correct shape for a neural network"""
+    """Gets the action_size for the gym environment into the correct shape for a neural network"""
     if "action_size" in environment.__dict__: return environment.action_size
     if action_types == "DISCRETE":
         return environment.action_space.n
@@ -69,3 +69,12 @@ def get_action_size(environment, action_types):
 
 def get_action_shape(environment):
     return environment.action_space.shape
+
+
+def project_path():
+    cur_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return cur_dir
+
+
+if __name__ == '__main__':
+    print(project_path())

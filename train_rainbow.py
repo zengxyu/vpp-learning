@@ -15,12 +15,12 @@ from pfrl import replay_buffers, utils
 class MultiBinaryAsDiscreteAction(gym.ActionWrapper):
     """Transforms MultiBinary action space to Discrete.
 
-    If the action space of a given env is `gym.spaces.MultiBinary(n)`, then
-    the action space of the wrapped env will be `gym.spaces.Discrete(2**n)`,
+    If the action space of a given environment is `gym.spaces.MultiBinary(n)`, then
+    the action space of the wrapped environment will be `gym.spaces.Discrete(2**n)`,
     which covers all the combinations of the original action space.
 
     Args:
-        env (gym.Env): Gym env whose action space is `gym.spaces.MultiBinary`.
+        env (gym.Env): Gym environment whose action space is `gym.spaces.MultiBinary`.
     """
 
     def __init__(self, env):
@@ -69,7 +69,7 @@ class DistributionalDuelingHead(nn.Module):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env", type=str, default="SlimeVolley-v0")
+    parser.add_argument("--environment", type=str, default="SlimeVolley-v0")
     parser.add_argument(
         "--outdir",
         type=str,
@@ -98,14 +98,14 @@ def main():
         "--render",
         action="store_true",
         default=False,
-        help="Render env states in a GUI window.",
+        help="Render environment states in a GUI window.",
     )
     parser.add_argument(
         "--monitor",
         action="store_true",
         default=False,
         help=(
-            "Monitor env. Videos and additional information are saved as output files."
+            "Monitor environment. Videos and additional information are saved as output files."
         ),
     )
     parser.add_argument("--gamma", type=float, default=0.98)

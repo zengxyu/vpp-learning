@@ -1,12 +1,8 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
-from collections import deque
-from PIL import Image
-import random
-import copy
 
-from field_env import Field, Action
+from environment.field_2d import Action
 
 
 class PPOPolicy(torch.nn.Module):

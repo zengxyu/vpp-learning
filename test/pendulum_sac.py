@@ -248,7 +248,7 @@ def main(env, agent, Episode, batch_size):
         print("episode:{}, Return:{}, buffer_capacity:{}".format(episode, score, agent.buffer.buffer_len()))
         Return.append(score)
         score = 0
-    # env.close()
+    # environment.close()
     # plt.plot(Return)
     # plt.ylabel('Return')
     # plt.xlabel("Episode")

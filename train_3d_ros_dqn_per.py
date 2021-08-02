@@ -5,7 +5,7 @@ import os
 import action_space
 import agents
 import network
-import field_ros
+from environment import field_ros
 
 from config.config_dqn import ConfigDQN
 from train.RosTrainer import RosTrainer

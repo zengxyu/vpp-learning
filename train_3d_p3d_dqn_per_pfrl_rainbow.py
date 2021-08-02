@@ -3,17 +3,17 @@ import sys
 import os
 
 import action_space
-import field_env_3d_unknown_map2_pfrl
+from environment import field_p3d_discrete
 import network
 
 from config.config_dqn import ConfigDQN
-from pfrl_src.P3DTrainer_PFRL_Rainbow import P3DTrainer_PFRL
+from train_pfrl.P3DTrainer_PFRL_Rainbow import P3DTrainer_PFRL
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 if __name__ == '__main__':
     # Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
-    Field = field_env_3d_unknown_map2_pfrl.Field
+    Field = field_p3d_discrete.Field
     # Action = action_space.ActionMoRo12
 
     out_folder = "output_p3d_ddqn_per_rainbow3"

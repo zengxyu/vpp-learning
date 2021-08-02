@@ -5,7 +5,7 @@ import os
 import action_space
 import agents
 import network
-import field_env_3d_unknown_map2
+from environment import field_env_3d_unknown_map2
 
 from train.P3DTrainer import P3DTrainer
 

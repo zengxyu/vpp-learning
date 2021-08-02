@@ -4,7 +4,7 @@ import os
 
 import agents
 import network
-import field_ros
+from environment import field_ros
 import action_space
 from config.config_dqn import ConfigDQN
 from train.RosRandomeTrainer import RosRandomTrainer

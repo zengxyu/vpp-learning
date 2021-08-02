@@ -9,7 +9,7 @@ import numpy as np
 
 from scipy.spatial.transform.rotation import Rotation
 from agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay import DDQN_With_Prioritised_Experience_Replay
-from field_ros import Field, ActionMoRo12
+from environment.field_ros import Field, ActionMoRo12
 from network.network_dqn import DQN_Network11_Dueling
 from utilities.summary_writer import MySummaryWriter
 from config.config import *

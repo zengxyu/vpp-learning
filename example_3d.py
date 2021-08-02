@@ -8,7 +8,7 @@ from panda3d.core import GeomNode, Geom, GeomVertexData, GeomTriangles, GeomVert
 from panda3d.core import LVecBase3i, LineSegs, PTA_int, PTA_float  # ,DirectionalLight, AmbientLight, LVecBase4, BitArray, TextNode
 
 from p3d_voxgrid import VoxelGrid
-from field_env_3d import Field, Action
+from environment.field_p3d import Field, Action
 
 import numpy as np
 import binvox_rw
@@ -226,7 +226,7 @@ class MyApp(ShowBase):
         # ruTextNodePath = self.render.attachNewNode(ru_text)
         # ruTextNodePath.setPos(tuple(ep_right_up * self.scale))
 
-        # self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        # self.fov_geom = self.environment.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
         # self.fov_node.addGeom(self.fov_geom)
         self.fov_node = self.env.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
@@ -322,7 +322,7 @@ class MyApp(ShowBase):
         self.env.step(act)
         self.fov_node.removeGeom(0)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
-        # self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+        # self.fov_geom = self.environment.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
         # self.fov_node.addGeom(self.fov_geom)
         self.fov_node = self.env.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
         self.render.attachNewNode(self.fov_node)
@@ -350,9 +350,9 @@ class MyApp(ShowBase):
     #        return Task.cont
     #
     #    self.fov_node.removeGeom(self.fov_geom)
-    #    self.env.step(action)
-    #    cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.env.compute_fov()
-    #    self.fov_geom = self.env.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
+    #    self.environment.step(action)
+    #    cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.environment.compute_fov()
+    #    self.fov_geom = self.environment.create_fov_geom(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
     #    self.fov_node.addGeom(self.fov_geom)
 
 

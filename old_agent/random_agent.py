@@ -1,5 +1,5 @@
 import numpy as np
-from field_env import Field, Action
+from environment.field_2d import Field, Action
 
 class RandomAgent:
     def __init__(self, env):

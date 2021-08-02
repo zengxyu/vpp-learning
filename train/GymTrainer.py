@@ -36,7 +36,7 @@ class GymTrainer(object):
             rewards = []
             actions = []
             state = self.field.reset()
-            self.agent.reset(0)
+            self.agent.reset()
             loss = 0
 
             while not done:
@@ -76,7 +76,7 @@ class GymTrainer(object):
         return action_in
 
     def get_state_size(self, field):
-        """Gets the state_size for the gym env into the correct shape for a neural network"""
+        """Gets the state_size for the gym environment into the correct shape for a neural network"""
         random_state = field.reset()
         if isinstance(random_state, dict):
             state_size = random_state["observation"].shape[0] + random_state["desired_goal"].shape[0]
@@ -85,7 +85,7 @@ class GymTrainer(object):
             return random_state.size
 
     def get_action_size(self, field, action_types):
-        """Gets the action_size for the gym env into the correct shape for a neural network"""
+        """Gets the action_size for the gym environment into the correct shape for a neural network"""
         if "action_size" in field.__dict__: return field.action_size
         if action_types == ActionType.DISCRETE:
             return field.action_space.n

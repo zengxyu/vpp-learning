@@ -1,5 +1,5 @@
 import pygame as pg
-from field_env_3d import Field, Action
+from environment.field_p3d import Field, Action
 
 class HumanPlayer:
     def __init__(self, env):
