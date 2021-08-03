@@ -64,8 +64,6 @@ def train_fun(tuning_param):
                        )
     config.set_parameters(tuning_param['learning_rate'], tuning_param['discount_rate'])
 
-    config.hyper_parameters['DQN_Agents']['learning_rate'] = tuning_param['learning_rate']
-    config.hyper_parameters['DQN_Agents']['discount_rate'] = tuning_param['discount_rate']
     trainer = P3DTrainer(config=config, Agent=Agent, Field=Field, Action=Action,
                          project_path=tuning_param["project_path"])
     trainer.train()
@@ -73,7 +71,6 @@ def train_fun(tuning_param):
 
 if __name__ == '__main__':
     ray.init(local_mode=False)
-
     project_path = get_project_path()
     analysis = tune.run(
         train_fun,
