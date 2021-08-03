@@ -36,6 +36,7 @@ class ConfigDQN(Config):
                 "update_every_n_steps": 10,
                 "gradient_clipping_norm": 0.7,
                 "learning_iterations": 1,
+                "n_atoms": 10
             }
         }
 
@@ -65,6 +66,11 @@ class ConfigDQN(Config):
         else:
             print("epsilon_decay_rate not in hyper_parameters['DQN_Agents'] keys")
 
+        if "n_atoms" in self.hyper_parameters['DQN_Agents'].keys():
+            self.hyper_parameters['DQN_Agents']['n_atoms'] = tuning_param['n_atoms']
+        else:
+            print("epsilon_decay_rate not in hyper_parameters['DQN_Agents'] keys")
+
     def get_decay(self):
         return self.hyper_parameters['DQN_Agents']['epsilon_decay_rate']
 
@@ -73,6 +79,12 @@ class ConfigDQN(Config):
 
     def get_discount_rate(self):
         return self.hyper_parameters['DQN_Agents']['discount_rate']
+
+    def get_batch_size(self):
+        return self.hyper_parameters["DQN_Agents"]["get_batch_size"]
+
+    def get_n_atoms(self):
+        return self.hyper_parameters["DQN_Agents"]["n_atoms"]
 
 
 g_eps_exploration_strategy_config = {EpsExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,

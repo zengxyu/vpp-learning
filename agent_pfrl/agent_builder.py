@@ -16,11 +16,6 @@ def phi(x):
     return (frame, robot_pose)
 
 
-def burnin_action_func(action_space):
-    """Select random actions until model is updated one or more times."""
-    return np.random.uniform(action_space.low, action_space.high).astype(np.float32)
-
-
 def build_dqn_per_agent(action_space, config):
     n_actions = action_space.n
     learning_rate = config.get_learning_rate()
@@ -63,7 +58,8 @@ def build_rainbow_agent(action_space, config):
     learning_rate = config.get_learning_rate()
     discount_rate = config.get_discount_rate()
     decay = config.get_decay()
-    q_func = DQN_Network11_PFRL_Rainbow(0, n_actions)
+    n_atoms = config.get_n_atoms()
+    q_func = DQN_Network11_PFRL_Rainbow(0, n_actions,n_atoms)
 
     # Noisy nets
     pfrl.nn.to_factorized_noisy(q_func, sigma_scale=0.1)
@@ -112,6 +108,7 @@ def build_sac_agent(action_space, config):
     learning_rate_actor = config.get_learning_rate_actor()
     learning_rate_critic = config.get_learning_rate_critic()
     discount_rate = config.get_discount_rate()
+    batch_size = config.get_batch_size()
     adam_eps = 1e-1
     action_dim = action_space.low.size
     policy_net = SAC_PolicyNet3_PFRL(state_dim=0, action_dim=action_dim)
@@ -132,6 +129,10 @@ def build_sac_agent(action_space, config):
     replay_start_size = 500
     rbuf = replay_buffers.ReplayBuffer(10 ** 6, num_steps=n_step_return)
 
+    def burnin_action_func():
+        """Select random actions until model is updated one or more times."""
+        return np.random.uniform(action_space.low, action_space.high).astype(np.float32)
+
     agent = pfrl.agents.SoftActorCritic(
         policy_net,
         q_func1,
@@ -144,7 +145,7 @@ def build_sac_agent(action_space, config):
         update_interval=update_interval,
         replay_start_size=replay_start_size,
         gpu=gpu,
-        minibatch_size=config['batch_size'],
+        minibatch_size=batch_size,
         burnin_action_func=burnin_action_func,
         temperature_optimizer_lr=learning_rate_critic,
     )

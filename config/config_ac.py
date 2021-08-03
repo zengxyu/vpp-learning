@@ -80,6 +80,8 @@ class ConfigAC(Config):
     def get_discount_rate(self):
         return self.hyper_parameters['Actor_Critic_Agents']['discount_rate']
 
+    def get_batch_size(self):
+        return self.hyper_parameters["Actor_Critic_Agents"]["batch_size"]
 # exploration_strategy_config = {ExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
 #                                                                       'epsilon_decay_denominator': 1.0},
 #                                ExplorationStrategy.EXPONENT_STRATEGY: {"epsilon": 0.5,

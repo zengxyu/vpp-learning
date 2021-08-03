@@ -572,7 +572,7 @@ class DQN_Network11_PFRL(torch.nn.Module):
 
 
 class DQN_Network11_PFRL_Rainbow(torch.nn.Module):
-    def __init__(self, obs_size, action_size):
+    def __init__(self, obs_size, action_size, n_atoms):
         super().__init__()
         self.frame_con1 = torch.nn.Conv2d(15, 24, kernel_size=4, stride=2)
         self.frame_fc1 = torch.nn.Linear(3264, 512)
@@ -587,7 +587,7 @@ class DQN_Network11_PFRL_Rainbow(torch.nn.Module):
         self.pose_fc3 = torch.nn.Linear(256, 128)
 
         self.pose_fc4 = torch.nn.Linear(128, 32)
-        self.n_atoms = 60
+        self.n_atoms = n_atoms
         self.action_size = action_size
         self.fc_val = torch.nn.Linear(32, self.action_size * self.n_atoms)
         self.register_buffer(
