@@ -1,16 +1,12 @@
-import logging
-
-import numpy as np
+import os
 import time
 
-import pfrl
-import torch
 from scipy.spatial.transform.rotation import Rotation
 
-import action_space
+from agent_pfrl.agent_builder import *
+from agent_pfrl.agent_type import AgentType
 from utilities.basic_logger import BasicLogger
 from utilities.summary_writer import SummaryWriterLogger
-from network.network_dqn import DQN_Network11_PFRL
 
 headless = True
 if not headless:
@@ -18,16 +14,15 @@ if not headless:
 
 
 class P3DTrainer_PFRL(object):
-    def __init__(self, config, Field, Action):
+    def __init__(self, config, agent_type, Field, Action, project_path):
         self.config = config
         self.Field = Field
         self.Action = Action
 
-        self.summary_writer = SummaryWriterLogger(config)
         # field
+        init_file_path = os.path.join(project_path, 'VG07_6.binvox')
         self.field = self.Field(Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, scale=0.05,
-                                max_steps=300, init_file='VG07_6.binvox', headless=headless)
-
+                                max_steps=300, init_file=init_file_path, headless=headless)
         self.config.environment = {
             "is_vpp": True,
             "reward_threshold": 0,
@@ -35,9 +30,16 @@ class P3DTrainer_PFRL(object):
             "action_size": self.get_action_size(self.field),
             "action_shape": self.get_action_size(self.field),
         }
-        # Agent
-        # self.agent = self.Agent(self.config)
-
+        # agent
+        if agent_type == AgentType.Agent_Rainbow:
+            self.agent = build_rainbow_agent(self.field.action_space, config)
+        elif agent_type == AgentType.Agent_DDQN_PER:
+            self.agent = build_dqn_per_agent(self.field.action_space, config)
+        elif agent_type == AgentType.Agent_SAC:
+            self.agent = build_sac_agent(self.field.action_space, config)
+        else:
+            raise NotImplementedError
+        self.summary_writer = SummaryWriterLogger(config)
         self.logger = BasicLogger.setup_console_logging(config)
 
     def train(self):
@@ -51,53 +53,6 @@ class P3DTrainer_PFRL(object):
             self.field.gui.run()
 
     def main_loop(self):
-        # obs_size = self.field.observation_space.low.size
-        n_actions = self.field.action_space.n
-        q_func = DQN_Network11_PFRL(0, n_actions)
-
-        # Use Adam to optimize q_func. eps=1e-2 is for stability.
-        optimizer = torch.optim.Adam(q_func.parameters(), eps=1e-2)
-        # Set the discount factor that discounts future rewards.
-        gamma = 0.9
-
-        # Use epsilon-greedy for exploration
-        explorer = pfrl.explorers.ConstantEpsilonGreedy(
-            epsilon=0.3, random_action_func=self.field.action_space.sample)
-
-        # DQN uses Experience Replay.
-        # Specify a replay buffer and its capacity.
-        replay_buffer = pfrl.replay_buffers.PrioritizedReplayBuffer(capacity=10 ** 6)
-
-        # Since observations from CartPole-v0 is numpy.float64 while
-        # As PyTorch only accepts numpy.float32 by default, specify
-        # a converter as a feature extractor function phi.
-        phi = lambda x: x.astype(np.float32, copy=False)
-
-        def phi2(x):
-            frame, robot_pose = x
-            frame = frame.astype(np.float32, copy=False)
-            robot_pose = robot_pose.astype(np.float32, copy=False)
-            return (frame, robot_pose)
-
-        # Set the device id to use GPU. To use CPU only, set it to -1.
-        gpu = -1
-
-        # Now create an agent that will interact with the environment.
-        agent = pfrl.agents.DoubleDQN(
-            q_func,
-            optimizer,
-            replay_buffer,
-            gamma,
-            explorer,
-            replay_start_size=500,
-            update_interval=1,
-            target_update_interval=100,
-            phi=phi2,
-            gpu=gpu,
-        )
-        n_episodes = 300
-        max_episode_len = 200
-
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         mean_loss_last_n_ep, mean_reward_last_n_ep = 0, 0
@@ -119,7 +74,7 @@ class P3DTrainer_PFRL(object):
                 robot_direction = Rotation.from_quat(robot_pose[3:]).as_matrix() @ initial_direction
                 robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
 
-                action = agent.act((observed_map, robot_pose_input))
+                action = self.agent.act((observed_map, robot_pose_input))
 
                 (observed_map_next, robot_pose_next), reward, done, _ = self.field.step(action)
 
@@ -128,9 +83,8 @@ class P3DTrainer_PFRL(object):
 
                 # diff direction
                 robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
-                reset = t == max_episode_len
 
-                agent.observe([observed_map, robot_pose_input], reward, done, reset)
+                self.agent.observe([observed_map, robot_pose_input], reward, done, done)
 
                 # to the next state
                 observed_map = observed_map_next.copy()
@@ -159,7 +113,7 @@ class P3DTrainer_PFRL(object):
                     mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
                                                                                             np.sum(rewards),
                                                                                             i_episode)
-                    print("statistic:{}".format(agent.get_statistics()))
+                    print("statistic:{}".format(self.agent.get_statistics()))
                     # if (i_episode + 1) % self.config.save_model_every == 0:
                     #     self.agent.store_model()
 

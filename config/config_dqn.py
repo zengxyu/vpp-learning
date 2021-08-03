@@ -49,9 +49,30 @@ class ConfigDQN(Config):
             self.hyper_parameters['DQN_Agents'].update(
                 g_eps_exploration_strategy_config[self.hyper_parameters['DQN_Agents']['eps_exploration_strategy']])
 
-    def set_parameters(self, learning_rate, discount_rate):
-        self.hyper_parameters['DQN_Agents']['learning_rate'] = learning_rate
-        self.hyper_parameters['DQN_Agents']['discount_rate'] = discount_rate
+    def set_parameters(self, tuning_param):
+        if "learning_rate" in self.hyper_parameters['DQN_Agents'].keys():
+            self.hyper_parameters['DQN_Agents']['learning_rate'] = tuning_param['learning_rate']
+        else:
+            print("learning_rate not in hyper_parameters['DQN_Agents'] keys")
+
+        if "discount_rate" in self.hyper_parameters['DQN_Agents'].keys():
+            self.hyper_parameters['DQN_Agents']['discount_rate'] = tuning_param['discount_rate']
+        else:
+            print("discount_rate not in hyper_parameters['DQN_Agents'] keys")
+
+        if "epsilon_decay_rate" in self.hyper_parameters['DQN_Agents'].keys():
+            self.hyper_parameters['DQN_Agents']['epsilon_decay_rate'] = tuning_param['epsilon_decay_rate']
+        else:
+            print("epsilon_decay_rate not in hyper_parameters['DQN_Agents'] keys")
+
+    def get_decay(self):
+        return self.hyper_parameters['DQN_Agents']['epsilon_decay_rate']
+
+    def get_learning_rate(self):
+        return self.hyper_parameters['DQN_Agents']['learning_rate']
+
+    def get_discount_rate(self):
+        return self.hyper_parameters['DQN_Agents']['discount_rate']
 
 
 g_eps_exploration_strategy_config = {EpsExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,

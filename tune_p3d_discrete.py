@@ -62,7 +62,7 @@ def train_fun(tuning_param):
                        console_logging_level=logging.DEBUG,
                        file_logging_level=logging.WARNING,
                        )
-    config.set_parameters(tuning_param['learning_rate'], tuning_param['discount_rate'])
+    config.set_parameters(tuning_param)
 
     trainer = P3DTrainer(config=config, Agent=Agent, Field=Field, Action=Action,
                          project_path=tuning_param["project_path"])

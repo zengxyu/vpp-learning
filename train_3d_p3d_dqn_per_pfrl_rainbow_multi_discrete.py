@@ -7,7 +7,7 @@ from environment import field_p3d_multi_discrete
 import network
 
 from config.config_dqn import ConfigDQN
-from train_pfrl.P3DTrainer_PFRL_Rainbow import P3DTrainer_PFRL
+from train_pfrl.P3DTrainer_PFRL import P3DTrainer_PFRL
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 

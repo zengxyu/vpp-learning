@@ -66,10 +66,19 @@ class ConfigAC(Config):
             }
         }
 
-    def set_parameters(self, learning_rate, discount_rate):
-        self.hyper_parameters['Actor_Critic_Agents']["Actor"]['learning_rate'] = learning_rate
-        self.hyper_parameters['Actor_Critic_Agents']["Critic"]['learning_rate'] = learning_rate
-        self.hyper_parameters['Actor_Critic_Agents']['discount_rate'] = discount_rate
+    def set_parameters(self, tuning_param):
+        self.hyper_parameters['Actor_Critic_Agents']["Actor"]['learning_rate'] = tuning_param['learning_rate']
+        self.hyper_parameters['Actor_Critic_Agents']["Critic"]['learning_rate'] = tuning_param['learning_rate']
+        self.hyper_parameters['Actor_Critic_Agents']['discount_rate'] = tuning_param['discount_rate']
+
+    def get_learning_rate_actor(self):
+        return self.hyper_parameters['Actor_Critic_Agents']["Actor"]['learning_rate']
+
+    def get_learning_rate_critic(self):
+        return self.hyper_parameters['Actor_Critic_Agents']["Critic"]['learning_rate']
+
+    def get_discount_rate(self):
+        return self.hyper_parameters['Actor_Critic_Agents']['discount_rate']
 
 # exploration_strategy_config = {ExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
 #                                                                       'epsilon_decay_denominator': 1.0},
