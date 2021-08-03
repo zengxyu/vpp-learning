@@ -13,7 +13,7 @@ from environment import field_p3d_discrete
 from train.P3DTrainer import P3DTrainer
 
 from config.config_dqn import ConfigDQN
-from utilities.util import project_path
+from utilities.util import get_project_path
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -74,7 +74,7 @@ def train_fun(tuning_param):
 if __name__ == '__main__':
     ray.init(local_mode=False)
 
-    project_path = project_path()
+    project_path = get_project_path()
     analysis = tune.run(
         train_fun,
         config={
