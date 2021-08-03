@@ -18,6 +18,11 @@ from utilities.util import project_path
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
+class ALG:
+    DDQN_PER = "ddqn_per"
+    DDQN_DUELING_PER = "ddqn_dueling_per"
+
+
 def build_ddqn_per():
     Network = network.network_dqn.DQN_Network11
     Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
@@ -42,8 +47,13 @@ def build_ddqn_dueling_per():
 
 
 def train_fun(tuning_param):
-    Network, Agent, Field, Action, out_folder, in_folder = build_ddqn_per()
-
+    if tuning_param['alg'] == ALG.DDQN_PER:
+        Network, Agent, Field, Action, out_folder, in_folder = build_ddqn_per()
+    elif tuning_param['alg'] == ALG.DDQN_DUELING_PER:
+        Network, Agent, Field, Action, out_folder, in_folder = build_ddqn_dueling_per()
+    else:
+        Network, Agent, Field, Action, out_folder, in_folder = None, None, None, None, None, None
+        raise NotImplementedError
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
@@ -65,14 +75,15 @@ if __name__ == '__main__':
     ray.init(local_mode=False)
 
     project_path = project_path()
-    print("project path:{}".format(project_path))
     analysis = tune.run(
         train_fun,
         config={
             "learning_rate": tune.grid_search([1e-3, 1e-4]),
             "discount_rate": tune.grid_search([0.9, 0.95, 0.98]),
-            "project_path": project_path
+            "project_path": project_path,
+            "alg": tune.grid_search([ALG.DDQN_DUELING_PER])
         },
         log_to_file=True,
         resources_per_trial={'cpu': 1, 'gpu': 0}
     )
+    print("project path:{}".format(project_path))

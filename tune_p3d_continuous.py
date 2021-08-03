@@ -68,14 +68,23 @@ def build_td3():
     return Actor_network, Critic_network, Agent, Field, Action, out_folder, in_folder
 
 
+class ALG:
+    DDPG = "DDPG"
+    SAC = "SAC"
+    SAC_PER = "SAC_PER"
+    TD3 = "TD3"
+
+
 def train_func(tuning_param):
     print("tuning_param:{}".format(tuning_param))
 
-    if tuning_param['alg'] == "sac":
+    if tuning_param['alg'] == ALG.SAC:
         Actor_network, Critic_network, Agent, Field, Action, out_folder, in_folder = build_sac()
-    else:
+    elif tuning_param['alg'] == ALG.SAC_PER:
         Actor_network, Critic_network, Agent, Field, Action, out_folder, in_folder = build_sac_per()
-
+    else:
+        Actor_network, Critic_network, Agent, Field, Action, out_folder, in_folder = None, None, None, None, None, None, None
+        raise NotImplementedError
     # network
     config = ConfigAC(actor_network=Actor_network,
                       critic_network=Critic_network,
@@ -109,7 +118,7 @@ if __name__ == '__main__':
             "learning_rate": tune.grid_search([1e-3, 1e-4]),
             "discount_rate": tune.grid_search([0.9, 0.95, 0.98]),
             "project_path": project_path,
-            "alg": tune.grid_search(["sac", "sac_per"])
+            "alg": tune.grid_search([ALG.SAC, ALG.SAC_PER])
         },
         log_to_file=True,
         resources_per_trial={'cpu': 1, 'gpu': 0}
