@@ -77,41 +77,6 @@ class ActionMoRo12(object):
 
 class ActionMoRo15(object):
 
-    def get_relative_move_rot(self, axes, action, move_step, rot_step):
-        relative_move = np.array([0, 0, 0])
-        relative_rot = np.array([0, 0, 0, 1.0])
-        if action == ActionMoRo15IntEnum.MOVE_FORWARD:
-            relative_move = np.array([1.0, 0, 0]) * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_BACKWARD:
-            relative_move = np.array([-1.0, 0, 0]) * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_LEFT:
-            relative_move = np.array([0, 1.0, 0]) * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_RIGHT:
-            relative_move = np.array([0, -1.0, 0]) * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_UP:
-            relative_move = np.array([0, 0, 1.0]) * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_DOWN:
-            relative_move = np.array([0, 0, -1.0]) * move_step
-        elif action == ActionMoRo15IntEnum.ROTATE_ROLL_P:
-            r = Rotation.from_euler('x', rot_step, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == ActionMoRo15IntEnum.ROTATE_ROLL_N:
-            r = Rotation.from_euler('x', -rot_step, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == ActionMoRo15IntEnum.ROTATE_PITCH_P:
-            r = Rotation.from_euler('y', rot_step, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == ActionMoRo15IntEnum.ROTATE_PITCH_N:
-            r = Rotation.from_euler('y', -rot_step, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == ActionMoRo15IntEnum.ROTATE_YAW_P:
-            r = Rotation.from_euler('z', rot_step, degrees=True)
-            relative_rot = r.as_quat()
-        elif action == ActionMoRo15IntEnum.ROTATE_YAW_N:
-            r = Rotation.from_euler('z', -rot_step, degrees=True)
-            relative_rot = r.as_quat()
-        return relative_move, relative_rot
-
     def get_relative_move_rot2(self, axes, action, move_step, rot_step):
         relative_move = np.array([0, 0, 0])
         relative_rot = Rotation.from_quat(np.array([0, 0, 0, 1.0]))
@@ -139,6 +104,8 @@ class ActionMoRo15(object):
             relative_rot = Rotation.from_rotvec(np.radians(rot_step) * axes[2])
         elif action == ActionMoRo15IntEnum.ROTATE_YAW_N:
             relative_rot = Rotation.from_rotvec(np.radians(-rot_step) * axes[2])
+        elif action == ActionMoRo15IntEnum.SMALL_STEP:
+            pass
         else:
             raise NotImplementedError
         return relative_move, relative_rot

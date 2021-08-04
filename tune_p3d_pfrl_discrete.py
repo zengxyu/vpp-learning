@@ -73,12 +73,14 @@ if __name__ == '__main__':
     analysis = tune.run(
         train_fun,
         config={
-            "learning_rate": tune.grid_search([1e-3, 1e-4]),
-            "discount_rate": tune.grid_search([0.9, 0.95, 0.98]),
-            "epsilon_decay_rate": tune.grid_search([0.999, 0.99975]),
-            "n_atoms": tune.grid_search([5, 10, 30]),
-            # "learning_rate": tune.grid_search([1e-4]),
-            # "discount_rate": tune.grid_search([0.98]),
+            # "learning_rate": tune.grid_search([1e-3, 1e-4]),
+            # "discount_rate": tune.grid_search([0.9, 0.95, 0.98]),
+            # "epsilon_decay_rate": tune.grid_search([0.999, 0.99975]),
+            # "n_atoms": tune.grid_search([5, 10, 30]),
+            "learning_rate": tune.grid_search([1e-4]),
+            "discount_rate": tune.grid_search([0.98]),
+            "epsilon_decay_rate": tune.grid_search([0.99975]),
+            "n_atoms": tune.grid_search([10]),
             "project_path": project_path,
             "alg": tune.grid_search([AgentType.Agent_Rainbow])
         },
