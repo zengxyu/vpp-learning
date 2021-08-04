@@ -61,7 +61,7 @@ class Field(gym.Env):
         self.hfov = hfov
         self.vfov = vfov
         self.shape = shape
-        self.action_space = gym.spaces.MultiDiscrete(self.get_action_size())
+        self.action_space = gym.spaces.MultiDiscrete([12, 3])
         self.observation_space = gym.spaces.Tuple(
             (gym.spaces.Box(low=0, high=255, shape=(15, 36, 18), dtype=np.uint),
              gym.spaces.Box(low=0, high=255, shape=(7,), dtype=np.uint)))
@@ -317,6 +317,7 @@ class Field(gym.Env):
         self.robot_rot = rot * self.robot_rot
 
     def step(self, action):
+
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
                                                                                   self.ROT_STEP)

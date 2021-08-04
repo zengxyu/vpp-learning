@@ -13,7 +13,7 @@ class RosRandomTrainer(object):
         self.Field = Field
         self.summary_writer = SummaryWriterLogger(config)
         self.logger = BasicLogger.setup_console_logging(config)
-        self.randomize_every_n_episode = 20
+        self.randomize_every_n_episode = 5
         self.field = Field(Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, max_steps=300,
                            handle_simulation=True)
 
@@ -53,7 +53,7 @@ class RosRandomTrainer(object):
                 robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
 
                 action = self.agent.pick_action([observed_map, robot_pose_input])
-                observed_map_next, robot_pose_next, reward, done = self.field.step(action)
+                (observed_map_next, robot_pose_next), reward, done, _ = self.field.step(action)
 
                 # if robot_pose is the same with the robot_pose_next, then reward--
                 if reward == 0:

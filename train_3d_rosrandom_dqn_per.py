@@ -17,7 +17,7 @@ Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prio
 Field = field_ros.Field
 Action = action_space.ActionMoRo12
 
-out_folder = "output_reset_and_random8"
+out_folder = "output_reset_and_random9"
 in_folder = ""
 
 eps_exploration_strategy_config = {EpsExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,

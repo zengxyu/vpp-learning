@@ -13,6 +13,8 @@ if not headless:
     from direct.stdpy import threading
 
 
+
+
 class P3DTrainer_PFRL(object):
     def __init__(self, config, agent_type, Field, Action, project_path):
         self.config = config
@@ -37,6 +39,9 @@ class P3DTrainer_PFRL(object):
             self.agent = build_dqn_per_agent(self.field.action_space, config)
         elif agent_type == AgentType.Agent_SAC:
             self.agent = build_sac_agent(self.field.action_space, config)
+        elif agent_type ==AgentType.Agent_Multi_DDQN_PER:
+            self.agent = build_multi_ddqn_per(self.field.action_space, config)
+
         else:
             raise NotImplementedError
         self.summary_writer = SummaryWriterLogger(config)
