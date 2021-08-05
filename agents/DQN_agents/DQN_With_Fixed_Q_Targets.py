@@ -43,4 +43,5 @@ class DQN_With_Fixed_Q_Targets(DQN):
         model_dict = {"q_network_local": self.q_network_local,
                       "q_network_target": self.q_network_target}
         optimizer_dict = {"q_network_optimizer", self.q_network_optimizer}
+        print("model_dict:", model_dict)
         return model_dict, optimizer_dict

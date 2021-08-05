@@ -51,26 +51,11 @@ class ConfigDQN(Config):
                 g_eps_exploration_strategy_config[self.hyper_parameters['DQN_Agents']['eps_exploration_strategy']])
 
     def set_parameters(self, tuning_param):
-        if "learning_rate" in self.hyper_parameters['DQN_Agents'].keys():
-            self.hyper_parameters['DQN_Agents']['learning_rate'] = tuning_param['learning_rate']
-        else:
-            print("learning_rate not in hyper_parameters['DQN_Agents'] keys")
-
-        if "discount_rate" in self.hyper_parameters['DQN_Agents'].keys():
-            self.hyper_parameters['DQN_Agents']['discount_rate'] = tuning_param['discount_rate']
-        else:
-            print("discount_rate not in hyper_parameters['DQN_Agents'] keys")
-
-        if "epsilon_decay_rate" in self.hyper_parameters[
-            'DQN_Agents'].keys() and "epsilon_decay_rate" in tuning_param.keys():
-            self.hyper_parameters['DQN_Agents']['epsilon_decay_rate'] = tuning_param['epsilon_decay_rate']
-        else:
-            print("epsilon_decay_rate not in hyper_parameters['DQN_Agents'] keys")
-
-        if "n_atoms" in self.hyper_parameters['DQN_Agents'].keys() and "n_atoms" in tuning_param.keys():
-            self.hyper_parameters['DQN_Agents']['n_atoms'] = tuning_param['n_atoms']
-        else:
-            print("epsilon_decay_rate not in hyper_parameters['DQN_Agents'] keys")
+        for key in tuning_param.keys():
+            if key in self.hyper_parameters['DQN_Agents'].keys():
+                self.hyper_parameters['DQN_Agents'][key] = tuning_param[key]
+            else:
+                print("{} not in hyper_parameters['DQN_Agents'] keys".format(key))
 
     def get_decay(self):
         return self.hyper_parameters['DQN_Agents']['epsilon_decay_rate']

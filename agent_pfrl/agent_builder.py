@@ -61,7 +61,7 @@ def build_rainbow_agent(action_space, config):
     decay = config.get_decay()
     n_atoms = config.get_n_atoms()
     q_func = DQN_Network11_PFRL_Rainbow(0, n_actions, n_atoms)
-
+    print("model:", q_func)
     # Noisy nets
     # pfrl.nn.to_factorized_noisy(q_func, sigma_scale=0.1)
     # Turn off explorer decay = 0.99975
