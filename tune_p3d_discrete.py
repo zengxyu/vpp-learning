@@ -24,7 +24,7 @@ class ALG:
 
 
 def build_ddqn_per():
-    Network = network.network_dqn.DQN_Network11
+    Network = network.network_dqn.DQN_Network11_Split
     Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
     Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
@@ -70,16 +70,18 @@ def train_fun(tuning_param):
 
 
 if __name__ == '__main__':
-    ray.init(local_mode=False)
+    ray.init(local_mode=True)
     project_path = get_project_path()
     analysis = tune.run(
         train_fun,
         config={
-            "learning_rate": tune.grid_search([1e-3, 1e-4]),
-            "discount_rate": tune.grid_search([0.9, 0.95, 0.98]),
+            # "learning_rate": tune.grid_search([1e-3, 1e-4]),
+            # "discount_rate": tune.grid_search([0.9, 0.95, 0.98]),
+            "learning_rate": tune.grid_search([1e-4]),
+            "discount_rate": tune.grid_search([0.98]),
             "project_path": project_path,
-            "epsilon_decay_rate":tune.grid_search([0.997]),
-            "alg": tune.grid_search([ALG.DDQN_DUELING_PER])
+            "epsilon_decay_rate": tune.grid_search([0.997]),
+            "alg": tune.grid_search([ALG.DDQN_PER])
         },
         log_to_file=True,
         resources_per_trial={'cpu': 1, 'gpu': 0}

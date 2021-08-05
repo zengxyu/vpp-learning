@@ -38,6 +38,8 @@ config = ConfigDQN(network=network,
                    eps_exploration_strategy_config=eps_exploration_strategy_config
                    )
 config.is_train = False
+# 刚才的环境忘记设置epsilon
+config.set_parameters({"epsilon": 0.3})
 if config.is_train:
     trainer = RosRandomTrainer(config=config, Agent=Agent, Field=Field, Action=Action)
 else:
