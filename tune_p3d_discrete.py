@@ -78,6 +78,7 @@ if __name__ == '__main__':
             "learning_rate": tune.grid_search([1e-3, 1e-4]),
             "discount_rate": tune.grid_search([0.9, 0.95, 0.98]),
             "project_path": project_path,
+            "epsilon_decay_rate":tune.grid_search([0.997]),
             "alg": tune.grid_search([ALG.DDQN_DUELING_PER])
         },
         log_to_file=True,

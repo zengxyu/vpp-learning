@@ -60,7 +60,7 @@ def build_rainbow_agent(action_space, config):
     discount_rate = config.get_discount_rate()
     decay = config.get_decay()
     n_atoms = config.get_n_atoms()
-    q_func = DQN_Network11_PFRL(0, n_actions)
+    q_func = DQN_Network11_PFRL_Rainbow(0, n_actions, n_atoms)
 
     # Noisy nets
     # pfrl.nn.to_factorized_noisy(q_func, sigma_scale=0.1)
@@ -87,7 +87,7 @@ def build_rainbow_agent(action_space, config):
         normalize_by_max=False,
     )
 
-    agent = MyDQN(
+    agent = MyCategoryDQN(
         q_func,
         opt,
         rbuf,

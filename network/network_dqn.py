@@ -591,7 +591,7 @@ class DQN_Network11_PFRL_Rainbow(torch.nn.Module):
         self.action_size = action_size
         self.fc_val = torch.nn.Linear(32, self.action_size * self.n_atoms)
         self.register_buffer(
-            "z_values", torch.linspace(-100, 100, self.n_atoms, dtype=torch.float)
+            "z_values", torch.linspace(0, 10000, self.n_atoms, dtype=torch.float)
         )
 
     def init_weights(self):

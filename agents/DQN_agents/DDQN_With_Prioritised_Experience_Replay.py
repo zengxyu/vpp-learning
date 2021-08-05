@@ -46,7 +46,6 @@ class DDQN_With_Prioritised_Experience_Replay(DDQN):
         Q_targets = self.compute_q_targets(next_states, rewards, dones)
         Q_expected = self.compute_expected_q_values(states, actions)
         # loss = F.mse_loss(Q_expected, Q_targets)
-
         loss = self.weighted_mse_loss(Q_expected, Q_targets, importance_sampling_weights)
         # loss = torch.mean(loss)
         td_errors = Q_targets - Q_expected

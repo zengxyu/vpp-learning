@@ -61,12 +61,13 @@ class ConfigDQN(Config):
         else:
             print("discount_rate not in hyper_parameters['DQN_Agents'] keys")
 
-        if "epsilon_decay_rate" in self.hyper_parameters['DQN_Agents'].keys():
+        if "epsilon_decay_rate" in self.hyper_parameters[
+            'DQN_Agents'].keys() and "epsilon_decay_rate" in tuning_param.keys():
             self.hyper_parameters['DQN_Agents']['epsilon_decay_rate'] = tuning_param['epsilon_decay_rate']
         else:
             print("epsilon_decay_rate not in hyper_parameters['DQN_Agents'] keys")
 
-        if "n_atoms" in self.hyper_parameters['DQN_Agents'].keys():
+        if "n_atoms" in self.hyper_parameters['DQN_Agents'].keys() and "n_atoms" in tuning_param.keys():
             self.hyper_parameters['DQN_Agents']['n_atoms'] = tuning_param['n_atoms']
         else:
             print("epsilon_decay_rate not in hyper_parameters['DQN_Agents'] keys")
