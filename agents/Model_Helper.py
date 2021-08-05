@@ -51,7 +51,7 @@ class ModelHelper(object):
     def load_model_optimizer(model_dict, optimizer_dict, model_ld_folder, predix, index, device):
         for key, model in model_dict.items():
             model_name = predix + "_" + key + "_%d.mdl" % index
-            model_name = "Agent_dqn_state_dict" + "_%d.mdl" % index
+            # model_name = "Agent_dqn_state_dict" + "_%d.mdl" % index
 
             model_pth = os.path.join(model_ld_folder, model_name)
             if not os.path.exists(model_pth):

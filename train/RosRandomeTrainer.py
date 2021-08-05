@@ -14,8 +14,12 @@ class RosRandomTrainer(object):
         self.summary_writer = SummaryWriterLogger(config)
         self.logger = BasicLogger.setup_console_logging(config)
         self.randomize_every_n_episode = 5
-        self.field = Field(Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0, max_steps=300,
-                           handle_simulation=True)
+        if not config.is_train:
+            self.field = Field(Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
+                               max_steps=300, handle_simulation=False)
+        else:
+            self.field = Field(Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
+                               max_steps=300, handle_simulation=True)
 
         self.config.environment = {
             "is_vpp": True,
@@ -75,8 +79,10 @@ class RosRandomTrainer(object):
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
                 # train
-                loss = self.agent.learn()
-
+                if self.config.is_train:
+                    loss = self.agent.learn()
+                else:
+                    loss = 0
                 time_step += 1
                 step_count += 1
 

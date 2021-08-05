@@ -53,7 +53,7 @@ class RosTrainer(object):
                 robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
 
                 action = self.agent.pick_action([observed_map, robot_pose_input])
-                observed_map_next, robot_pose_next, reward, done = self.field.step(action)
+                (observed_map_next, robot_pose_next), reward, done, _ = self.field.step(action)
 
                 # if robot_pose is the same with the robot_pose_next, then reward--
                 if reward == 0:
@@ -75,7 +75,10 @@ class RosTrainer(object):
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
                 # train
-                loss = self.agent.learn()
+                if self.config.is_train:
+                    loss = self.agent.learn()
+                else:
+                    loss = 0
 
                 time_step += 1
                 step_count += 1

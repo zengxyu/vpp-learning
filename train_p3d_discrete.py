@@ -1,3 +1,4 @@
+import argparse
 import logging
 import sys
 import os
@@ -13,7 +14,7 @@ from environment import field_p3d_discrete
 from train.P3DTrainer import P3DTrainer
 
 from config.config_dqn import ConfigDQN
-from utilities.util import project_path
+from utilities.util import get_project_path
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -41,8 +42,20 @@ def build_ddqn_dueling_per():
     return Network, Agent, Field, Action, out_folder, in_folder
 
 
+def build_ddqn_per_without_robotpose():
+    Network = network.network_dqn.DQN_Network11_Without_RobotPose
+    Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
+    Field = field_p3d_discrete.Field
+    Action = action_space.ActionMoRo12
+
+    out_folder = "output_p3d_ddqn_per_without_robotpose"
+    in_folder = ""
+
+    return Network, Agent, Field, Action, out_folder, in_folder
+
+
 def train_fun(tuning_param):
-    Network, Agent, Field, Action, out_folder, in_folder = build_ddqn_per()
+    Network, Agent, Field, Action, out_folder, in_folder = build_ddqn_per_without_robotpose()
 
     # network
     config = ConfigDQN(network=Network,
@@ -57,7 +70,12 @@ def train_fun(tuning_param):
     trainer.train()
 
 
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--info', metavar='N', type=str, nargs='+',
+                    help='an integer for the accumulator')
+
+args = parser.parse_args()
 if __name__ == '__main__':
-    project_path = project_path()
+    project_path = get_project_path()
 
     train_fun({"project_path": project_path})
