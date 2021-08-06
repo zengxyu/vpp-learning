@@ -13,7 +13,7 @@ class RosRandomTrainer(object):
         self.Field = Field
         self.summary_writer = SummaryWriterLogger(config)
         self.logger = BasicLogger.setup_console_logging(config)
-        self.randomize_every_n_episode = 5
+        self.randomize_every_n_episode = 20
         if not config.is_train:
             self.field = Field(Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                                max_steps=300, handle_simulation=False)
@@ -46,6 +46,7 @@ class RosRandomTrainer(object):
             self.agent.reset()
 
             if i_episode % self.randomize_every_n_episode == 0:
+                print("======================reset and randomize the environment")
                 observed_map, robot_pose = self.field.reset_and_randomize()
                 self.randomize_every_n_episode = max(self.randomize_every_n_episode - 1, 1)
             else:
