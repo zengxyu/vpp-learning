@@ -1,3 +1,4 @@
+import argparse
 import logging
 import sys
 import os
@@ -68,6 +69,12 @@ def train_fun(tuning_param):
                          project_path=tuning_param["project_path"])
     trainer.train()
 
+
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--info', metavar='N', type=str, nargs='+',
+                    help='an integer for the accumulator')
+
+args = parser.parse_args()
 
 if __name__ == '__main__':
     ray.init(local_mode=True)
