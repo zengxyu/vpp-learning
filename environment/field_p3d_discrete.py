@@ -339,9 +339,9 @@ class Field(gym.Env):
             (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, done, {}
 
     def transform_map(self, unknown_map, known_free_map, known_target_map):
-        unknown_map = np.array(unknown_map)
-        known_free_map = np.array(known_free_map)
-        known_target_map = np.array(known_target_map)
+        unknown_map = np.array(unknown_map) + 1e-15
+        known_free_map = np.array(known_free_map) + 1e-15
+        known_target_map = np.array(known_target_map) + 1e-15
         sum_map = unknown_map + known_free_map + known_target_map
         unknown_map_prob = unknown_map / sum_map
         known_free_map_prob = known_free_map / sum_map
