@@ -11,6 +11,7 @@ import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
 from action_space import ActionMoRo12
+from scipy.ndimage.filters import gaussian_filter
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
@@ -360,6 +361,10 @@ class Field(gym.Env):
         #
         # known_target_map_v = np.e ** known_target_map_prob
         # known_free_map_v = np.e ** (-known_free_map_prob)
+
+        unknown_map_prob = gaussian_filter(unknown_map_prob, sigma=7)
+        known_free_map_prob = gaussian_filter(known_free_map_prob, sigma=7)
+        known_target_map_prob = gaussian_filter(known_target_map_prob, sigma=7)
 
         return unknown_map_prob, known_free_map_prob, known_target_map_prob
 
