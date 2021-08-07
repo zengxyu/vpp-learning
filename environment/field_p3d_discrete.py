@@ -334,20 +334,29 @@ class Field(gym.Env):
         unknown_map, known_free_map, known_target_map = self.transform_map(unknown_map, known_free_map,
                                                                            known_target_map)
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
-
+        # if True in np.isnan(map):
+        #     print("====================nan")
         return (map, np.concatenate(
             (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, done, {}
 
+    # 裁剪n
+    def nan_to_num(self, n):
+        NEAR_0 = 1e-15
+        return np.clip(n, NEAR_0, 1 - NEAR_0)
+
     def transform_map(self, unknown_map, known_free_map, known_target_map):
-        unknown_map = np.array(unknown_map) + 1e-15
-        known_free_map = np.array(known_free_map) + 1e-15
-        known_target_map = np.array(known_target_map) + 1e-15
+        unknown_map = np.array(unknown_map)
+        known_free_map = np.array(known_free_map)
+        known_target_map = np.array(known_target_map)
         sum_map = unknown_map + known_free_map + known_target_map
+        sum_map = sum_map + 1e-15
         unknown_map_prob = unknown_map / sum_map
         known_free_map_prob = known_free_map / sum_map
         known_target_map_prob = known_target_map / sum_map
         info_map = -(
-                unknown_map_prob * np.log(unknown_map_prob) + (1 - unknown_map_prob) * np.log(1 - unknown_map_prob))
+                unknown_map_prob * np.log(self.nan_to_num(unknown_map_prob)) + (1 - unknown_map_prob) * np.log(
+            self.nan_to_num(1 - unknown_map_prob)))
+
         known_target_map_v = np.e ** known_target_map_prob
         known_free_map_v = np.e ** (-known_free_map_prob)
 
