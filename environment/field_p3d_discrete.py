@@ -102,7 +102,7 @@ class Field(gym.Env):
         wall_max = min(pos + w, max_w)
         block_min = -min(pos, 0)
         block_max = max_w - max(pos + w, max_w)
-        block_max = block_max if block_max != 0 else None
+        block_max = block_max if block_max != s0 else None
         return slice(wall_min, wall_max), slice(block_min, block_max)
 
     def paste(self, wall, block, loc):
@@ -331,10 +331,27 @@ class Field(gym.Env):
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
+        unknown_map, known_free_map, known_target_map = self.transform_map(unknown_map, known_free_map,
+                                                                           known_target_map)
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
 
         return (map, np.concatenate(
             (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, done, {}
+
+    def transform_map(self, unknown_map, known_free_map, known_target_map):
+        unknown_map = np.array(unknown_map)
+        known_free_map = np.array(known_free_map)
+        known_target_map = np.array(known_target_map)
+        sum_map = unknown_map + known_free_map + known_target_map
+        unknown_map_prob = unknown_map / sum_map
+        known_free_map_prob = known_free_map / sum_map
+        known_target_map_prob = known_target_map / sum_map
+        info_map = -(
+                unknown_map_prob * np.log(unknown_map_prob) + (1 - unknown_map_prob) * np.log(1 - unknown_map_prob))
+        known_target_map_v = np.e ** known_target_map_prob
+        known_free_map_v = np.e ** (-known_free_map_prob)
+
+        return known_free_map_v, known_target_map_v, info_map
 
     def reset(self):
         self.reset_count += 1

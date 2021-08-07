@@ -125,6 +125,7 @@ class ActionMoRoMultiplier36(object):
     def get_relative_move_rot2(self, axes, action_ind, move_step, rot_step):
         relative_move = np.array([0, 0, 0])
         relative_rot = Rotation.from_quat(np.array([0, 0, 0, 1.0]))
+        print(action_ind)
         action, multiplier = self.action_space[action_ind]
 
         if action == ActionMoRo12IntEnum.MOVE_FORWARD:
