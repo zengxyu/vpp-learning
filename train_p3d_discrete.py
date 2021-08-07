@@ -23,7 +23,7 @@ def build_ddqn_per():
     Network = network.network_dqn.DQN_Network11
     Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
     Field = field_p3d_discrete.Field
-    Action = action_space.ActionMoRo12
+    Action = action_space.ActionMoRoMultiplier36
 
     out_folder = "output_p3d_ddqn_per"
     in_folder = ""
@@ -55,7 +55,7 @@ def build_ddqn_per_without_robotpose():
 
 
 def train_fun(tuning_param):
-    Network, Agent, Field, Action, out_folder, in_folder = build_ddqn_per_without_robotpose()
+    Network, Agent, Field, Action, out_folder, in_folder = build_ddqn_per()
 
     # network
     config = ConfigDQN(network=Network,
