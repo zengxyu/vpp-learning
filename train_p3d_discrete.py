@@ -25,7 +25,7 @@ def build_ddqn_per():
     Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
 
-    out_folder = "output_p3d_ddqn_per_improved4"
+    out_folder = "output_p3d_ddqn_per_improved6"
     in_folder = ""
 
     return Network, Agent, Field, Action, out_folder, in_folder
