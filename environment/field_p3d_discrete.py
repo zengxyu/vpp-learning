@@ -334,8 +334,8 @@ class Field(gym.Env):
         unknown_map, known_free_map, known_target_map = self.transform_map(unknown_map, known_free_map,
                                                                            known_target_map)
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
-        # if True in np.isnan(map):
-        #     print("====================nan")
+        if True in np.isnan(map):
+            print("====================nan")
         return (map, np.concatenate(
             (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, done, {}
 
@@ -353,14 +353,15 @@ class Field(gym.Env):
         unknown_map_prob = unknown_map / sum_map
         known_free_map_prob = known_free_map / sum_map
         known_target_map_prob = known_target_map / sum_map
-        info_map = -(
-                unknown_map_prob * np.log(self.nan_to_num(unknown_map_prob)) + (1 - unknown_map_prob) * np.log(
-            self.nan_to_num(1 - unknown_map_prob)))
+        # info_map = -(
+        #         unknown_map_prob * np.log(self.nan_to_num(unknown_map_prob)) + (1 - unknown_map_prob) * np.log(
+        #     self.nan_to_num(1 - unknown_map_prob)))
+        unknown_map_prob = np.e ** unknown_map_prob
 
         known_target_map_v = np.e ** known_target_map_prob
         known_free_map_v = np.e ** (-known_free_map_prob)
 
-        return known_free_map_v, known_target_map_v, info_map
+        return unknown_map_prob, known_free_map_v, known_target_map_v
 
     def reset(self):
         self.reset_count += 1
