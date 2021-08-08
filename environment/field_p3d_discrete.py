@@ -358,7 +358,7 @@ class Field(gym.Env):
         # info_map = -(
         #         unknown_map_prob * np.log(self.nan_to_num(unknown_map_prob)) + (1 - unknown_map_prob) * np.log(
         #     self.nan_to_num(1 - unknown_map_prob)))
-        unknown_map_prob = np.e ** unknown_map_prob
+        # unknown_map_prob = np.e ** unknown_map_prob
         #
         # known_target_map_v = np.e ** known_target_map_prob
         # known_free_map_v = np.e ** (-known_free_map_prob)
