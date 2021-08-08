@@ -20,12 +20,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def build_ddqn_per():
-    Network = network.network_dqn.DQN_Network11
+    Network = network.network_dqn.DQN_Network11_Improved
     Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
     Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
 
-    out_folder = "output_p3d_ddqn_per_improved9"
+    out_folder = "output_p3d_ddqn_per_improved10"
     in_folder = ""
 
     return Network, Agent, Field, Action, out_folder, in_folder

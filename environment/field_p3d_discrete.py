@@ -332,9 +332,7 @@ class Field(gym.Env):
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        unknown_map_v, known_free_map_v, known_target_map_v = self.transform_map(unknown_map, known_free_map,
-                                                                                 known_target_map)
-        map = np.concatenate([unknown_map_v, known_free_map_v, known_target_map_v], axis=0)
+        map = self.transform_map(unknown_map, known_free_map, known_target_map)
         if True in np.isnan(map):
             print("====================nan")
         return (map, np.concatenate(
@@ -365,7 +363,10 @@ class Field(gym.Env):
         unknown_map_prob_f = sobel(gaussian_filter(unknown_map_prob, sigma=7))
         known_free_map_prob_f = sobel(gaussian_filter(known_free_map_prob, sigma=7))
         known_target_map_prob_f = sobel(gaussian_filter(known_target_map_prob, sigma=7))
-        return unknown_map_prob, known_free_map_prob, known_target_map_prob, unknown_map_prob_f, known_free_map_prob_f, known_target_map_prob_f
+        map = np.concatenate(
+            [unknown_map_prob, known_free_map_prob, known_target_map_prob, unknown_map_prob_f, known_free_map_prob_f,
+             known_target_map_prob_f], axis=0)
+        return map
 
     def reset(self):
         self.reset_count += 1
@@ -406,8 +407,5 @@ class Field(gym.Env):
         # print(self.robot_rot.as_quat())
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        unknown_map_v, known_free_map_v, known_target_map_v = self.transform_map(unknown_map, known_free_map,
-                                                                                 known_target_map)
-        # print(unknown_map)
-        map = np.concatenate([unknown_map_v, known_free_map_v, known_target_map_v], axis=0)
+        map = self.transform_map(unknown_map, known_free_map, known_target_map)
         return (map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())))
