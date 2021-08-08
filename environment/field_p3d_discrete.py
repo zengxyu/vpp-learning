@@ -350,8 +350,7 @@ class Field(gym.Env):
         known_free_map = np.array(known_free_map)
         known_target_map = np.array(known_target_map)
         sum_map = unknown_map + known_free_map + known_target_map
-        sum_map = sum_map + 1e-15
-        sum_map = np.sum(sum_map)
+        sum_map = np.sum(sum_map, axis=0) + 1e-15
         unknown_map_prob = unknown_map / sum_map
         known_free_map_prob = known_free_map / sum_map
         known_target_map_prob = known_target_map / sum_map
