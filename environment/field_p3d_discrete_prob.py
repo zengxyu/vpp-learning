@@ -51,7 +51,7 @@ class GuiFieldValues(IntEnum):
     TARGET_SEEN = 5
 
 
-class Field(gym.Env):
+class Field:
     def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
                  is_augment_env=False,
                  scale=0.05):
@@ -77,8 +77,8 @@ class Field(gym.Env):
         self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 10.0
-        self.ROT_STEP = 15.0
+        self.MOVE_STEP = 20.0
+        self.ROT_STEP = 30.0
 
         self.reset_count = 0
         self.upper_scale = 1
@@ -317,10 +317,12 @@ class Field(gym.Env):
     def rotate_robot(self, rot):
         self.robot_rot = rot * self.robot_rot
 
-    def step(self, action):
+    def step(self, action, action_values):
+        probs = max(action_values) / sum(action_values)
+
         axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
-                                                                                  self.ROT_STEP)
+        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP * probs,
+                                                                                  self.ROT_STEP * self.MOVE_STEP)
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
