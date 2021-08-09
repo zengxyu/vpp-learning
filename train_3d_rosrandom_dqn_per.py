@@ -18,8 +18,8 @@ Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prio
 Field = field_ros.Field
 Action = action_space.ActionMoRo12
 
-out_folder = "output_reset_and_random9"
-in_folder = ""
+out_folder = "output_reset_and_random10"
+in_folder = "output_reset_and_random6"
 
 eps_exploration_strategy_config = {EpsExplorationStrategy.INVERSE_STRATEGY: {"epsilon": 1.0,
                                                                              'epsilon_decay_denominator': 1.0},
@@ -39,11 +39,11 @@ config = ConfigDQN(network=network,
                    )
 config.is_train = True
 # 刚才的环境忘记设置epsilon
-config.set_parameters({"epsilon": 0.5})
+config.set_parameters({"epsilon": 0.4})
 if config.is_train:
     trainer = RosRandomTrainer(config=config, Agent=Agent, Field=Field, Action=Action)
 else:
     trainer = RosTrainer(config=config, Agent=Agent, Field=Field, Action=Action)
 
-# trainer.agent.load_model(index=49)
+trainer.agent.load_model(index=49)
 trainer.train()
