@@ -22,7 +22,7 @@ def build_ddqn_per():
     Field = field_p3d_discrete_unknown_reward.Field
     Action = action_space.ActionMoRo12
 
-    out_folder = "output_p3d_ddqn_per27"
+    out_folder = "output_p3d_ddqn_per_with_unknown_cells"
     in_folder = ""
 
     return Network, Agent, Field, Action, out_folder, in_folder
