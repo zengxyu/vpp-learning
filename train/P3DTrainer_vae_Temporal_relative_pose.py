@@ -138,7 +138,7 @@ class P3DTrainer(object):
 
                 (observed_map_next, robot_pose_next), found_target_num, unknown_cell_num, done, _ = self.field.step(
                     action)
-                reward = found_target_num
+                reward = found_target_num + 0.001 * unknown_cell_num
 
                 # if robot_pose is the same with the robot_pose_next, then reward--
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
