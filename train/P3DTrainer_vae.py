@@ -58,6 +58,7 @@ class P3DTrainer(object):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         mean_loss_last_n_ep, mean_reward_last_n_ep = 0, 0
+        # self.agent.pre_learn_vae()
         for i_episode in range(self.config.num_episodes_to_run):
             print("\nepisode {}".format(i_episode))
             e_start_time = time.time()

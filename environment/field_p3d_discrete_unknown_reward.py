@@ -57,6 +57,7 @@ class Field(gym.Env):
                  scale=0.05):
         self.found_targets = 0
         self.free_cells = 0
+        self.new_unknown_cells = 0
         self.sensor_range = sensor_range
         self.action_instance = Action()
         self.hfov = hfov
@@ -234,7 +235,7 @@ class Field(gym.Env):
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
-        self.known_map, found_targets, free_cells, unknown_cells, coords, values = field_env_3d_helper.update_grid_inds_in_view(
+        self.known_map, found_targets, free_cells, total_cells, coords, values = field_env_3d_helper.update_grid_inds_in_view(
             self.known_map,
             self.global_map,
             Vec3D(*tuple(
@@ -256,7 +257,16 @@ class Field(gym.Env):
             self.gui.gui_done.clear()
 
         # print("Updating field took {} s".format(time.perf_counter() - time_start))
-
+        unknown_cells = found_targets + free_cells
+        # if total_cells == 0:
+        #     uncertainty = 1
+        # else:
+        #     uncertainty = unknown_cells / total_cells
+        # print("found_targets:{};free_cells:{};unknown_cells:{};total_cells:{};uncertainty:{}".format(found_targets,
+        #                                                                                              free_cells,
+        #                                                                                              unknown_cells,
+        #                                                                                              total_cells,
+        #                                                                                              uncertainty))
         return found_targets, free_cells, unknown_cells
 
     def update_grid_inds_in_view_old(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
@@ -324,12 +334,12 @@ class Field(gym.Env):
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
-        new_targets_found, new_free_cells, new_unknown_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down,
-                                                                                             ep_left_up,
-                                                                                             ep_right_down, ep_right_up)
+        new_targets_found, new_free_cells, uncertainty = self.update_grid_inds_in_view(cam_pos, ep_left_down,
+                                                                                       ep_left_up,
+                                                                                       ep_right_down, ep_right_up)
+        # print(new_targets_found, new_free_cells, new_unknown_cells)
         self.free_cells += new_free_cells
         self.found_targets += new_targets_found
-
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
 
@@ -338,7 +348,7 @@ class Field(gym.Env):
         if True in np.isnan(map):
             print("====================nan")
         return (map, np.concatenate(
-            (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, done, {}
+            (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, uncertainty, done, {}
 
     # 裁剪n
     def nan_to_num(self, n):
