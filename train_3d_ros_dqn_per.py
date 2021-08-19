@@ -13,7 +13,7 @@ from train.RosTrainer import RosTrainer
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 network = network.network_dqn.DQN_Network11
-Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
+Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
 Field = field_ros.Field
 Action = action_space.ActionMoRo12
 

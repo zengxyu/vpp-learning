@@ -20,12 +20,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def build_ddqn_per():
-    Network = network.network_dqn.DQN_Network11_Improved
-    Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
+    Network = network.network_dqn.DQN_Network11
+    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
 
-    out_folder = "output_p3d_ddqn_per_improved10"
+    out_folder = "output_p3d_ddqn_per22_test"
     in_folder = ""
 
     return Network, Agent, Field, Action, out_folder, in_folder
@@ -33,7 +33,7 @@ def build_ddqn_per():
 
 def build_ddqn_dueling_per():
     Network = network.network_dqn.DQN_Network11_Dueling
-    Agent = agents.DQN_agents.Dueling_DDQN_With_Prioritised_Experience_Replay.Dueling_DDQN_With_Prioritised_Experience_Replay
+    Agent = agents.DQN_agents.Dueling_DDQN_PER.Dueling_DDQN_PER
     Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo15
 
@@ -44,7 +44,7 @@ def build_ddqn_dueling_per():
 
 def build_ddqn_per_without_robotpose():
     Network = network.network_dqn.DQN_Network11_Without_RobotPose
-    Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
+    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
 

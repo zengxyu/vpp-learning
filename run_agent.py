@@ -13,7 +13,7 @@ from agents.DQN_agents.Dueling_DDQN import Dueling_DDQN
 from train.Trainer import Trainer
 from config.config import Config
 from agents.DQN_agents.DDQN import DDQN
-from agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay import DDQN_With_Prioritised_Experience_Replay
+from agents.DQN_agents.DDQN_PER import DDQN_PER
 from agents.DQN_agents.DQN import DQN
 from agents.DQN_agents.DQN_With_Fixed_Q_Targets import DQN_With_Fixed_Q_Targets
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     # AGENTS = [SAC_Discrete, DDQN, Dueling_DDQN, DQN, DQN_With_Fixed_Q_Targets,
     #           DDQN_With_Prioritised_Experience_Replay, A2C, PPO, A3C ]
     AGENTS = [DDQN, Dueling_DDQN, DQN, DQN_With_Fixed_Q_Targets,
-              DDQN_With_Prioritised_Experience_Replay]
+              DDQN_PER]
     # AGENTS = [SAC]
     trainer = Trainer(config, AGENTS)
     trainer.run_games_for_agents()

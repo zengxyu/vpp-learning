@@ -328,7 +328,7 @@ std::tuple<int, int, int, int, int> count_known_target_layer5(const py::array_t<
     }
 }*/
 
-std::tuple<py::array_t<int>, int,int, std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
+std::tuple<py::array_t<int>, int,int, int,std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
 {
     std::vector<Vec3D> points = {cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up};
     auto[bb_min, bb_max] = get_bb_points(points, known_map.shape());
@@ -337,6 +337,8 @@ std::tuple<py::array_t<int>, int,int, std::vector<int>, std::vector<int>> update
     Vec3D plane_normal = v1.cross(v2);
     int found_targets = 0;
     int free_cells = 0;
+    int unknown_cell = 0;
+    int total = 0;
     std::vector<int> coords, values;
     for (size_t z = (size_t)bb_min.z; z < (size_t)bb_max.z; z++)
     {
@@ -345,30 +347,38 @@ std::tuple<py::array_t<int>, int,int, std::vector<int>, std::vector<int>> update
             for (size_t x = (size_t)bb_min.x; x < (size_t)bb_max.x; x++)
             {
                 Vec3D point = Vec3D(x, y, z);
-                if (*known_map.data(x, y, z) != 0)
-                    continue;
                 auto[p_proj, rel_dist] = line_plane_intersection(ep_right_down, plane_normal, cam_pos, (point - cam_pos));
-                if (rel_dist < 1.0) // if point lies behind projection or there is no projection, skip
-                    continue;
-                if (point_in_rectangle(p_proj, ep_right_down, v1, v2))
-                {
-                    *known_map.mutable_data(x, y, z) = *global_map.data(x, y, z);
-                    // for now, occupied cells are targets, change later
-                    if (*known_map.data(x, y, z) == 2)
-                        found_targets += 1;
-                    if (*known_map.data(x, y, z) == 1)
-                        free_cells += 1;
-                     //if (!headless) {}
-                    coords.push_back(x);
-                    coords.push_back(y);
-                    coords.push_back(z);
-                    values.push_back(*known_map.data(x, y, z) + 3);
-                }
+                    if (rel_dist < 1.0) // if point lies behind projection or there is no projection, skip
+                        continue;
+                    if (point_in_rectangle(p_proj, ep_right_down, v1, v2))
+                    {
+                        total += 1;
+                        if (*known_map.data(x, y, z) == 0){
+                            *known_map.mutable_data(x, y, z) = *global_map.data(x, y, z);
+                            // for now, occupied cells are targets, change later
+                            if (*known_map.data(x, y, z) == 2)
+                                found_targets += 1;
+                            if (*known_map.data(x, y, z) == 1)
+                                free_cells += 1;
+
+                             //if (!headless) {}
+                            coords.push_back(x);
+                            coords.push_back(y);
+                            coords.push_back(z);
+                            values.push_back(*known_map.data(x, y, z) + 3);
+                        }
+                    }
+//                if (*known_map.data(x, y, z) != 0)
+////                等于0说明known_map对这个位置的数据未知
+////                  不等于0说明known_map对这个位置的数据已知
+//                    continue;
+//
+//                }
             }
         }
     }
 //    double reward = found_targets*0.7+free_cells*0.3;
-    return std::make_tuple(known_map, found_targets,free_cells, coords, values);
+    return std::make_tuple(known_map, found_targets, free_cells, total, coords, values);
 }
 
 void test()

@@ -64,6 +64,8 @@ class P3DTrainer(object):
             done = False
             losses = []
             rewards = []
+            found_target_nums = []
+            unknown_cell_nums = []
             actions = []
             self.agent.reset()
             observed_map, robot_pose = self.field.reset()
@@ -76,7 +78,10 @@ class P3DTrainer(object):
 
                 action = self.agent.pick_action([observed_map, robot_pose_input])
 
-                (observed_map_next, robot_pose_next), reward, done, _ = self.field.step(action)
+                (observed_map_next, robot_pose_next), found_target_num, unknown_cell_num, done, _ = self.field.step(
+                    action)
+                reward = found_target_num + unknown_cell_num * 0.0005
+
 
                 # if robot_pose is the same with the robot_pose_next, then reward--
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
@@ -95,6 +100,8 @@ class P3DTrainer(object):
                     loss = self.agent.learn()
 
                 actions.append(action)
+                found_target_nums.append(found_target_num)
+                unknown_cell_nums.append(unknown_cell_num)
                 rewards.append(reward)
                 losses.append(loss)
                 time_step += 1
@@ -114,8 +121,11 @@ class P3DTrainer(object):
                     print("robot pose: {}".format(robot_pose[:3]))
                     print("actions:{}".format(np.array(actions)))
                     print("rewards:{}".format(np.array(rewards)))
+                    print("found_target_nums:{}".format(np.array(found_target_nums)))
+                    # print("unknown_cell_nums:{}".format(np.array(unknown_cell_nums)))
+
                     mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
-                                                                                            np.sum(rewards),
+                                                                                            np.sum(found_target_nums),
                                                                                             i_episode)
 
                     if (i_episode + 1) % self.config.save_model_every == 0:

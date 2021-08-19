@@ -2,7 +2,7 @@ import copy
 
 from agents.Base_Agent_DQN import Base_Agent_DQN
 # Important, 记住这里要改回来
-from agents.DQN_agents.DQN_Prob import DQN
+from agents.DQN_agents.DQN import DQN
 from collections import Counter
 
 

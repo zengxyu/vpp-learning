@@ -25,3 +25,9 @@ class Children(Parent):
 if __name__ == '__main__':
     child = Children()
     child.say()
+import torch
+
+a = torch.rand(4, 3, 28, 28)
+ind = torch.tensor([0, 2])
+c = a.index_select(0, ind)
+print(c.shape)

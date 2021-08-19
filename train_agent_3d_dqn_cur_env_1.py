@@ -8,7 +8,7 @@ import time
 import numpy as np
 
 from scipy.spatial.transform.rotation import Rotation
-from agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay import DDQN_With_Prioritised_Experience_Replay
+from agents.DQN_agents.DDQN_PER import DDQN_PER
 from environment.field_ros import Field, ActionMoRo12
 from network.network_dqn import DQN_Network11_Dueling
 from utilities.summary_writer import MySummaryWriter
@@ -39,7 +39,7 @@ config.overwrite_existing_results_file = False
 config.randomise_random_seed = True
 config.save_model = False
 config.model = DQN_Network11_Dueling
-config.agent = DDQN_With_Prioritised_Experience_Replay
+config.agent = DDQN_PER
 config.is_train = True
 
 config.output_folder = "output_ros_ddqn_prb_dueling222"

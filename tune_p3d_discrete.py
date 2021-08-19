@@ -26,7 +26,7 @@ class ALG:
 
 def build_ddqn_per():
     Network = network.network_dqn.DQN_Network11_Split
-    Agent = agents.DQN_agents.DDQN_With_Prioritised_Experience_Replay.DDQN_With_Prioritised_Experience_Replay
+    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
 
@@ -38,7 +38,7 @@ def build_ddqn_per():
 
 def build_ddqn_dueling_per():
     Network = network.network_dqn.DQN_Network11_Dueling
-    Agent = agents.DQN_agents.Dueling_DDQN_With_Prioritised_Experience_Replay.Dueling_DDQN_With_Prioritised_Experience_Replay
+    Agent = agents.DQN_agents.Dueling_DDQN_PER.Dueling_DDQN_PER
     Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
 

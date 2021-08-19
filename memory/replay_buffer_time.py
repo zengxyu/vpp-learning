@@ -128,6 +128,28 @@ class PriorityReplayBuffer:
         transitions = self.tree.data[-self.tree.capacity:]
         return vs[:self.size], transitions[:self.size]
 
+    def transform(self, data_slice):
+        frames_in = []
+        robot_poses_in = []
+        next_frames_in = []
+        next_robot_poses_in = []
+        for i in range(data_slice.shape[0]):
+            experience = data_slice[i]
+            frames_in.append(experience[0])
+            robot_poses_in.append(experience[1])
+            next_frames_in.append(experience[4])
+            next_robot_poses_in.append(experience[5])
+        frames_in = np.array(frames_in, dtype=np.float)
+        robot_poses_in = np.array(robot_poses_in, dtype=np.float)
+        actions = data_slice[-1][2]
+        rewards = data_slice[-1][3]
+        next_frames_in = np.array(next_frames_in, dtype=np.float)
+        next_robot_poses_in = np.array(next_robot_poses_in, dtype=np.float)
+        dones = data_slice[-1][6]
+
+        return np.array([frames_in, robot_poses_in, actions, rewards, next_frames_in, next_robot_poses_in, dones],
+                        dtype=np.object)
+
     def sample(self, is_vpp=True, num_experiences=None, is_weighted=True):
         # Draws a random sample of experience from the replay buffer
         batch_size = self.batch_size if num_experiences is None else num_experiences
@@ -148,9 +170,10 @@ class PriorityReplayBuffer:
                 idx, p, data_idx, data = self.tree.get_leaf(v)
                 prob = p / self.tree.total_p
                 ISWeights[i, 0] = np.power(prob / min_prob, -self.beta)
-                b_idx[i], b_memory[i, :] = idx, data
-                # data_idx = max(5, data_idx)
-                # b_idx[i], b_memory[i, :] = idx, self.tree.data[data_idx - 4:data_idx + 1]
+                # b_idx[i], b_memory[i, :] = idx, data
+                data_idx = max(4, data_idx)
+                transformed_data = self.transform(self.tree.data[data_idx - 4:data_idx + 1])
+                b_idx[i], b_memory[i, :] = idx, transformed_data
 
         else:
             for i in range(batch_size):

@@ -1,11 +1,20 @@
+import pickle
+
 import torch
 import torch.nn.functional as F
 from agents.DQN_agents.DDQN import DDQN
 from memory.replay_buffer import PriorityReplayBuffer
 import numpy as np
+import os
 
 
-class DDQN_With_Prioritised_Experience_Replay(DDQN):
+def minmaxscaler(data):
+    min = torch.min(data)
+    max = torch.max(data)
+    return (data - min) / (max - min)
+
+
+class DDQN_PER(DDQN):
     """A DQN agent with prioritised experience replay"""
     agent_name = "DDQN with Prioritised Replay"
 
@@ -20,6 +29,8 @@ class DDQN_With_Prioritised_Experience_Replay(DDQN):
         # sampled_experiences, importance_sampling_weights = self.memory.sample()
         tree_idx, minibatch, ISWeights = self.memory.sample(is_vpp=self.config.environment['is_vpp'])
         states, actions, rewards, next_states, dones = minibatch
+        # states[0] = minmaxscaler(states[0])
+        # next_states[0] = minmaxscaler(next_states[0])
         # states, actions, rewards, next_states, dones = sampled_experiences
         loss, td_errors = self.compute_loss_and_td_errors(states, next_states, rewards, actions, dones, ISWeights)
         self.take_optimisation_step(self.q_network_optimizer, self.q_network_local, loss,
@@ -30,7 +41,31 @@ class DDQN_With_Prioritised_Experience_Replay(DDQN):
         self.skipping_step_update_of_target_network(self.q_network_local, self.q_network_target,
                                                     global_step_number=self.global_step_number,
                                                     update_every_n_steps=self.hyper_parameters["update_every_n_steps"])
+        if self.global_step_number % 1000 == 0:
+            pickle.dump(self.memory, open(os.path.join(self.config.folder['exp_sv'], "buffer.obj"), 'wb'))
+            print("save replay buffer to local")
         return loss.detach().cpu().numpy()
+
+    def pick_action(self, state):
+        """Uses the local Q network and an epsilon greedy policy to pick an action"""
+        # PyTorch only accepts mini-batches and not single observations so we have to use unsqueeze to add
+        # a "fake" dimension to make it a mini-batch rather than a single observation
+        if isinstance(state, list):
+            frame, robot_pose = state
+            state = [torch.Tensor([frame]).to(self.device), torch.Tensor([robot_pose]).to(self.device)]
+        else:
+            state = torch.FloatTensor([state]).to(self.device)
+
+        # state[0] = minmaxscaler(state[0])
+        self.q_network_local.eval()
+        with torch.no_grad():
+            action_values = self.q_network_local(state)
+        self.q_network_local.train()
+        action = self.exploration_strategy.perturb_action_for_exploration_purposes({"action_values": action_values,
+                                                                                    "turn_off_exploration": self.turn_off_exploration,
+                                                                                    "episode_number": self.episode_number})
+
+        return action
 
     def update_memory_batch_errors(self, tree_idx, td_errors, rewards):
         loss_each_item = torch.abs(td_errors)

@@ -1,3 +1,5 @@
+import os.path
+
 from utilities.util import create_save_folder, build_in_folder
 
 
@@ -27,7 +29,7 @@ class Config(object):
 
     def setup_folder(self, out_folder, in_folder):
         self.folder = {
-            'out_folder': out_folder,
+            'out_folder': os.path.join('output', out_folder),
             'in_folder': in_folder,
 
             # output: to save
