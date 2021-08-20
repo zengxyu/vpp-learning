@@ -193,6 +193,584 @@ class DQN_Network11_VAE(torch.nn.Module):
         return eps.mul(std).add_(mu)
 
 
+class DQN_Network11_VAE_Time_enhanced3(torch.nn.Module):
+    def __init__(self, action_size, batch_size=128):
+        super().__init__()
+        self.in_channels = 15
+        self.out_channels = 24
+        self.kernel_size = 4
+        self.stride = 2
+        self.padding = 1
+        self.w = 36
+        self.h = 18
+        self.out_w = compute_conv_out_width(i=self.w, k=self.kernel_size, s=self.stride, p=self.padding)
+        self.out_h = compute_conv_out_width(i=self.h, k=self.kernel_size, s=self.stride, p=self.padding)
+        self.out_node_num = compute_conv_out_node_num(d=self.out_channels, w=self.out_w, h=self.out_h)
+
+        # 编码
+        self.init_encode_layer()
+
+        self.fc_mu = torch.nn.Linear(1024, 512)
+        self.fc_std = torch.nn.Linear(1024, 512)
+
+        # 解码层
+        self.init_decoder_layer()
+
+        # dqn
+        # self.pose_fc3 = torch.nn.Linear(256 * 5, 256 * 3)
+
+        self.pose_fc4 = torch.nn.Linear(1024 + 128 * 2, 448)
+
+        self.pose_fc5 = torch.nn.Linear(448, 32)
+
+        self.fc_val = torch.nn.Linear(32, action_size)
+
+    def init_encode_layer(self):
+        self.frame_con1 = torch.nn.Conv2d(15, 24, self.kernel_size, self.stride, self.padding)
+        self.frame_fc1 = torch.nn.Linear(3888, 512)
+        self.frame_fc2 = torch.nn.Linear(512, 128)
+
+        self.pose_fc1a = torch.nn.Linear(3, 32)
+        self.pose_fc2a = torch.nn.Linear(32, 64)
+
+        self.pose_fc1b = torch.nn.Linear(3, 32)
+        self.pose_fc2b = torch.nn.Linear(32, 64)
+
+        self.hn_neighbor_state_dim = 512
+        self.lstm_neighbor1 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+        self.lstm_neighbor2 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+
+    def init_decoder_layer(self):
+        self.decoder_linear_layer = nn.Sequential(
+            nn.Linear(512, 1024),
+            nn.ReLU(True),
+            nn.Linear(1024, self.out_node_num),
+            nn.ReLU(True)
+        )
+        # 24 * 9 * 18
+        self.decoder_conv_layer = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=self.out_channels, out_channels=self.in_channels * 12,
+                               kernel_size=self.kernel_size,
+                               stride=self.stride,
+                               padding=self.padding),  # (b, 8, 16, 16)
+            nn.Tanh()
+        )
+
+    def encode(self, frame_reshape, robot_pose_reshape):
+        frame_outs = None
+        robot_pose_outs = None
+        batch_size = frame_reshape.shape[1]
+        h0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+            torch.device("cpu"))
+        c0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+            torch.device("cpu"))
+
+        for i in range(5):
+            out_frame = F.relu(self.frame_con1(frame_reshape[i]))
+            out_frame = out_frame.reshape(out_frame.size()[0], -1)
+            out_frame = F.relu(self.frame_fc1(out_frame))
+            out_frame = F.relu(self.frame_fc2(out_frame))
+
+            out_pose_a = F.relu(self.pose_fc1a(robot_pose_reshape[i][:, 0:3]))
+            out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+            out_pose_b = F.relu(self.pose_fc1b(robot_pose_reshape[i][:, 3:6]))
+            out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+            out_frame = out_frame.unsqueeze(1)
+            robot_pose_cat_out = torch.cat((out_pose_a, out_pose_b), dim=1).unsqueeze(1)
+
+            if frame_outs is None:
+                # batch_size * hidden_size
+                frame_outs = out_frame
+                robot_pose_outs = robot_pose_cat_out
+            else:
+                frame_outs = torch.cat((frame_outs, out_frame), dim=1)
+                robot_pose_outs = torch.cat((robot_pose_outs, robot_pose_cat_out), dim=1)
+        lstm_neighbor_output, (hn_frame, cn) = self.lstm_neighbor1(frame_outs, (h0, c0))
+        lstm_neighbor_output, (hn_robot_pose, cn) = self.lstm_neighbor2(robot_pose_outs, (h0, c0))
+
+        hn_frame = hn_frame.squeeze(0)
+        hn_robot_pose = hn_robot_pose.squeeze(0)
+        hn = torch.cat((hn_frame, hn_robot_pose), dim=1)
+        # 输出是batch_size * 1024
+        return hn
+
+    def encode_frame(self, frame_reshape):
+        out_frame = F.relu(self.frame_con1(frame_reshape[-1]))
+        out_frame = out_frame.reshape(out_frame.size()[0], -1)
+        out_frame = F.relu(self.frame_fc1(out_frame))
+        out_frame = F.relu(self.frame_fc2(out_frame))
+        return out_frame
+
+    def encode_robot_pose(self, robot_pose_reshape):
+        out_pose_a = F.relu(self.pose_fc1a(robot_pose_reshape[-1][:, 0:3]))
+        out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+        out_pose_b = F.relu(self.pose_fc1b(robot_pose_reshape[-1][:, 3:6]))
+        out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+        out_pose = torch.cat((out_pose_a, out_pose_b), dim=1)
+        return out_pose
+
+    def decoder(self, z):
+        h3_linear = self.decoder_linear_layer(z)
+        h3_conv = h3_linear.view(z.shape[0], self.out_channels, self.out_w, self.out_h)
+        x = self.decoder_conv_layer(h3_conv)
+        x = x.view(z.shape[0], 12, self.in_channels, self.w, self.h)
+        return x
+
+    def reparametrize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()  # 计算标准差
+        # if torch.cuda.is_available():
+        #     eps = torch.cuda.FloatTensor(std.size()).normal_()  # 从标准的正态分布中随机采样一个eps
+        # else:
+        eps = torch.FloatTensor(std.size()).normal_()
+        eps = Variable(eps)
+        return eps.mul(std).add_(mu)
+
+    def forward(self, state):
+        frame, robot_pose = state
+        frame_reshape = torch.transpose(frame, 0, 1)
+        robot_pose_reshape = torch.transpose(robot_pose, 0, 1)
+        # 经过了lstm
+        hn = self.encode(frame_reshape, robot_pose_reshape)
+
+        mu = self.fc_mu(hn)
+        logvar = self.fc_std(hn)
+
+        # 一个分支是解码
+        z = self.reparametrize(mu, logvar)
+        out_decoder = self.decoder(z)
+
+        # 一个是DQN
+        h_frame = self.encode_frame(frame_reshape)
+        h_pose = self.encode_robot_pose(robot_pose_reshape)
+        out = torch.cat((hn, h_frame, h_pose), dim=1)
+
+        out = F.relu(self.pose_fc4(out))
+        out = F.relu(self.pose_fc5(out))
+
+        val = self.fc_val(out)
+        return val, out_decoder, mu, logvar
+
+
+class DQN_Network11_Time_enhanced3(torch.nn.Module):
+    def __init__(self, action_size, batch_size=128):
+        super().__init__()
+        self.in_channels = 15
+        self.out_channels = 24
+        self.kernel_size = 4
+        self.stride = 2
+        self.padding = 1
+        self.w = 36
+        self.h = 18
+        self.out_w = compute_conv_out_width(i=self.w, k=self.kernel_size, s=self.stride, p=self.padding)
+        self.out_h = compute_conv_out_width(i=self.h, k=self.kernel_size, s=self.stride, p=self.padding)
+        self.out_node_num = compute_conv_out_node_num(d=self.out_channels, w=self.out_w, h=self.out_h)
+
+        # 编码
+        self.init_encode_layer()
+
+        # self.fc_mu = torch.nn.Linear(1024, 512)
+        # self.fc_std = torch.nn.Linear(1024, 512)
+
+        # dqn
+        # self.pose_fc3 = torch.nn.Linear(256 * 5, 256 * 3)
+
+        self.pose_fc4 = torch.nn.Linear(1024 + 128 * 2, 448)
+
+        self.pose_fc5 = torch.nn.Linear(448, 32)
+
+        self.fc_val = torch.nn.Linear(32, action_size)
+
+    def init_encode_layer(self):
+        self.frame_con1 = torch.nn.Conv2d(15, 24, self.kernel_size, self.stride, self.padding)
+        self.frame_fc1 = torch.nn.Linear(3888, 512)
+        self.frame_fc2 = torch.nn.Linear(512, 128)
+
+        self.pose_fc1a = torch.nn.Linear(3, 32)
+        self.pose_fc2a = torch.nn.Linear(32, 64)
+
+        self.pose_fc1b = torch.nn.Linear(3, 32)
+        self.pose_fc2b = torch.nn.Linear(32, 64)
+
+        self.hn_neighbor_state_dim = 512
+        self.lstm_neighbor1 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+        self.lstm_neighbor2 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+
+
+    def encode(self, frame_reshape, robot_pose_reshape):
+        frame_outs = None
+        robot_pose_outs = None
+        batch_size = frame_reshape.shape[1]
+        h0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+            torch.device("cpu"))
+        c0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+            torch.device("cpu"))
+
+        for i in range(5):
+            out_frame = F.relu(self.frame_con1(frame_reshape[i]))
+            out_frame = out_frame.reshape(out_frame.size()[0], -1)
+            out_frame = F.relu(self.frame_fc1(out_frame))
+            out_frame = F.relu(self.frame_fc2(out_frame))
+
+            out_pose_a = F.relu(self.pose_fc1a(robot_pose_reshape[i][:, 0:3]))
+            out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+            out_pose_b = F.relu(self.pose_fc1b(robot_pose_reshape[i][:, 3:6]))
+            out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+            out_frame = out_frame.unsqueeze(1)
+            robot_pose_cat_out = torch.cat((out_pose_a, out_pose_b), dim=1).unsqueeze(1)
+
+            if frame_outs is None:
+                # batch_size * hidden_size
+                frame_outs = out_frame
+                robot_pose_outs = robot_pose_cat_out
+            else:
+                frame_outs = torch.cat((frame_outs, out_frame), dim=1)
+                robot_pose_outs = torch.cat((robot_pose_outs, robot_pose_cat_out), dim=1)
+        lstm_neighbor_output, (hn_frame, cn) = self.lstm_neighbor1(frame_outs, (h0, c0))
+        lstm_neighbor_output, (hn_robot_pose, cn) = self.lstm_neighbor2(robot_pose_outs, (h0, c0))
+
+        hn_frame = hn_frame.squeeze(0)
+        hn_robot_pose = hn_robot_pose.squeeze(0)
+        hn = torch.cat((hn_frame, hn_robot_pose), dim=1)
+        # 输出是batch_size * 1024
+        return hn
+
+    def encode_frame(self, frame_reshape):
+        out_frame = F.relu(self.frame_con1(frame_reshape[-1]))
+        out_frame = out_frame.reshape(out_frame.size()[0], -1)
+        out_frame = F.relu(self.frame_fc1(out_frame))
+        out_frame = F.relu(self.frame_fc2(out_frame))
+        return out_frame
+
+    def encode_robot_pose(self, robot_pose_reshape):
+        out_pose_a = F.relu(self.pose_fc1a(robot_pose_reshape[-1][:, 0:3]))
+        out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+        out_pose_b = F.relu(self.pose_fc1b(robot_pose_reshape[-1][:, 3:6]))
+        out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+        out_pose = torch.cat((out_pose_a, out_pose_b), dim=1)
+        return out_pose
+
+    def forward(self, state):
+        frame, robot_pose = state
+        frame_reshape = torch.transpose(frame, 0, 1)
+        robot_pose_reshape = torch.transpose(robot_pose, 0, 1)
+        # 经过了lstm
+        hn = self.encode(frame_reshape, robot_pose_reshape)
+
+        # 一个是DQN
+        h_frame = self.encode_frame(frame_reshape)
+        h_pose = self.encode_robot_pose(robot_pose_reshape)
+        out = torch.cat((hn, h_frame, h_pose), dim=1)
+
+        out = F.relu(self.pose_fc4(out))
+        out = F.relu(self.pose_fc5(out))
+
+        val = self.fc_val(out)
+        return val
+
+
+# class DQN_Network11_VAE_Time_enhanced2(torch.nn.Module):
+#     def __init__(self, action_size, batch_size=128):
+#         super().__init__()
+#         self.in_channels = 15
+#         self.out_channels = 24
+#         self.kernel_size = 4
+#         self.stride = 2
+#         self.padding = 1
+#         self.w = 36
+#         self.h = 18
+#         self.out_w = compute_conv_out_width(i=self.w, k=self.kernel_size, s=self.stride, p=self.padding)
+#         self.out_h = compute_conv_out_width(i=self.h, k=self.kernel_size, s=self.stride, p=self.padding)
+#         self.out_node_num = compute_conv_out_node_num(d=self.out_channels, w=self.out_w, h=self.out_h)
+#
+#         # 编码
+#         self.init_encode_layer()
+#
+#         self.fc_mu = torch.nn.Linear(1024, 512)
+#         self.fc_std = torch.nn.Linear(1024, 512)
+#
+#         # 解码层
+#         self.init_decoder_layer()
+#
+#         # dqn
+#         # self.pose_fc3 = torch.nn.Linear(256 * 5, 256 * 3)
+#
+#         self.pose_fc4 = torch.nn.Linear(1024 + 128, 448)
+#
+#         self.pose_fc5 = torch.nn.Linear(448, 32)
+#
+#         self.fc_val = torch.nn.Linear(32, action_size)
+#
+#     def init_encode_layer(self):
+#         self.frame_con1 = torch.nn.Conv2d(15, 24, self.kernel_size, self.stride, self.padding)
+#         self.frame_fc1 = torch.nn.Linear(3888, 512)
+#         self.frame_fc2 = torch.nn.Linear(512, 128)
+#
+#         self.pose_fc1a = torch.nn.Linear(3, 32)
+#         self.pose_fc2a = torch.nn.Linear(32, 64)
+#
+#         self.pose_fc1b = torch.nn.Linear(3, 32)
+#         self.pose_fc2b = torch.nn.Linear(32, 64)
+#
+#         self.hn_neighbor_state_dim = 512
+#         self.lstm_neighbor1 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+#         self.lstm_neighbor2 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+#
+#     def init_decoder_layer(self):
+#         self.decoder_linear_layer = nn.Sequential(
+#             nn.Linear(512, 1024),
+#             nn.ReLU(True),
+#             nn.Linear(1024, self.out_node_num),
+#             nn.ReLU(True)
+#         )
+#         # 24 * 9 * 18
+#         self.decoder_conv_layer = nn.Sequential(
+#             nn.ConvTranspose2d(in_channels=self.out_channels, out_channels=self.in_channels * 12,
+#                                kernel_size=self.kernel_size,
+#                                stride=self.stride,
+#                                padding=self.padding),  # (b, 8, 16, 16)
+#             nn.Tanh()
+#         )
+#
+#     def encode(self, frame_reshape, robot_pose_reshape):
+#         frame_outs = None
+#         robot_pose_outs = None
+#         batch_size = frame_reshape.shape[1]
+#         h0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+#             torch.device("cpu"))
+#         c0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+#             torch.device("cpu"))
+#
+#         for i in range(5):
+#             out_frame = F.relu(self.frame_con1(frame_reshape[i]))
+#             out_frame = out_frame.reshape(out_frame.size()[0], -1)
+#             out_frame = F.relu(self.frame_fc1(out_frame))
+#             out_frame = F.relu(self.frame_fc2(out_frame))
+#
+#             out_pose_a = F.relu(self.pose_fc1a(robot_pose_reshape[i][:, 0:3]))
+#             out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+#
+#             out_pose_b = F.relu(self.pose_fc1b(robot_pose_reshape[i][:, 3:6]))
+#             out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+#             out_frame = out_frame.unsqueeze(1)
+#             robot_pose_cat_out = torch.cat((out_pose_a, out_pose_b), dim=1).unsqueeze(1)
+#
+#             if frame_outs is None:
+#                 # batch_size * hidden_size
+#                 frame_outs = out_frame
+#                 robot_pose_outs = robot_pose_cat_out
+#             else:
+#                 frame_outs = torch.cat((frame_outs, out_frame), dim=1)
+#                 robot_pose_outs = torch.cat((robot_pose_outs, robot_pose_cat_out), dim=1)
+#         lstm_neighbor_output, (hn_frame, cn) = self.lstm_neighbor1(frame_outs, (h0, c0))
+#         lstm_neighbor_output, (hn_robot_pose, cn) = self.lstm_neighbor2(robot_pose_outs, (h0, c0))
+#
+#         hn_frame = hn_frame.squeeze(0)
+#         hn_robot_pose = hn_robot_pose.squeeze(0)
+#         hn = torch.cat((hn_frame, hn_robot_pose), dim=1)
+#         # 输出是batch_size * 1024
+#         return hn
+#
+#     def encode_frame(self, frame_reshape):
+#         out_frame = F.relu(self.frame_con1(frame_reshape[-1]))
+#         out_frame = out_frame.reshape(out_frame.size()[0], -1)
+#         out_frame = F.relu(self.frame_fc1(out_frame))
+#         out_frame = F.relu(self.frame_fc2(out_frame))
+#         return out_frame
+#
+#     def decoder(self, z):
+#         h3_linear = self.decoder_linear_layer(z)
+#         h3_conv = h3_linear.view(z.shape[0], self.out_channels, self.out_w, self.out_h)
+#         x = self.decoder_conv_layer(h3_conv)
+#         x = x.view(z.shape[0], 12, self.in_channels, self.w, self.h)
+#         return x
+#
+#     def reparametrize(self, mu, logvar):
+#         std = logvar.mul(0.5).exp_()  # 计算标准差
+#         # if torch.cuda.is_available():
+#         #     eps = torch.cuda.FloatTensor(std.size()).normal_()  # 从标准的正态分布中随机采样一个eps
+#         # else:
+#         eps = torch.FloatTensor(std.size()).normal_()
+#         eps = Variable(eps)
+#         return eps.mul(std).add_(mu)
+#
+#     def forward(self, state):
+#         frame, robot_pose = state
+#         frame_reshape = torch.transpose(frame, 0, 1)
+#         robot_pose_reshape = torch.transpose(robot_pose, 0, 1)
+#         # 经过了lstm
+#         hn = self.encode(frame_reshape, robot_pose_reshape)
+#
+#         mu = self.fc_mu(hn)
+#         logvar = self.fc_std(hn)
+#
+#         # 一个分支是解码
+#         z = self.reparametrize(mu, logvar)
+#         out_decoder = self.decoder(z)
+#
+#         # 一个是DQN
+#         h_frame = self.encode_frame(frame_reshape)
+#         out = torch.cat((hn, h_frame), dim=1)
+#
+#         out = F.relu(self.pose_fc4(out))
+#         out = F.relu(self.pose_fc5(out))
+#
+#         val = self.fc_val(out)
+#         return val, out_decoder, mu, logvar
+
+class DQN_Network11_VAE_Time_enhanced2(torch.nn.Module):
+    def __init__(self, action_size, batch_size=128):
+        super().__init__()
+        self.in_channels = 15
+        self.out_channels = 24
+        self.kernel_size = 4
+        self.stride = 2
+        self.padding = 1
+        self.w = 36
+        self.h = 18
+        self.out_w = compute_conv_out_width(i=self.w, k=self.kernel_size, s=self.stride, p=self.padding)
+        self.out_h = compute_conv_out_width(i=self.h, k=self.kernel_size, s=self.stride, p=self.padding)
+        self.out_node_num = compute_conv_out_node_num(d=self.out_channels, w=self.out_w, h=self.out_h)
+
+        # 编码
+        self.init_encode_layer()
+
+        self.fc_mu = torch.nn.Linear(1024, 512)
+        self.fc_std = torch.nn.Linear(1024, 512)
+
+        # 解码层
+        self.init_decoder_layer()
+
+        # dqn
+        # self.pose_fc3 = torch.nn.Linear(256 * 5, 256 * 3)
+
+        self.pose_fc4 = torch.nn.Linear(1024 + 128, 448)
+
+        self.pose_fc5 = torch.nn.Linear(448, 32)
+
+        self.fc_val = torch.nn.Linear(32, action_size)
+
+    def init_encode_layer(self):
+        self.frame_con1 = torch.nn.Conv2d(15, 24, self.kernel_size, self.stride, self.padding)
+        self.frame_fc1 = torch.nn.Linear(3888, 512)
+        self.frame_fc2 = torch.nn.Linear(512, 128)
+
+        self.pose_fc1a = torch.nn.Linear(3, 32)
+        self.pose_fc2a = torch.nn.Linear(32, 64)
+
+        self.pose_fc1b = torch.nn.Linear(3, 32)
+        self.pose_fc2b = torch.nn.Linear(32, 64)
+
+        self.hn_neighbor_state_dim = 512
+        self.lstm_neighbor1 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+        self.lstm_neighbor2 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+
+    def init_decoder_layer(self):
+        self.decoder_linear_layer = nn.Sequential(
+            nn.Linear(512, 1024),
+            nn.ReLU(True),
+            nn.Linear(1024, self.out_node_num),
+            nn.ReLU(True)
+        )
+        # 24 * 9 * 18
+        self.decoder_conv_layer = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=self.out_channels, out_channels=self.in_channels * 12,
+                               kernel_size=self.kernel_size,
+                               stride=self.stride,
+                               padding=self.padding),  # (b, 8, 16, 16)
+            nn.Tanh()
+        )
+
+    def encode(self, frame_reshape, robot_pose_reshape):
+        frame_outs = None
+        robot_pose_outs = None
+        batch_size = frame_reshape.shape[1]
+        h0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+            torch.device("cpu"))
+        c0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+            torch.device("cpu"))
+
+        for i in range(5):
+            out_frame = F.relu(self.frame_con1(frame_reshape[i]))
+            out_frame = out_frame.reshape(out_frame.size()[0], -1)
+            out_frame = F.relu(self.frame_fc1(out_frame))
+            out_frame = F.relu(self.frame_fc2(out_frame))
+
+            out_pose_a = F.relu(self.pose_fc1a(robot_pose_reshape[i][:, 0:3]))
+            out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+            out_pose_b = F.relu(self.pose_fc1b(robot_pose_reshape[i][:, 3:6]))
+            out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+            out_frame = out_frame.unsqueeze(1)
+            robot_pose_cat_out = torch.cat((out_pose_a, out_pose_b), dim=1).unsqueeze(1)
+
+            if frame_outs is None:
+                # batch_size * hidden_size
+                frame_outs = out_frame
+                robot_pose_outs = robot_pose_cat_out
+            else:
+                frame_outs = torch.cat((frame_outs, out_frame), dim=1)
+                robot_pose_outs = torch.cat((robot_pose_outs, robot_pose_cat_out), dim=1)
+        lstm_neighbor_output, (hn_frame, cn) = self.lstm_neighbor1(frame_outs, (h0, c0))
+        lstm_neighbor_output, (hn_robot_pose, cn) = self.lstm_neighbor2(robot_pose_outs, (h0, c0))
+
+        hn_frame = hn_frame.squeeze(0)
+        hn_robot_pose = hn_robot_pose.squeeze(0)
+        hn = torch.cat((hn_frame, hn_robot_pose), dim=1)
+        # 输出是batch_size * 1024
+        return hn
+
+    def encode_frame(self, frame_reshape):
+        out_frame = F.relu(self.frame_con1(frame_reshape[-1]))
+        out_frame = out_frame.reshape(out_frame.size()[0], -1)
+        out_frame = F.relu(self.frame_fc1(out_frame))
+        out_frame = F.relu(self.frame_fc2(out_frame))
+        return out_frame
+
+    def decoder(self, z):
+        h3_linear = self.decoder_linear_layer(z)
+        h3_conv = h3_linear.view(z.shape[0], self.out_channels, self.out_w, self.out_h)
+        x = self.decoder_conv_layer(h3_conv)
+        x = x.view(z.shape[0], 12, self.in_channels, self.w, self.h)
+        return x
+
+    def reparametrize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()  # 计算标准差
+        # if torch.cuda.is_available():
+        #     eps = torch.cuda.FloatTensor(std.size()).normal_()  # 从标准的正态分布中随机采样一个eps
+        # else:
+        eps = torch.FloatTensor(std.size()).normal_()
+        eps = Variable(eps)
+        return eps.mul(std).add_(mu)
+
+    def forward(self, state):
+        frame, robot_pose = state
+        frame_reshape = torch.transpose(frame, 0, 1)
+        robot_pose_reshape = torch.transpose(robot_pose, 0, 1)
+        # 经过了lstm
+        hn = self.encode(frame_reshape, robot_pose_reshape)
+
+        mu = self.fc_mu(hn)
+        logvar = self.fc_std(hn)
+
+        # 一个分支是解码
+        z = self.reparametrize(mu, logvar)
+        out_decoder = self.decoder(z)
+
+        # 一个是DQN
+        h_frame = self.encode_frame(frame_reshape)
+        out = torch.cat((hn, h_frame), dim=1)
+
+        out = F.relu(self.pose_fc4(out))
+        out = F.relu(self.pose_fc5(out))
+
+        val = self.fc_val(out)
+        return val, out_decoder, mu, logvar
+
+
 class DQN_Network11_VAE_Time_enhanced(torch.nn.Module):
     def __init__(self, action_size, batch_size=128):
         super().__init__()

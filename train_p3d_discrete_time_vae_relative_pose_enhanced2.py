@@ -17,12 +17,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def build_ddqn_per():
-    Network = network.network_dqn_vae.DQN_Network11_VAE_Time_enhanced
+    Network = network.network_dqn_vae.DQN_Network11_VAE_Time_enhanced2
     Agent = agents.DQN_agents.Agent_DDQN_PER_VAE_Temporal.Agent_DDQN_PER_VAE
     Field = field_p3d_discrete_unknown_reward.Field
     Action = action_space.ActionMoRo12
 
-    out_folder = "output_p3d_ddqn_per_with_unknown_cells"
+    out_folder = "output_p3d_ddqn_per_with_unknown_cells_random2"
     in_folder = ""
 
     return Network, Agent, Field, Action, out_folder, in_folder

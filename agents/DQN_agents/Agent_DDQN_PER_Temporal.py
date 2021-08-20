@@ -29,7 +29,7 @@ def minmaxscaler(data):
     return (data - min) / (max - min)
 
 
-class Agent_DDQN_PER_VAE(Base_Agent_DQN):
+class Agent_DDQN_PER_Temporal(Base_Agent_DQN):
     """A DQN agent with prioritised experience replay"""
     agent_name = "DDQN with Prioritised Replay"
 
@@ -76,10 +76,9 @@ class Agent_DDQN_PER_VAE(Base_Agent_DQN):
         else:
             state = torch.FloatTensor([state]).to(self.device)
 
-        state[0] = minmaxscaler(state[0])
         self.q_network_local.eval()
         with torch.no_grad():
-            action_values = self.q_network_local(state)[0]
+            action_values = self.q_network_local(state)
         self.q_network_local.train()
         action = self.exploration_strategy.perturb_action_for_exploration_purposes({"action_values": action_values,
                                                                                     "turn_off_exploration": self.turn_off_exploration,
@@ -90,22 +89,19 @@ class Agent_DDQN_PER_VAE(Base_Agent_DQN):
     def learn(self):
         tree_idx, minibatch, ISWeights = self.memory.sample(is_vpp=self.config.environment['is_vpp'])
         states, actions, rewards, next_states, dones = minibatch
-        states[0] = minmaxscaler(states[0])
-        next_states[0] = minmaxscaler(next_states[0])
-        loss_vae = self.compute_vae_loss(states, next_states, actions)
 
         loss_dqn, td_errors = self.compute_loss_and_td_errors(states, next_states, rewards, actions, dones, ISWeights)
         if self.global_step_number % 50 == 0:
-            print("loss vae:{}; loss dqn:{}".format(loss_vae, loss_dqn))
-        loss = loss_vae + loss_dqn
-        self.take_optimisation_step(self.q_network_optimizer, self.q_network_local, loss,
+            print("loss dqn:{}".format(loss_dqn))
+        # loss =  loss_dqn
+        self.take_optimisation_step(self.q_network_optimizer, self.q_network_local, loss_dqn,
                                     self.hyper_parameters["gradient_clipping_norm"])
 
         self.update_memory_batch_errors(tree_idx, td_errors, rewards)
         self.skipping_step_update_of_target_network(self.q_network_local, self.q_network_target,
                                                     global_step_number=self.global_step_number,
                                                     update_every_n_steps=self.hyper_parameters["update_every_n_steps"])
-        return loss.detach().cpu().numpy()
+        return loss_dqn.detach().cpu().numpy()
 
     def imitation_learning(self):
         pass
@@ -122,9 +118,8 @@ class Agent_DDQN_PER_VAE(Base_Agent_DQN):
         """Computes the q_values for next state we will use to create the loss to train the Q network. Double DQN
         uses the local index to pick the maximum q_value action and then the target network to calculate the q_value.
         The reasoning behind this is that it will help stop the network from overestimating q values"""
-        max_action_indexes = self.q_network_local(next_states)[0].detach().argmax(1)
-        a = self.q_network_target(next_states)[0]
-        Q_targets_next = a.gather(1, max_action_indexes.unsqueeze(1))
+        max_action_indexes = self.q_network_local(next_states).detach().argmax(1)
+        Q_targets_next = self.q_network_target(next_states).gather(1, max_action_indexes.unsqueeze(1))
         return Q_targets_next
 
     # def compute_vae_loss(self, states, next_states):
@@ -186,7 +181,7 @@ class Agent_DDQN_PER_VAE(Base_Agent_DQN):
 
     def compute_expected_q_values(self, states, actions):
         """Computes the expected q_values we will use to create the loss to train the Q network"""
-        Q_expected = self.q_network_local(states)[0].gather(1,
+        Q_expected = self.q_network_local(states).gather(1,
                                                             actions.long())  # must convert actions to long so can be used as index
         return Q_expected
 
