@@ -384,7 +384,7 @@ class Field(gym.Env):
              known_target_map_prob_f], axis=0)
         return map
 
-    def reset(self):
+    def reset(self, is_random=True):
         self.reset_count += 1
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
@@ -394,17 +394,16 @@ class Field(gym.Env):
         if self.reset_count % 2 == 0:
             self.upper_scale += 1
         upper = np.array([1.0, 1.0, 1.0]) * self.upper_scale
-        # self.robot_pos = np.random.uniform(self.allowed_lower_bound, self.allowed_upper_bound)
-        upper = np.clip(upper, np.array([0.0, 0.0, 0.0]), np.array([255.0, 255.0, 255.0]))
+        if is_random:
+            self.robot_pos = np.random.uniform(np.array([0.0, 0.0, 0.0]), np.array([255.0, 255.0, 255.0]))
+            print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
 
-        # self.robot_pos = np.random.uniform(np.array([0.0, 0.0, 0.0]), upper)
-        self.robot_pos = np.array([0.0, 0.0, 0.0])
-        # print("upper:{}; reset robot pose as:{}".format(upper, self.robot_pos))
-        print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
-
-        # self.robot_rot = Rotation.from_euler("xyz", np.array([0, 0, np.pi / 2]))
-        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-
+            angles = [Rotation.from_quat([0, 0, 0, 1]), Rotation.from_quat([0, 1, 0, 0]),
+                      Rotation.from_quat([0, 0, 1, 0])]
+            self.robot_rot = angles[random.randint(0, 2)]
+        else:
+            self.robot_pos = np.array([0.0, 0.0, 0.0])
+            self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         self.step_count = 0
         self.found_targets = 0
         self.free_cells = 0
