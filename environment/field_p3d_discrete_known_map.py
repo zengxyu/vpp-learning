@@ -12,7 +12,6 @@ from field_env_3d_helper import Vec3D
 
 from action_space import ActionMoRo12
 from scipy.ndimage.filters import gaussian_filter, sobel
-from skimage import transform, data
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
