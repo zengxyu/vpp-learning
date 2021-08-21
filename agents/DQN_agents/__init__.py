@@ -9,3 +9,4 @@ from . import DDQN_PER_LSTM
 from . import Agent_DDQN_PER_Time
 from . import Agent_DDQN_PER_VAE_Temporal
 from . import Agent_DDQN_PER_Temporal
+from . import Agent_DDQN_PER_KnownMap
