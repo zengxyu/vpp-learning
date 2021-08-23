@@ -3,13 +3,10 @@ import logging
 import sys
 import os
 
-import ray
-from ray import tune
-
 import action_space
 import agents
 import network
-from environment import field_p3d_discrete_known_map
+from environment import field_p3d_discrete
 
 from train.P3DTrainer import P3DTrainer
 
@@ -20,9 +17,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def build_ddqn_per():
-    Network = network.network_dqn.DQN_Network11
+    Network = network.network_dqn_11.DQN_Network11
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
-    Field = field_p3d_discrete_known_map.Field
+    Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
 
     out_folder = "output_p3d_ddqn_per22_test"

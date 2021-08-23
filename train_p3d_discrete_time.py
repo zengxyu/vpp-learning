@@ -20,7 +20,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def build_ddqn_per():
-    Network = network.network_dqn.DQN_Network11_Time_Deeper
+    Network = network.network_dqn_11.DQN_Network11_LSTM
     Agent = agents.DQN_agents.Agent_DDQN_PER_Time.Agent_DDQN_PER_Time
     Field = field_p3d_discrete_unknown_reward.Field
     Action = action_space.ActionMoRo12

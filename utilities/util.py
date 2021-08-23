@@ -119,5 +119,5 @@ if __name__ == '__main__':
     b = compute_conv_out_width(i=18, k=4, s=2, p=1)
 
     print(a, b)
-    c = compute_conv_out_node_num(48, 4, 9)
+    c = compute_conv_out_node_num(9, 18, 50)
     print(c)

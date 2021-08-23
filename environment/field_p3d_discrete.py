@@ -330,8 +330,6 @@ class Field(gym.Env):
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         map = self.concat(unknown_map, known_free_map, known_target_map)
-        if True in np.isnan(map):
-            print("====================nan")
         return (map, np.concatenate(
             (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, done, {}
 
@@ -353,13 +351,6 @@ class Field(gym.Env):
         unknown_map_prob = unknown_map / sum_map
         known_free_map_prob = known_free_map / sum_map
         known_target_map_prob = known_target_map / sum_map
-        # info_map = -(
-        #         unknown_map_prob * np.log(self.nan_to_num(unknown_map_prob)) + (1 - unknown_map_prob) * np.log(
-        #     self.nan_to_num(1 - unknown_map_prob)))
-        # unknown_map_prob = np.e ** unknown_map_prob
-        #
-        # known_target_map_v = np.e ** known_target_map_prob
-        # known_free_map_v = np.e ** (-known_free_map_prob)
 
         unknown_map_prob_f = sobel(gaussian_filter(unknown_map_prob, sigma=7))
         known_free_map_prob_f = sobel(gaussian_filter(known_free_map_prob, sigma=7))
