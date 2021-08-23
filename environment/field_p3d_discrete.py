@@ -177,11 +177,6 @@ class Field(gym.Env):
 
     def generate_unknown_map(self, cam_pos):
         rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
-        # unknown_map = count_unknown_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0, 50.0)
-        # known_free_map = count_known_free_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
-        #                                              50.0)
-        # known_target_map = count_known_target_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
-        #                                                  1.0, 50.0)
 
         unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
                                                       250.0)

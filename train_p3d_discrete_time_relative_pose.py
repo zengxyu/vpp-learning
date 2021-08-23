@@ -9,7 +9,7 @@ from ray import tune
 import action_space
 import agents
 import network
-from environment import field_p3d_discrete, field_p3d_discrete_unknown_reward
+from environment import field_p3d_discrete, field_p3d_discrete_unknown_reward, field_p3d_discrete_known_map
 
 from train.P3DTrainer_Time_relative_pose import P3DTrainer
 
@@ -22,10 +22,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 def build_ddqn_per():
     Network = network.network_dqn.DQN_Network11_Time
     Agent = agents.DQN_agents.Agent_DDQN_PER_Time.Agent_DDQN_PER_Time
-    Field = field_p3d_discrete_unknown_reward.Field
+    Field = field_p3d_discrete_known_map.Field
     Action = action_space.ActionMoRo12
 
-    out_folder = "output_p3d_ddqn_per24"
+    out_folder = "output_p3d_fov_"
     in_folder = ""
 
     return Network, Agent, Field, Action, out_folder, in_folder

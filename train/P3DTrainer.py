@@ -53,8 +53,6 @@ class P3DTrainer(object):
         pass
 
     def main_loop(self):
-        observed_map, robot_pose = self.field.reset()
-        print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         mean_loss_last_n_ep, mean_reward_last_n_ep = 0, 0
@@ -66,7 +64,8 @@ class P3DTrainer(object):
             rewards = []
             actions = []
             self.agent.reset()
-            observed_map, robot_pose = self.field.reset()
+            observed_map, robot_pose = self.field.reset(is_random=False)
+            print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
             while not done:
                 loss = 0
 
@@ -76,7 +75,7 @@ class P3DTrainer(object):
 
                 action = self.agent.pick_action([observed_map, robot_pose_input])
 
-                (observed_map_next, robot_pose_next), reward, done, _ = self.field.step(action)
+                (observed_map_next, robot_pose_next), reward, _, done, _ = self.field.step(action)
 
                 # if robot_pose is the same with the robot_pose_next, then reward--
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction

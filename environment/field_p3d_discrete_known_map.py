@@ -185,13 +185,30 @@ class Field(gym.Env):
         #                                                  1.0, 50.0)
 
         unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
-                                                      250.0)
+                                                      30.0)
         known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
-                                                            1.0, 250.0)
+                                                            1.0, 30.0)
         known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
-                                                                rot_vecs, 1.0, 250.0)
+                                                                rot_vecs, 1.0, 30.0)
 
         return unknown_map, known_free_map, known_target_map
+
+    # def generate_known_map(self):
+    #     rot_vecs = self.compute_rot_vecs(-180, 180, 180, -180, 180, 180)
+    #     # unknown_map = count_unknown_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0, 50.0)
+    #     # known_free_map = count_known_free_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
+    #     #                                              50.0)
+    #     # known_target_map = count_known_target_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+    #     #                                                  1.0, 50.0)
+    #
+    #     unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
+    #                                                   30.0)
+    #     known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+    #                                                         1.0, 30.0)
+    #     known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+    #                                                             rot_vecs, 1.0, 30.0)
+    #
+    #     return unknown_map, known_free_map, known_target_map
 
     def line_plane_intersection(self, p0, nv, l0, lv):
         """ return intersection of a line with a plane
@@ -355,8 +372,11 @@ class Field(gym.Env):
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         frontier_map = self.concat(unknown_map, known_free_map, known_target_map)
-        transformed_global_map = self.compute_global_map()
-        return (transformed_global_map, frontier_map, np.concatenate(
+        # transformed_global_map = self.compute_global_map()
+        # return (transformed_global_map, frontier_map, np.concatenate(
+        #     (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, unknown_cells, done, {}
+
+        return (frontier_map, np.concatenate(
             (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, unknown_cells, done, {}
 
     # 裁剪n
@@ -432,6 +452,7 @@ class Field(gym.Env):
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         frontier_map = self.concat(unknown_map, known_free_map, known_target_map)
-        transformed_global_map = self.compute_global_map()
+        # transformed_global_map = self.compute_global_map()
+        # return (transformed_global_map, frontier_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())))
 
-        return (transformed_global_map, frontier_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())))
+        return (frontier_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())))
