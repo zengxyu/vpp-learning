@@ -195,7 +195,11 @@ class Field(gym.Env):
 
     def generate_spherical_coordinate_map(self, cam_pos):
         rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
-        spherical_coordinate_map = field_env_3d_helper.generate_spherical_coordinate_map(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 250.0, 250)
+        spherical_coordinate_map = field_env_3d_helper.generate_spherical_coordinate_map(self.known_map,
+                                                                                         generate_vec3d_from_arr(
+                                                                                             cam_pos), rot_vecs, 250.0,
+                                                                                         250)
+        spherical_coordinate_map = np.transpose(spherical_coordinate_map, (2, 0, 1))
         return spherical_coordinate_map
 
     def line_plane_intersection(self, p0, nv, l0, lv):
@@ -325,15 +329,15 @@ class Field(gym.Env):
 
         return found_targets
 
-    def compute_global_map(self):
-        res = np.zeros(shape=(3, 32, 32, 32))
-        for i in range(0, 256, 8):
-            for j in range(0, 256, 8):
-                for k in range(0, 256, 8):
-                    res[0, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 0)
-                    res[1, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 1)
-                    res[2, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 2)
-        return res
+    # def compute_global_map(self):
+    #     res = np.zeros(shape=(3, 32, 32, 32))
+    #     for i in range(0, 256, 8):
+    #         for j in range(0, 256, 8):
+    #             for k in range(0, 256, 8):
+    #                 res[0, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 0)
+    #                 res[1, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 1)
+    #                 res[2, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 2)
+    #     return res
 
     def move_robot(self, direction):
         self.robot_pos += direction

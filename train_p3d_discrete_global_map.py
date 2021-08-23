@@ -3,15 +3,12 @@ import logging
 import sys
 import os
 
-import ray
-from ray import tune
-
 import action_space
 import agents
 import network
-from environment import field_p3d_discrete_prob
+from environment import field_p3d_discrete_known_map
 
-from train.P3DTrainer_Prob import P3DTrainer
+from train.P3DTrainer_Knownmap import P3DTrainer
 
 from config.config_dqn import ConfigDQN
 from utilities.util import get_project_path
@@ -20,16 +17,38 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def build_ddqn_per():
-    Network = network.network_dqn.DQN_Network11
-    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
-    Field = field_p3d_discrete_prob.Field
+    Network = network.network_known_map.DQN_Network11_KnownMap
+    Agent = agents.DQN_agents.Agent_DDQN_PER_KnownMap.Agent_DDQN_PER_KnownMap
+    Field = field_p3d_discrete_known_map.Field
     Action = action_space.ActionMoRo12
 
-    out_folder = "output_p3d_ddqn_per_improved10"
+    out_folder = "output_p3d_global_map_01"
     in_folder = ""
 
     return Network, Agent, Field, Action, out_folder, in_folder
 
+
+def build_ddqn_dueling_per():
+    Network = network.network_dqn.DQN_Network11_Dueling
+    Agent = agents.DQN_agents.Dueling_DDQN_PER.Dueling_DDQN_PER
+    Field = field_p3d_discrete.Field
+    Action = action_space.ActionMoRo15
+
+    out_folder = "output_p3d_ddqn_dueling"
+    in_folder = ""
+    return Network, Agent, Field, Action, out_folder, in_folder
+
+
+def build_ddqn_per_without_robotpose():
+    Network = network.network_dqn.DQN_Network11_Without_RobotPose
+    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
+    Field = field_p3d_discrete.Field
+    Action = action_space.ActionMoRo12
+
+    out_folder = "output_p3d_ddqn_per_without_robotpose"
+    in_folder = ""
+
+    return Network, Agent, Field, Action, out_folder, in_folder
 
 
 def train_fun(tuning_param):
