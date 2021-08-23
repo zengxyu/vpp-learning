@@ -328,6 +328,51 @@ std::tuple<int, int, int, int, int> count_known_target_layer5(const py::array_t<
     }
 }*/
 
+py::array_t<Vec3D> generate_test_vector_array()
+{
+    py::array::ShapeContainer test_shape{3, 3};
+    py::array_t<Vec3D> test_array(test_shape);
+    for (py::ssize_t i = 0; i < 3; i++)
+    {
+        for (py::ssize_t j = 0; j < 3; j++)
+        {
+            *test_array.mutable_data(i, j) = Vec3D(i, j, 0);
+        }
+    }
+    return test_array;
+}
+
+py::array_t<int> generate_spherical_coordinate_map(const py::array_t<int> &known_map, const Vec3D& cam_pos, const py::array &dir_vecs, double range, py::ssize_t range_cells)
+{
+    const double step = range / range_cells;
+    py::ssize_t phi_cells = dir_vecs.shape()[0];
+    py::ssize_t theta_cells = dir_vecs.shape()[1];
+    py::array::ShapeContainer spherical_map_shape{phi_cells, theta_cells, range_cells};
+    py::array_t<int> spherical_coordinate_map(spherical_map_shape);
+    for (py::ssize_t p = 0; p < phi_cells; p++)
+    {
+        for (py::ssize_t t = 0; t < theta_cells; t++)
+        {
+            const py::object *dir_vec_obj = static_cast<const py::object *>(dir_vecs.data(p, t));
+            const Vec3D *dir_vec = dir_vec_obj->cast<const Vec3D *>();
+            for (py::ssize_t r = 0; r < range_cells; r++)
+            {
+                *spherical_coordinate_map.mutable_data(p, t, r) = -1; // set to -1 for cells not in map
+                Vec3D cur = cam_pos + (step * (r+1)) * (*dir_vec);
+                //std::cout << cur << std::endl;
+                int x = (int)cur.x;
+                if (!in_range(x, known_map.shape()[0])) continue;
+                int y = (int)cur.y;
+                if (!in_range(y, known_map.shape()[1])) continue;
+                int z = (int)cur.z;
+                if (!in_range(z, known_map.shape()[2])) continue;
+                *spherical_coordinate_map.mutable_data(p, t, r) = *known_map.data(x, y, z);
+            }
+        }
+    }
+    return spherical_coordinate_map;
+}
+
 std::tuple<py::array_t<int>, int,int, int,std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
 {
     std::vector<Vec3D> points = {cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up};
@@ -387,6 +432,7 @@ void test()
 }
 
 PYBIND11_MODULE(field_env_3d_helper, m) {
+    PYBIND11_NUMPY_DTYPE(Vec3D, x, y, z);
     m.doc() = "field env 3d helper plugin"; // Optional module docstring
     py::class_<Vec3D>(m, "Vec3D")
         .def(py::init<double, double, double>())
@@ -401,6 +447,8 @@ PYBIND11_MODULE(field_env_3d_helper, m) {
     m.def("count_known_free_layer5", &count_known_free_layer5, "Count unknown cells on ray in 5 layers");
     m.def("count_known_target_layer5", &count_known_target_layer5, "Count unknown cells on ray in 5 layers");
 
+    m.def("generate_test_vector_array", &generate_test_vector_array, "Test creation of Vec3D array");
+    m.def("generate_spherical_coordinate_map", &generate_spherical_coordinate_map, "Convert known map into map in spherical coordinates");
 
     m.def("test", &test, "Print test");
 }
