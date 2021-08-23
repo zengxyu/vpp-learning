@@ -360,7 +360,7 @@ class Field(gym.Env):
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         frontier_map = self.concat(unknown_map, known_free_map, known_target_map)
-        transformed_global_map = self.compute_global_map()
+        transformed_global_map = self.generate_spherical_coordinate_map(cam_pos)
         return (transformed_global_map, frontier_map, np.concatenate(
             (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, unknown_cells, done, {}
 
@@ -437,6 +437,6 @@ class Field(gym.Env):
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         frontier_map = self.concat(unknown_map, known_free_map, known_target_map)
-        transformed_global_map = self.compute_global_map()
+        transformed_global_map = self.generate_spherical_coordinate_map(cam_pos)
 
         return (transformed_global_map, frontier_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())))
