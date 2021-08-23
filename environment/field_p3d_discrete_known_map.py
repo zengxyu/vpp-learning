@@ -193,6 +193,11 @@ class Field(gym.Env):
 
         return unknown_map, known_free_map, known_target_map
 
+    def generate_spherical_coordinate_map(self, cam_pos):
+        rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
+        spherical_coordinate_map = field_env_3d_helper.generate_spherical_coordinate_map(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 250.0, 250)
+        return spherical_coordinate_map
+
     def line_plane_intersection(self, p0, nv, l0, lv):
         """ return intersection of a line with a plane
 
