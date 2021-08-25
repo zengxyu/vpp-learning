@@ -6,9 +6,9 @@ import os
 import action_space
 import agents
 import network
-from environment import field_p3d_discrete_known_map
+from environment import field_p3d_discrete
 
-from train.P3DTrainer_Knownmap import P3DTrainer
+from train.P3DTrainer_Temporal import P3DTrainer
 
 from config.config_dqn import ConfigDQN
 from utilities.util import get_project_path
@@ -17,12 +17,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def build_ddqn_per():
-    Network = network.network_known_map.DQN_Network11_KnownMap
-    Agent = agents.DQN_agents.Agent_DDQN_PER_KnownMap.Agent_DDQN_PER_KnownMap
-    Field = field_p3d_discrete_known_map.Field
+    "加了LSTM"
+    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM
+    Agent = agents.DQN_agents.Agent_DDQN_PER_Time.Agent_DDQN_PER_Time
+    Field = field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
 
-    out_folder = "output_p3d_ddqn_known_map"
+    out_folder = "output_p3d_sph_coordinates_temporal2"
     in_folder = ""
 
     return Network, Agent, Field, Action, out_folder, in_folder

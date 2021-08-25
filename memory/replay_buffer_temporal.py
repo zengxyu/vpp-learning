@@ -80,7 +80,7 @@ class ReplayBuffer:
         return len(self.memory)
 
 
-class PriorityReplayBuffer:
+class PriorityReplayBufferTemporal:
     """
     A special replay buffer which stores a priority for each event and only overwrites the ones with lowest priority
 

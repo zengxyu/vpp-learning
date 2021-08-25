@@ -8,7 +8,7 @@ from agents.Base_Agent_DQN import Base_Agent_DQN
 from agents.DQN_agents.DDQN import DDQN
 from agents.VAE_Learner import VAE_Learner
 from exploration_strategies.Epsilon_Greedy_Exploration import Epsilon_Greedy_Exploration
-from memory.replay_buffer_time import PriorityReplayBuffer
+from memory.replay_buffer_temporal import PriorityReplayBufferTemporal
 import numpy as np
 
 reconstruction_function = torch.nn.MSELoss(reduction='sum')
@@ -43,9 +43,9 @@ class Agent_DDQN_PER_Temporal(Base_Agent_DQN):
                                               lr=self.hyper_parameters["learning_rate"], eps=1e-4)
         self.exploration_strategy = Epsilon_Greedy_Exploration(self.hyper_parameters)
 
-        self.memory = PriorityReplayBuffer(buffer_size=self.hyper_parameters['buffer_size'],
-                                           batch_size=self.hyper_parameters['batch_size'],
-                                           device=self.device, is_discrete=True, seed=self.seed)
+        self.memory = PriorityReplayBufferTemporal(buffer_size=self.hyper_parameters['buffer_size'],
+                                                   batch_size=self.hyper_parameters['batch_size'],
+                                                   device=self.device, is_discrete=True, seed=self.seed)
         self.encoder_parameter_names = ["encoder_conv_layer.0.weight", "encoder_conv_layer.0.bias",
                                         "encoder_linear_layer.0.weight", "encoder_linear_layer.0.bias",
                                         "fc_mu.weight", "fc_mu.bias",
@@ -108,7 +108,7 @@ class Agent_DDQN_PER_Temporal(Base_Agent_DQN):
 
     def update_memory_batch_errors(self, tree_idx, td_errors, rewards):
         loss_each_item = torch.abs(td_errors)
-        loss_reward_each_item = 0.01 * loss_each_item + rewards
+        loss_reward_each_item = loss_each_item + rewards
         loss_reward_each_item = loss_reward_each_item.detach().cpu().numpy()
         tree_idx = tree_idx[:, np.newaxis]
 
