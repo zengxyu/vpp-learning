@@ -9,8 +9,7 @@ import binvox_rw
 import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
-
-from action_space import ActionMoRo12
+import math as m
 from scipy.ndimage.filters import gaussian_filter, sobel
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
@@ -81,6 +80,8 @@ class Field(gym.Env):
         self.MOVE_STEP = 10.0
         self.ROT_STEP = 15.0
 
+        self.is_sph_pos = False
+        self.is_global_known_map = False
         self.reset_count = 0
         self.upper_scale = 1
         self.ratio = 0.1
@@ -267,15 +268,6 @@ class Field(gym.Env):
 
         # print("Updating field took {} s".format(time.perf_counter() - time_start))
         unknown_cells = found_targets + free_cells
-        # if total_cells == 0:
-        #     uncertainty = 1
-        # else:
-        #     uncertainty = unknown_cells / total_cells
-        # print("found_targets:{};free_cells:{};unknown_cells:{};total_cells:{};uncertainty:{}".format(found_targets,
-        #                                                                                              free_cells,
-        #                                                                                              unknown_cells,
-        #                                                                                              total_cells,
-        #                                                                                              uncertainty))
         return found_targets, free_cells, unknown_cells
 
     def update_grid_inds_in_view_old(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
@@ -329,6 +321,17 @@ class Field(gym.Env):
 
         return found_targets
 
+    def compute_global_known_map(self, cam_pos):
+        generate_spherical_coordinate_map = self.generate_spherical_coordinate_map(cam_pos)
+        neighbor_dist = 100
+        step_size = 10
+        block_num = neighbor_dist / step_size
+        res = np.zeros(shape=(2, 36, 18, 10))
+
+        for i in range(0, 100, step_size):
+            res[0, :, :, i // 10] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 1)
+            res[1, :, :, i // 10] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 2)
+        return res
     # def compute_global_map(self):
     #     res = np.zeros(shape=(3, 32, 32, 32))
     #     for i in range(0, 256, 8):
@@ -339,43 +342,38 @@ class Field(gym.Env):
     #                 res[2, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 2)
     #     return res
 
+
     def move_robot(self, direction):
         self.robot_pos += direction
         self.robot_pos = np.clip(self.robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
 
+
     def rotate_robot(self, rot):
         self.robot_rot = rot * self.robot_rot
 
-    def step(self, action):
-        axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
-                                                                                  self.ROT_STEP)
-        self.move_robot(relative_move)
-        self.rotate_robot(relative_rot)
-        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
-        new_targets_found, new_free_cells, unknown_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down,
-                                                                                         ep_left_up,
-                                                                                         ep_right_down, ep_right_up)
-        # print(new_targets_found, new_free_cells, new_unknown_cells)
-        self.free_cells += new_free_cells
-        self.found_targets += new_targets_found
-        self.step_count += 1
-        done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
 
-        unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        frontier_map = self.concat(unknown_map, known_free_map, known_target_map)
-        transformed_global_map = self.generate_spherical_coordinate_map(cam_pos)
-        return (transformed_global_map, frontier_map, np.concatenate(
-            (self.robot_pos, self.robot_rot.as_quat()))), new_targets_found, unknown_cells, done, {}
+    def cart2sph(self, x, y, z):
+        XsqPlusYsq = x ** 2 + y ** 2
+        r = m.sqrt(XsqPlusYsq + z ** 2)  # r
+        elev = m.atan2(z, m.sqrt(XsqPlusYsq))  # theta
+        az = m.atan2(y, x)  # phi
+        return az, elev, r
+
+
+    def robot_pose_cart_2_polor(self, pos):
+        return self.cart2sph(pos[0], pos[1], pos[2])
+
 
     # 裁剪n
     def nan_to_num(self, n):
         NEAR_0 = 1e-15
         return np.clip(n, NEAR_0, 1 - NEAR_0)
 
+
     def concat(self, unknown_map, known_free_map, known_target_map):
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
         return map
+
 
     def transform_map(self, unknown_map, known_free_map, known_target_map):
         unknown_map = np.array(unknown_map)
@@ -402,7 +400,38 @@ class Field(gym.Env):
              known_target_map_prob_f], axis=0)
         return map
 
-    def reset(self, is_random=True):
+
+    def step(self, action):
+        axes = self.robot_rot.as_matrix().transpose()
+        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
+                                                                                  self.ROT_STEP)
+        self.move_robot(relative_move)
+        self.rotate_robot(relative_rot)
+        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
+        new_targets_found, new_free_cells, unknown_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down,
+                                                                                         ep_left_up,
+                                                                                         ep_right_down, ep_right_up)
+        # print(new_targets_found, new_free_cells, new_unknown_cells)
+        self.free_cells += new_free_cells
+        self.found_targets += new_targets_found
+        self.step_count += 1
+        done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
+
+        unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
+        observation = self.concat(unknown_map, known_free_map, known_target_map)
+
+        transformed_global_map = self.generate_spherical_coordinate_map(cam_pos)
+
+        if self.is_sph_pos:
+            robot_pos = self.robot_pose_cart_2_polor(self.robot_pos)
+        else:
+            robot_pos = self.robot_pos
+
+        return (transformed_global_map, observation, np.concatenate(
+            (robot_pos, self.robot_rot.as_quat()))), new_targets_found, unknown_cells, done, {}
+
+
+    def reset(self, is_random=True,is_global_known_map=False):
         self.reset_count += 1
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
@@ -440,7 +469,14 @@ class Field(gym.Env):
         # print(self.robot_rot.as_quat())
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        frontier_map = self.concat(unknown_map, known_free_map, known_target_map)
+
+        observation = self.concat(unknown_map, known_free_map, known_target_map)
+
         transformed_global_map = self.generate_spherical_coordinate_map(cam_pos)
 
-        return (transformed_global_map, frontier_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())))
+        if self.is_sph_pos:
+            robot_pos = self.robot_pose_cart_2_polor(self.robot_pos)
+        else:
+            robot_pos = self.robot_pos
+
+        return (transformed_global_map, observation, np.concatenate((robot_pos, self.robot_rot.as_quat())))

@@ -7,6 +7,7 @@ import binvox_rw
 import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
+import math as m
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
@@ -68,6 +69,8 @@ class Field:
         self.MOVE_STEP = 1.0
         self.ROT_STEP = 15.0
 
+        self.is_sph_pos = True
+
         if init_file:
             self.read_env_from_file(init_file, scale)
 
@@ -98,6 +101,13 @@ class Field:
         ep_right_down = self.robot_pos + vec_right_down * self.sensor_range
         ep_right_up = self.robot_pos + vec_right_up * self.sensor_range
         return self.robot_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up
+
+    def cart2sph(self, x, y, z):
+        XsqPlusYsq = x ** 2 + y ** 2
+        r = m.sqrt(XsqPlusYsq + z ** 2)  # r
+        elev = m.atan2(z, m.sqrt(XsqPlusYsq))  # theta
+        az = m.atan2(y, x)  # phi
+        return az, elev, r
 
     def compute_rot_vecs(self, min_ang, max_ang, num_steps):
         axes = self.robot_rot.as_matrix().transpose()
@@ -275,16 +285,19 @@ class Field:
 
         # unknown_map = self.generate_unknown_map(cam_pos)
 
-        return self.known_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), new_targets_found, done
+        return self.known_map, np.concatenate((robot_pos, self.robot_rot.as_quat())), new_targets_found, done
 
-    def reset(self):
+    def robot_pose_cart_2_polor(self, pos):
+        return self.cart2sph(pos[0], pos[1], pos[2])
+
+    def reset(self, is_sph_pos=False):
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
         self.robot_pos = np.random.uniform((0.0, 0.0, 0.0), self.shape)
         self.robot_rot = Rotation.random()
         self.step_count = 0
         self.found_targets = 0
-
+        self.is_sph_pos = is_sph_pos
         if not self.headless:
             self.gui.messenger.send('reset', [], 'default')
             self.gui.gui_done.wait()
@@ -296,8 +309,11 @@ class Field:
 
         print(self.robot_pos)
         print(self.robot_rot.as_quat())
-
+        if self.is_sph_pos:
+            robot_pos = self.robot_pose_cart_2_polor(self.robot_pos)
+        else:
+            robot_pos = self.robot_pos
         # unknown_map = self.generate_unknown_map(cam_pos)
         # print(unknown_map)
 
-        return self.known_map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
+        return self.known_map, np.concatenate((robot_pos, self.robot_rot.as_quat()))

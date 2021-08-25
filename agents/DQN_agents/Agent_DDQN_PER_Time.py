@@ -6,7 +6,7 @@ from agents.DQN_agents.DDQN import DDQN
 import numpy as np
 import os
 
-from memory.replay_buffer_time import PriorityReplayBuffer
+from memory.replay_buffer_temporal import PriorityReplayBufferTemporal
 
 
 def minmaxscaler(data):
@@ -21,9 +21,9 @@ class Agent_DDQN_PER_Time(DDQN):
 
     def __init__(self, config):
         DDQN.__init__(self, config)
-        self.memory = PriorityReplayBuffer(buffer_size=self.hyper_parameters['buffer_size'],
-                                           batch_size=self.hyper_parameters['batch_size'],
-                                           device=self.device, is_discrete=True, seed=self.seed)
+        self.memory = PriorityReplayBufferTemporal(buffer_size=self.hyper_parameters['buffer_size'],
+                                                   batch_size=self.hyper_parameters['batch_size'],
+                                                   device=self.device, is_discrete=True, seed=self.seed)
 
     def learn(self):
         """Runs a learning iteration for the Q network after sampling from the replay buffer in a prioritised way"""

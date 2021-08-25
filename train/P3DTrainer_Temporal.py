@@ -1,13 +1,14 @@
 import logging
 import os
+import random
 
 import numpy as np
 import time
 from scipy.spatial.transform.rotation import Rotation
 
+from train.StateDeque import State_DEQUE
 from utilities.basic_logger import BasicLogger
 from utilities.summary_writer import SummaryWriterLogger
-from ray import tune
 
 headless = True
 if not headless:
@@ -36,8 +37,10 @@ class P3DTrainer(object):
         }
         # Agent
         self.agent = self.Agent(self.config)
+        self.seq_len = 5
 
         self.logger = BasicLogger.setup_console_logging(config)
+        self.deque = State_DEQUE(capacity=self.seq_len)
 
     def train(self):
         if headless:
@@ -64,7 +67,7 @@ class P3DTrainer(object):
             rewards = []
             actions = []
             self.agent.reset()
-            observed_map, robot_pose = self.field.reset(is_sph_pos=True)
+            observed_map, robot_pose = self.field.reset(is_sph_pos=False)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
             while not done:
@@ -73,8 +76,13 @@ class P3DTrainer(object):
                 # robot direction
                 robot_direction = Rotation.from_quat(robot_pose[3:]).as_matrix() @ initial_direction
                 robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
+                self.deque.append(observed_map, robot_pose_input)
 
-                action = self.agent.pick_action([observed_map, robot_pose_input])
+                # 前5步，随便选择一个动作
+                if time_step <= self.seq_len:
+                    action = random.randint(0, 11)
+                else:
+                    action = self.agent.pick_action([self.deque.get_states(), self.deque.get_robot_poses()])
 
                 (observed_map_next, robot_pose_next), reward, _, done, _ = self.field.step(action)
 
@@ -83,6 +91,7 @@ class P3DTrainer(object):
 
                 # diff direction
                 robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
+                self.deque.append_next(observed_map_next, robot_pose_input_next)
 
                 self.agent.step(state=[observed_map, robot_pose_input], action=action, reward=reward,
                                 next_state=[observed_map_next, robot_pose_input_next], done=done)
@@ -91,7 +100,7 @@ class P3DTrainer(object):
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
                 # train
-                if time_step % self.config.learn_every == 0:
+                if time_step % self.config.learn_every == 0 and time_step > self.seq_len:
                     loss = self.agent.learn()
 
                 actions.append(action)

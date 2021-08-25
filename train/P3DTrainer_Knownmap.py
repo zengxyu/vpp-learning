@@ -64,7 +64,7 @@ class P3DTrainer(object):
             rewards = []
             actions = []
             self.agent.reset()
-            global_map, observed_map, robot_pose = self.field.reset(is_random=False)
+            global_map, observed_map, robot_pose = self.field.reset(is_sph_pos=False, is_global_known_map=True)
             while not done:
                 loss = 0
 
