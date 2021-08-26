@@ -159,6 +159,52 @@ class ActionMoRoMultiplier36(object):
         return len(ActionMoRo12IntEnum) * len(MultiplierIntEnum)
 
 
+class ActionMoRoMul108(object):
+    def __init__(self):
+        self.action_space = []
+        for mo_action in ActionMo6IntEnum:
+            for ro_action in ActionRo6IntEnum:
+                for mtplier in MultiplierIntEnum:
+                    self.action_space.append([mo_action, ro_action, mtplier])
+
+    def get_relative_move_rot2(self, axes, action_ind, move_step, rot_step):
+        relative_move = np.array([0, 0, 0])
+        relative_rot = Rotation.from_quat(np.array([0, 0, 0, 1.0]))
+        mo_action, ro_action, multiplier = self.action_space[action_ind]
+
+        if mo_action == ActionMo6IntEnum.MOVE_FORWARD:
+            relative_move = axes[0] * move_step * multiplier
+        elif mo_action == ActionMo6IntEnum.MOVE_BACKWARD:
+            relative_move = -axes[0] * move_step * multiplier
+        elif mo_action == ActionMo6IntEnum.MOVE_LEFT:
+            relative_move = axes[1] * move_step * multiplier
+        elif mo_action == ActionMo6IntEnum.MOVE_RIGHT:
+            relative_move = -axes[1] * move_step * multiplier
+        elif mo_action == ActionMo6IntEnum.MOVE_UP:
+            relative_move = axes[2] * move_step * multiplier
+        elif mo_action == ActionMo6IntEnum.MOVE_DOWN:
+            relative_move = -axes[2] * move_step * multiplier
+
+        if ro_action == ActionRo6IntEnum.ROTATE_ROLL_P:
+            relative_rot = Rotation.from_rotvec(np.radians(rot_step * multiplier) * axes[0])
+        elif ro_action == ActionRo6IntEnum.ROTATE_ROLL_N:
+            relative_rot = Rotation.from_rotvec(np.radians(-rot_step * multiplier) * axes[0])
+        elif ro_action == ActionRo6IntEnum.ROTATE_PITCH_P:
+            relative_rot = Rotation.from_rotvec(np.radians(rot_step * multiplier) * axes[1])
+        elif ro_action == ActionRo6IntEnum.ROTATE_PITCH_N:
+            relative_rot = Rotation.from_rotvec(np.radians(-rot_step * multiplier) * axes[1])
+        elif ro_action == ActionRo6IntEnum.ROTATE_YAW_P:
+            relative_rot = Rotation.from_rotvec(np.radians(rot_step * multiplier) * axes[2])
+        elif ro_action == ActionRo6IntEnum.ROTATE_YAW_N:
+            relative_rot = Rotation.from_rotvec(np.radians(-rot_step * multiplier) * axes[2])
+        else:
+            raise NotImplementedError
+        return relative_move, relative_rot
+
+    def get_action_size(self):
+        return len(ActionMo6IntEnum) * len(ActionRo6IntEnum) * len(MultiplierIntEnum)
+
+
 class ActionMoRoContinuous(object):
     def get_action_size(self, robot_pos, robot_rot):
         return len(robot_pos) + len(robot_rot)
