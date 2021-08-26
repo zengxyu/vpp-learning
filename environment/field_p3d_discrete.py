@@ -14,6 +14,8 @@ from action_space import ActionMoRo12
 from scipy.ndimage.filters import gaussian_filter, sobel
 import math as m
 
+from utilities.util import get_state_size, get_action_size
+
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
 
@@ -53,8 +55,7 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
-                 is_augment_env=False,
+    def __init__(self, config, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
                  scale=0.05):
         self.found_targets = 0
         self.free_cells = 0
@@ -69,7 +70,6 @@ class Field:
              gym.spaces.Box(low=0, high=255, shape=(7,), dtype=np.float)))
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
-        self.is_augment_env = is_augment_env
         # how often to augment the environment
         self.augment_env_every = 30
         self.trim_data = None
@@ -83,6 +83,7 @@ class Field:
 
         self.is_sph_pos = False
         self.is_global_known_map = False
+        self.is_randomize = False
 
         self.reset_count = 0
         self.upper_scale = 1
@@ -93,6 +94,13 @@ class Field:
         print("rot step:", self.ROT_STEP)
         if init_file:
             self.read_env_from_file(init_file, scale)
+        config.environment = {
+            "is_vpp": True,
+            "reward_threshold": 0,
+            "state_size": get_state_size(self),
+            "action_size": get_action_size(self),
+            "action_shape": get_action_size(self),
+        }
 
     def get_action_size(self):
         return self.action_instance.get_action_size()
@@ -107,7 +115,7 @@ class Field:
         wall_max = min(pos + w, max_w)
         block_min = -min(pos, 0)
         block_max = max_w - max(pos + w, max_w)
-        block_max = block_max if block_max != s0 else None
+        block_max = block_max if block_max != 0 else None
         return slice(wall_min, wall_max), slice(block_min, block_max)
 
     def paste(self, wall, block, loc):
@@ -417,9 +425,10 @@ class Field:
         return (map, np.concatenate(
             (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, done, {}
 
-    def reset(self, is_sph_pos, is_global_known_map):
+    def reset(self, is_sph_pos, is_global_known_map, is_randomize):
         self.is_sph_pos = is_sph_pos
         self.is_global_known_map = is_global_known_map
+        self.is_randomize = is_randomize
         self.reset_count += 1
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
@@ -443,14 +452,14 @@ class Field:
         self.step_count = 0
         self.found_targets = 0
         self.free_cells = 0
-        # if self.is_augment_env:uuut_env()
 
         if not self.headless:
             self.gui.messenger.send('reset', [], 'default')
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
             # self.gui.reset()
-
+        if self.is_randomize:
+            self.global_map = self.augment_env()
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 

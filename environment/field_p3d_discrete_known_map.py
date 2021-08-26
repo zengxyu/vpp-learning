@@ -12,6 +12,8 @@ from field_env_3d_helper import Vec3D
 import math as m
 from scipy.ndimage.filters import gaussian_filter, sobel
 
+from utilities.util import get_state_size, get_action_size
+
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
 
@@ -51,9 +53,10 @@ class GuiFieldValues(IntEnum):
 
 
 class Field(gym.Env):
-    def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
+    def __init__(self, config, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
                  is_augment_env=False,
                  scale=0.05):
+
         self.found_targets = 0
         self.free_cells = 0
         self.new_unknown_cells = 0
@@ -91,6 +94,13 @@ class Field(gym.Env):
         print("rot step:", self.ROT_STEP)
         if init_file:
             self.read_env_from_file(init_file, scale)
+        config.environment = {
+            "is_vpp": True,
+            "reward_threshold": 0,
+            "state_size": get_state_size(self),
+            "action_size": get_action_size(self),
+            "action_shape": get_action_size(self),
+        }
 
     def get_action_size(self):
         return self.action_instance.get_action_size()
@@ -332,6 +342,7 @@ class Field(gym.Env):
             res[0, :, :, i // 10] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 1)
             res[1, :, :, i // 10] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 2)
         return res
+
     # def compute_global_map(self):
     #     res = np.zeros(shape=(3, 32, 32, 32))
     #     for i in range(0, 256, 8):
@@ -342,15 +353,12 @@ class Field(gym.Env):
     #                 res[2, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 2)
     #     return res
 
-
     def move_robot(self, direction):
         self.robot_pos += direction
         self.robot_pos = np.clip(self.robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
 
-
     def rotate_robot(self, rot):
         self.robot_rot = rot * self.robot_rot
-
 
     def cart2sph(self, x, y, z):
         XsqPlusYsq = x ** 2 + y ** 2
@@ -359,21 +367,17 @@ class Field(gym.Env):
         az = m.atan2(y, x)  # phi
         return az, elev, r
 
-
     def robot_pose_cart_2_polor(self, pos):
         return self.cart2sph(pos[0], pos[1], pos[2])
-
 
     # 裁剪n
     def nan_to_num(self, n):
         NEAR_0 = 1e-15
         return np.clip(n, NEAR_0, 1 - NEAR_0)
 
-
     def concat(self, unknown_map, known_free_map, known_target_map):
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
         return map
-
 
     def transform_map(self, unknown_map, known_free_map, known_target_map):
         unknown_map = np.array(unknown_map)
@@ -399,7 +403,6 @@ class Field(gym.Env):
             [unknown_map_prob, known_free_map_prob, known_target_map_prob, unknown_map_prob_f, known_free_map_prob_f,
              known_target_map_prob_f], axis=0)
         return map
-
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
@@ -430,8 +433,7 @@ class Field(gym.Env):
         return (transformed_global_map, observation, np.concatenate(
             (robot_pos, self.robot_rot.as_quat()))), new_targets_found, unknown_cells, done, {}
 
-
-    def reset(self, is_random=True,is_global_known_map=False):
+    def reset(self, is_random=True, is_global_known_map=False):
         self.reset_count += 1
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
