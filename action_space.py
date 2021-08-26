@@ -162,9 +162,9 @@ class ActionMoRoMultiplier36(object):
 class ActionMoRoMul108(object):
     def __init__(self):
         self.action_space = []
-        for mo_action in ActionMo6IntEnum:
-            for ro_action in ActionRo6IntEnum:
-                for mtplier in MultiplierIntEnum:
+        for mtplier in MultiplierIntEnum:
+            for mo_action in ActionMo6IntEnum:
+                for ro_action in ActionRo6IntEnum:
                     self.action_space.append([mo_action, ro_action, mtplier])
 
     def get_relative_move_rot2(self, axes, action_ind, move_step, rot_step):
