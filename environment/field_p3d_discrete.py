@@ -382,9 +382,9 @@ class Field:
 
     def compute_global_known_map(self, cam_pos):
         generate_spherical_coordinate_map = self.generate_spherical_coordinate_map(cam_pos)
-        neighbor_dist = 100
+        neighbor_dist = 250
         step_size = 10
-        res = np.zeros(shape=(2, 10, 36, 18))
+        res = np.zeros(shape=(2, int(neighbor_dist / step_size), 36, 18))
 
         for i in range(0, neighbor_dist, step_size):
             res[0, i // step_size, :, :] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 1)
@@ -418,7 +418,7 @@ class Field:
             robot_pos = self.robot_pos
 
         if self.is_global_known_map:
-            global_known_map = self.compute_global_known_map(cam_pos)
+            global_known_map = self.compute_global_known_map(np.array([128, 128, 128]))
             return (global_known_map, map, np.concatenate(
                 (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, done, {}
 
@@ -471,6 +471,6 @@ class Field:
         else:
             robot_pos = self.robot_pos
         if self.is_global_known_map:
-            global_known_map = self.compute_global_known_map(cam_pos)
+            global_known_map = self.compute_global_known_map(np.array([128, 128, 128]))
             return global_known_map, map, np.concatenate((robot_pos, self.robot_rot.as_quat()))
         return map, np.concatenate((robot_pos, self.robot_rot.as_quat()))

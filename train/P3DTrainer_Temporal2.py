@@ -26,9 +26,10 @@ class P3DTrainer(object):
         self.seq_len = 5
         self.deque = State_DEQUE(capacity=self.seq_len)
 
-    def train(self, is_sph_pos=False, is_global_known_map=False, is_randomize=False):
+    def train(self, is_sph_pos=False, is_global_known_map=False, is_randomize=False,
+              is_reward_plus_unknown_cells=False):
         if headless:
-            self.main_loop(is_sph_pos, is_global_known_map, is_randomize)
+            self.main_loop(is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells)
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
@@ -36,7 +37,7 @@ class P3DTrainer(object):
             main_thread.start()
             self.field.gui.run()
 
-    def main_loop(self, is_sph_pos, is_global_known_map, is_randomize):
+    def main_loop(self, is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         mean_loss_last_n_ep, mean_reward_last_n_ep = 0, 0
@@ -48,8 +49,10 @@ class P3DTrainer(object):
             rewards = []
             actions = []
             self.agent.reset()
-            observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos, is_global_known_map=is_global_known_map,
-                                                        is_randomize=is_randomize)
+            known_map, observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
+                                                                   is_global_known_map=is_global_known_map,
+                                                                   is_randomize=is_randomize)
+            known_map_next = None
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
             while not done:
@@ -64,23 +67,37 @@ class P3DTrainer(object):
                 if time_step <= self.seq_len:
                     action = random.randint(0, 11)
                 else:
-                    action = self.agent.pick_action([self.deque.get_states(), self.deque.get_robot_poses()])
-
-                (observed_map_next, robot_pose_next), reward, _, done, _ = self.field.step(action)
-
+                    action = self.agent.pick_action([known_map, self.deque.get_states(), self.deque.get_robot_poses()])
+                if is_global_known_map:
+                    (known_map_next, observed_map_next,
+                     robot_pose_next), found_targets, unknown_cells, done, _ = self.field.step(action)
+                else:
+                    (observed_map_next, robot_pose_next), found_targets, unknown_cells, done, _ = self.field.step(
+                        action)
+                if is_reward_plus_unknown_cells:
+                    reward = found_targets + 0.001 * unknown_cells
+                else:
+                    reward = found_targets
                 # if robot_pose is the same with the robot_pose_next, then reward--
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
                 # diff direction
                 robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
+
                 self.deque.append_next(observed_map_next, robot_pose_input_next)
 
-                self.agent.step(state=[observed_map, robot_pose_input], action=action, reward=reward,
-                                next_state=[observed_map_next, robot_pose_input_next], done=done)
+                if is_global_known_map:
+                    self.agent.step(state=[known_map, observed_map, robot_pose_input], action=action,
+                                    reward=reward,
+                                    next_state=[known_map_next, observed_map_next, robot_pose_input_next], done=done)
+                else:
+                    self.agent.step(state=[observed_map, robot_pose_input], action=action, reward=reward,
+                                    next_state=[observed_map_next, robot_pose_input_next], done=done)
 
                 # to the next state
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
+                known_map = known_map_next.copy()
                 # train
                 if time_step % self.config.learn_every == 0 and time_step > self.seq_len:
                     loss = self.agent.learn()
