@@ -27,9 +27,10 @@ class P3DTrainer(object):
         self.deque = State_DEQUE(capacity=self.seq_len)
 
     def train(self, is_sph_pos=False, is_global_known_map=False, is_randomize=False,
-              is_reward_plus_unknown_cells=False):
+              is_reward_plus_unknown_cells=False, randomize_control=False):
         if headless:
-            self.main_loop(is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells)
+            self.main_loop(is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells,
+                           randomize_control)
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
@@ -37,10 +38,11 @@ class P3DTrainer(object):
             main_thread.start()
             self.field.gui.run()
 
-    def main_loop(self, is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells):
+    def main_loop(self, is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells, randomize_control):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         mean_loss_last_n_ep, mean_reward_last_n_ep = 0, 0
+        last_targets_found = 0
         for i_episode in range(self.config.num_episodes_to_run):
             print("\nepisode {}".format(i_episode))
             e_start_time = time.time()
@@ -52,7 +54,9 @@ class P3DTrainer(object):
             self.agent.reset()
             known_map, observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
                                                                    is_global_known_map=is_global_known_map,
-                                                                   is_randomize=is_randomize)
+                                                                   is_randomize=is_randomize,
+                                                                   randomize_control=randomize_control,
+                                                                   last_targets_found=last_targets_found)
             known_map_next = None
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
@@ -122,6 +126,7 @@ class P3DTrainer(object):
                     threading.Thread.considerYield()
 
                 if done:
+                    last_targets_found = np.sum(found_targets)
                     print("\nepisode {} over".format(i_episode))
                     print("robot pose: {}".format(robot_pose[:3]))
                     print("actions:{}".format(np.array(actions)))
