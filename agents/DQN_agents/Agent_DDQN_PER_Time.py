@@ -65,7 +65,7 @@ class Agent_DDQN_PER_Time(DDQN):
 
     def update_memory_batch_errors(self, tree_idx, td_errors, rewards):
         loss_each_item = torch.abs(td_errors)
-        loss_reward_each_item = loss_each_item + rewards
+        loss_reward_each_item = 0.00001*loss_each_item + rewards
         loss_reward_each_item = loss_reward_each_item.detach().cpu().numpy()
         tree_idx = tree_idx[:, np.newaxis]
 
