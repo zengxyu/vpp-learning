@@ -19,12 +19,12 @@ if not headless:
 
 
 def train_fun():
-    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM2
-    Agent = agents.DQN_agents.Agent_DDQN_PER_Time.Agent_DDQN_PER_Time
+    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM2_KnownMap
+    Agent = agents.DQN_agents.Agent_DDQN_PER_Time_Known_Map.Agent_DDQN_PER_Time_KnownMap
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMul108
     Trainer = train.P3DTrainer_Temporal2.P3DTrainer
-    out_folder = "out_p3d_temporal_random_108"
+    out_folder = "out_p3d_temporal_known_map_random_108"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
@@ -45,7 +45,7 @@ def train_fun():
     agent = Agent(config)
 
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_sph_pos=False, is_randomize=True, is_global_known_map=False)
+    trainer.train(is_sph_pos=False, is_randomize=True, is_global_known_map=True, is_reward_plus_unknown_cells=True)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
