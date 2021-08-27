@@ -47,6 +47,7 @@ class P3DTrainer(object):
             done = False
             losses = []
             rewards = []
+            found_targets = []
             actions = []
             self.agent.reset()
             known_map, observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
@@ -70,14 +71,14 @@ class P3DTrainer(object):
                     action = self.agent.pick_action([known_map, self.deque.get_states(), self.deque.get_robot_poses()])
                 if is_global_known_map:
                     (known_map_next, observed_map_next,
-                     robot_pose_next), found_targets, unknown_cells, done, _ = self.field.step(action)
+                     robot_pose_next), found_target_num, unknown_cells_num, done, _ = self.field.step(action)
                 else:
-                    (observed_map_next, robot_pose_next), found_targets, unknown_cells, done, _ = self.field.step(
+                    (observed_map_next, robot_pose_next), found_target_num, unknown_cells_num, done, _ = self.field.step(
                         action)
                 if is_reward_plus_unknown_cells:
-                    reward = found_targets + 0.001 * unknown_cells
+                    reward = found_target_num + 0.001 * unknown_cells_num
                 else:
-                    reward = found_targets
+                    reward = found_target_num
                 # if robot_pose is the same with the robot_pose_next, then reward--
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
@@ -104,6 +105,7 @@ class P3DTrainer(object):
 
                 actions.append(action)
                 rewards.append(reward)
+                found_targets.append(found_target_num)
                 losses.append(loss)
                 time_step += 1
                 # print(
@@ -121,9 +123,10 @@ class P3DTrainer(object):
                     print("\nepisode {} over".format(i_episode))
                     print("robot pose: {}".format(robot_pose[:3]))
                     print("actions:{}".format(np.array(actions)))
+                    print("found_targets:{}".format(np.array(found_targets)))
                     print("rewards:{}".format(np.array(rewards)))
                     mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
-                                                                                            np.sum(rewards),
+                                                                                            np.sum(found_targets),
                                                                                             i_episode)
 
                     if (i_episode + 1) % self.config.save_model_every == 0:
