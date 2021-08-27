@@ -15,15 +15,18 @@ if not headless:
 
 
 class P3DTrainer(object):
-    def __init__(self, config, Agent, Field, Action, project_path):
+    def __init__(self, config, agent, field):
         self.config = config
         self.summary_writer = SummaryWriterLogger(config)
 
         self.logger = BasicLogger.setup_console_logging(config)
+        self.agent = agent
+        self.field = field
 
-    def train(self):
+    def train(self, is_sph_pos=False, is_global_known_map=False, is_randomize=False,
+              is_reward_plus_unknown_cells=False, randomize_control=False):
         if headless:
-            self.main_loop()
+            self.main_loop(is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells, randomize_control)
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
@@ -31,13 +34,12 @@ class P3DTrainer(object):
             main_thread.start()
             self.field.gui.run()
 
-    def imitation_learning(self):
-        pass
-
-    def main_loop(self):
+    def main_loop(self, is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells, randomize_control):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         mean_loss_last_n_ep, mean_reward_last_n_ep = 0, 0
+        last_targets_found = 0
+
         for i_episode in range(self.config.num_episodes_to_run):
             print("\nepisode {}".format(i_episode))
             e_start_time = time.time()
@@ -45,8 +47,14 @@ class P3DTrainer(object):
             losses = []
             rewards = []
             actions = []
+            found_targets = []
+
             self.agent.reset()
-            observed_map, robot_pose = self.field.reset(is_sph_pos=True)
+            observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
+                                                        is_global_known_map=is_global_known_map,
+                                                        is_randomize=is_randomize,
+                                                        randomize_control=randomize_control,
+                                                        last_targets_found=last_targets_found)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
             while not done:
@@ -58,7 +66,8 @@ class P3DTrainer(object):
 
                 action = self.agent.pick_action([observed_map, robot_pose_input])
 
-                (observed_map_next, robot_pose_next), reward, _, done, _ = self.field.step(action)
+                (observed_map_next, robot_pose_next), found_target_num, unknown_cells_num, done, _ = self.field.step(action)
+                reward = found_target_num
 
                 # if robot_pose is the same with the robot_pose_next, then reward--
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
@@ -78,6 +87,7 @@ class P3DTrainer(object):
 
                 actions.append(action)
                 rewards.append(reward)
+                found_targets.append(found_target_num)
                 losses.append(loss)
                 time_step += 1
                 # print(
@@ -92,6 +102,8 @@ class P3DTrainer(object):
                     threading.Thread.considerYield()
 
                 if done:
+                    last_targets_found = np.sum(found_targets)
+
                     print("\nepisode {} over".format(i_episode))
                     print("robot pose: {}".format(robot_pose[:3]))
                     print("actions:{}".format(np.array(actions)))
@@ -106,5 +118,3 @@ class P3DTrainer(object):
                     e_end_time = time.time()
                     print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
         print('Complete')
-
-

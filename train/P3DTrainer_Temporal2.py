@@ -52,12 +52,21 @@ class P3DTrainer(object):
             found_targets = []
             actions = []
             self.agent.reset()
-            known_map, observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
-                                                                   is_global_known_map=is_global_known_map,
-                                                                   is_randomize=is_randomize,
-                                                                   randomize_control=randomize_control,
-                                                                   last_targets_found=last_targets_found)
+            known_map = None
             known_map_next = None
+
+            if is_global_known_map:
+                known_map, observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
+                                                                       is_global_known_map=is_global_known_map,
+                                                                       is_randomize=is_randomize,
+                                                                       randomize_control=randomize_control,
+                                                                       last_targets_found=last_targets_found)
+            else:
+                observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
+                                                            is_global_known_map=is_global_known_map,
+                                                            is_randomize=is_randomize,
+                                                            randomize_control=randomize_control,
+                                                            last_targets_found=last_targets_found)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
             while not done:
@@ -104,7 +113,8 @@ class P3DTrainer(object):
                 # to the next state
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
-                known_map = known_map_next.copy()
+                if is_global_known_map:
+                    known_map = known_map_next.copy()
                 # train
                 if time_step % self.config.learn_every == 0 and time_step > self.seq_len:
                     loss = self.agent.learn()
