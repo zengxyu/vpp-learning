@@ -24,7 +24,7 @@ def train_fun():
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMul108
     Trainer = train.P3DTrainer_Temporal2.P3DTrainer
-    out_folder = "out_p3d_temporal_known_map_random_108"
+    out_folder = "out_p3d_temporal_known_map_random_108_control"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
