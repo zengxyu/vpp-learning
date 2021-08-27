@@ -73,7 +73,9 @@ class P3DTrainer(object):
                     (known_map_next, observed_map_next,
                      robot_pose_next), found_target_num, unknown_cells_num, done, _ = self.field.step(action)
                 else:
-                    (observed_map_next, robot_pose_next), found_target_num, unknown_cells_num, done, _ = self.field.step(
+                    (
+                        observed_map_next,
+                        robot_pose_next), found_target_num, unknown_cells_num, done, _ = self.field.step(
                         action)
                 if is_reward_plus_unknown_cells:
                     reward = found_target_num + 0.001 * unknown_cells_num
@@ -123,11 +125,17 @@ class P3DTrainer(object):
                     print("\nepisode {} over".format(i_episode))
                     print("robot pose: {}".format(robot_pose[:3]))
                     print("actions:{}".format(np.array(actions)))
-                    print("found_targets:{}".format(np.array(found_targets)))
                     print("rewards:{}".format(np.array(rewards)))
+                    print("found_targets:{}".format(np.array(found_targets)))
+                    print("Episode : {} | Mean loss : {} | Reward : {} | Found_targets : {}".format(i_episode,
+                                                                                                    np.mean(losses),
+                                                                                                    np.sum(rewards),
+                                                                                                    np.sum(
+                                                                                                        found_targets)))
+
                     mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
                                                                                             np.sum(found_targets),
-                                                                                            i_episode)
+                                                                                            i_episode, verbose=False)
 
                     if (i_episode + 1) % self.config.save_model_every == 0:
                         self.agent.store_model()
