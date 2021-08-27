@@ -5,7 +5,9 @@ import os
 
 import action_space
 import agents
+import environment
 import network
+import train
 from environment import field_p3d_discrete
 
 from train.P3DTrainer import P3DTrainer
@@ -15,45 +17,19 @@ from utilities.util import get_project_path
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
+headless = True
+if not headless:
+    from direct.stdpy import threading
 
-def build_ddqn_per():
+
+def train_fun():
     Network = network.network_dqn_11.DQN_Network11
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
-    Field = field_p3d_discrete.Field
+    Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
-
-    out_folder = "output_p3d_sph_coordinates"
+    Trainer = train.P3DTrainer.P3DTrainer
+    out_folder = "out_p3d_01"
     in_folder = ""
-
-    return Network, Agent, Field, Action, out_folder, in_folder
-
-
-def build_ddqn_dueling_per():
-    Network = network.network_dqn.DQN_Network11_Dueling
-    Agent = agents.DQN_agents.Dueling_DDQN_PER.Dueling_DDQN_PER
-    Field = field_p3d_discrete.Field
-    Action = action_space.ActionMoRo15
-
-    out_folder = "output_p3d_ddqn_dueling"
-    in_folder = ""
-    return Network, Agent, Field, Action, out_folder, in_folder
-
-
-def build_ddqn_per_without_robotpose():
-    Network = network.network_dqn.DQN_Network11_Without_RobotPose
-    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
-    Field = field_p3d_discrete.Field
-    Action = action_space.ActionMoRo12
-
-    out_folder = "output_p3d_ddqn_per_without_robotpose"
-    in_folder = ""
-
-    return Network, Agent, Field, Action, out_folder, in_folder
-
-
-def train_fun(tuning_param):
-    Network, Agent, Field, Action, out_folder, in_folder = build_ddqn_per()
-
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
@@ -62,9 +38,19 @@ def train_fun(tuning_param):
                        console_logging_level=logging.DEBUG,
                        file_logging_level=logging.WARNING,
                        )
-    trainer = P3DTrainer(config=config, Agent=Agent, Field=Field, Action=Action,
-                         project_path=tuning_param["project_path"])
-    trainer.train()
+
+    init_file_path = os.path.join(project_path, 'VG07_6.binvox')
+    # field
+    field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
+                  scale=0.05,
+                  max_steps=500, init_file=init_file_path, headless=headless)
+    config.set_parameters({"learning_rate": 3e-5})
+    # Agent
+    agent = Agent(config)
+
+    trainer = Trainer(config=config, agent=agent, field=field)
+    trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_reward_plus_unknown_cells=False,
+                  randomize_control=False)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -75,4 +61,4 @@ args = parser.parse_args()
 if __name__ == '__main__':
     project_path = get_project_path()
 
-    train_fun({"project_path": project_path})
+    train_fun()

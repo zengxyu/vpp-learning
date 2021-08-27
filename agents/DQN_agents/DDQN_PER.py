@@ -29,8 +29,8 @@ class DDQN_PER(DDQN):
         # sampled_experiences, importance_sampling_weights = self.memory.sample()
         tree_idx, minibatch, ISWeights = self.memory.sample(is_vpp=self.config.environment['is_vpp'])
         states, actions, rewards, next_states, dones = minibatch
-        states[0] = minmaxscaler(states[0])
-        next_states[0] = minmaxscaler(next_states[0])
+        # states[0] = minmaxscaler(states[0])
+        # next_states[0] = minmaxscaler(next_states[0])
         # states, actions, rewards, next_states, dones = sampled_experiences
         loss, td_errors = self.compute_loss_and_td_errors(states, next_states, rewards, actions, dones, ISWeights)
         self.take_optimisation_step(self.q_network_optimizer, self.q_network_local, loss,
@@ -44,6 +44,8 @@ class DDQN_PER(DDQN):
         if self.global_step_number % 1000 == 0:
             pickle.dump(self.memory, open(os.path.join(self.config.folder['exp_sv'], "buffer.obj"), 'wb'))
             print("save replay buffer to local")
+        print(loss.detach().cpu().numpy(), torch.mean(torch.abs(td_errors)).detach().cpu().numpy())
+
         return loss.detach().cpu().numpy()
 
     def pick_action(self, state):
@@ -56,7 +58,7 @@ class DDQN_PER(DDQN):
         else:
             state = torch.FloatTensor([state]).to(self.device)
 
-        state[0] = minmaxscaler(state[0])
+        # state[0] = minmaxscaler(state[0])
         self.q_network_local.eval()
         with torch.no_grad():
             action_values = self.q_network_local(state)
