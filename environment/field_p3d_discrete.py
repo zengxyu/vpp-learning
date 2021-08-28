@@ -87,6 +87,7 @@ class Field:
         self.randomize_control = False
         self.is_egocetric = False
         self.max_targets_found = 0
+        self.avg_targets_found = 0
         self.reset_count = 0
         self.upper_scale = 1
         self.ratio = 0.1
