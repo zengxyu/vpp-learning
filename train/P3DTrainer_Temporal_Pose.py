@@ -82,7 +82,7 @@ class P3DTrainer(object):
                  robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, done, _ = self.field.step(
                     action)
                 if is_reward_plus_unknown_cells:
-                    reward = found_target_num + 0.005 * unknown_cells_num ** (
+                    reward = found_target_num + 0.5 * unknown_cells_num ** (
                             1 - step / self.max_steps) - (known_cells_num / 100) ** 1.1
                 else:
                     reward = found_target_num
@@ -107,7 +107,7 @@ class P3DTrainer(object):
                 actions.append(action)
                 rewards.append(reward)
                 found_targets.append(found_target_num)
-                unknown_cells.append(0.001 * unknown_cells_num)
+                unknown_cells.append(unknown_cells_num)
                 known_cells.append(known_cells_num)
                 losses.append(loss)
                 time_step += 1
