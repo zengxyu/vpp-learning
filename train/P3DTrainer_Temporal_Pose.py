@@ -83,7 +83,7 @@ class P3DTrainer(object):
                     action)
                 if is_reward_plus_unknown_cells:
                     reward = found_target_num + 0.005 * unknown_cells_num ** (
-                                1 - step / self.max_steps) - known_cells_num ** 1.1
+                            1 - step / self.max_steps) - (known_cells_num / 100) ** 1.1
                 else:
                     reward = found_target_num
                 # if robot_pose is the same with the robot_pose_next, then reward--
@@ -126,12 +126,13 @@ class P3DTrainer(object):
                     print("rewards:{}".format(np.array(rewards)))
                     print("found_targets:{}".format(np.array(found_targets)))
 
-                    print("Episode : {} | Mean loss : {} | Reward : {} | Found_targets : {} | unknown_cells :{} | known cells :{}".format(
-                        i_episode,
-                        np.mean(losses),
-                        np.sum(rewards),
-                        np.sum(
-                            found_targets), np.sum(unknown_cells), np.sum(known_cells)))
+                    print(
+                        "Episode : {} | Mean loss : {} | Reward : {} | Found_targets : {} | unknown_cells :{} | known cells :{}".format(
+                            i_episode,
+                            np.mean(losses),
+                            np.sum(rewards),
+                            np.sum(
+                                found_targets), np.sum(unknown_cells), np.sum(known_cells)))
 
                     mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
                                                                                             np.sum(found_targets),
