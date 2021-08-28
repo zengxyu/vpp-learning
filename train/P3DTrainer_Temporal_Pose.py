@@ -77,10 +77,12 @@ class P3DTrainer(object):
                     action = random.randint(0, self.field.get_action_size())
                 else:
                     action = self.agent.pick_action([observed_map, self.deque.get_robot_poses()])
-                (observed_map_next, robot_pose_next), found_target_num, unknown_cells_num, done, _ = self.field.step(
+                (observed_map_next,
+                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, done, _ = self.field.step(
                     action)
                 if is_reward_plus_unknown_cells:
-                    reward = found_target_num + 0.005 * unknown_cells_num ** (1 - step / self.max_steps)
+                    reward = found_target_num + 0.005 * unknown_cells_num ** (
+                                1 - step / self.max_steps) - known_cells_num ** 1.1
                 else:
                     reward = found_target_num
                 # if robot_pose is the same with the robot_pose_next, then reward--
@@ -104,7 +106,7 @@ class P3DTrainer(object):
                 actions.append(action)
                 rewards.append(reward)
                 found_targets.append(found_target_num)
-                unknown_cells.append(0.005 * unknown_cells_num)
+                unknown_cells.append(0.001 * unknown_cells_num)
                 losses.append(loss)
                 time_step += 1
                 step += 1
