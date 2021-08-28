@@ -244,7 +244,7 @@ class Field:
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
-        self.known_map, found_targets, free_cells, unknown_cells, coords, values = field_env_3d_helper.update_grid_inds_in_view(
+        self.known_map, found_targets, free_cells, total, coords, values = field_env_3d_helper.update_grid_inds_in_view(
             self.known_map,
             self.global_map,
             Vec3D(*tuple(
@@ -266,8 +266,9 @@ class Field:
             self.gui.gui_done.clear()
 
         # print("Updating field took {} s".format(time.perf_counter() - time_start))
-
-        return found_targets, free_cells, unknown_cells
+        unknown_cells = found_targets + free_cells
+        known_cells = total - unknown_cells
+        return found_targets, free_cells, unknown_cells, known_cells
 
     def update_grid_inds_in_view_old(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
@@ -402,9 +403,11 @@ class Field:
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
-        new_targets_found, new_free_cells, new_unknown_cells = self.update_grid_inds_in_view(cam_pos, ep_left_down,
-                                                                                             ep_left_up,
-                                                                                             ep_right_down, ep_right_up)
+        new_targets_found, new_free_cells, new_unknown_cells, known_cells = self.update_grid_inds_in_view(cam_pos,
+                                                                                                          ep_left_down,
+                                                                                                          ep_left_up,
+                                                                                                          ep_right_down,
+                                                                                                          ep_right_up)
         self.free_cells += new_free_cells
         self.found_targets += new_targets_found
 
@@ -425,10 +428,10 @@ class Field:
             else:
                 global_known_map = self.compute_global_known_map(np.array([128, 128, 128]), neighbor_dist=120)
             return (global_known_map, map, np.concatenate(
-                (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, done, {}
+                (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, done, {}
 
         return (map, np.concatenate(
-            (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, done, {}
+            (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, done, {}
 
     def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, last_targets_found):
         "randomize_control: 如果这张地图学完了，就换下一张，没学完，就始终使用一张图"
