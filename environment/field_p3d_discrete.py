@@ -469,8 +469,8 @@ class Field:
                 # if self.reset_count >= 200:
                 #     threshold = 40000
                 threshold = self.avg_targets_found
-                if last_targets_found >= threshold:
-                    print("last_targets_found :{} >= {}; RESET THE ENV".format(last_targets_found, threshold))
+                if last_targets_found > threshold:
+                    print("last_targets_found :{} > {}; RESET THE ENV".format(last_targets_found, threshold))
                     self.global_map = self.augment_env()
                 else:
                     print("last_targets_found :{} <= {}, NOT RESET THE ENV".format(last_targets_found, threshold))
