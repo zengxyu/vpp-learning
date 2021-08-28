@@ -75,7 +75,7 @@ class P3DTrainer(object):
 
                 # 前5步，随便选择一个动作
                 if step <= self.seq_len:
-                    action = random.randint(0, self.field.get_action_size())
+                    action = random.randint(0, self.field.get_action_size() - 1)
                 else:
                     action = self.agent.pick_action([observed_map, self.deque.get_robot_poses()])
                 (observed_map_next,
