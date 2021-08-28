@@ -439,7 +439,7 @@ class Field:
         self.randomize_control = randomize_control
         self.is_egocetric = is_egocetric
         self.max_targets_found = last_targets_found
-        self.avg_targets_found = (self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
+
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
         self.allowed_range = np.array([128, 128, 128])
@@ -468,13 +468,14 @@ class Field:
                 #     threshold = 30000
                 # if self.reset_count >= 200:
                 #     threshold = 40000
-                threshold = self.avg_targets_found
+                threshold = 1.1 * self.avg_targets_found
                 if last_targets_found >= threshold:
                     print("last_targets_found :{} >= {}; RESET THE ENV".format(last_targets_found, threshold))
                     self.global_map = self.augment_env()
                 else:
                     print("last_targets_found :{} < {}, NOT RESET THE ENV".format(last_targets_found, threshold))
-
+        self.avg_targets_found = (
+                                         self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
