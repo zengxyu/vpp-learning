@@ -432,15 +432,19 @@ class Field:
 
     def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, last_targets_found):
         "randomize_control: 如果这张地图学完了，就换下一张，没学完，就始终使用一张图"
-        self.reset_count += 1
         self.is_sph_pos = is_sph_pos
         self.is_global_known_map = is_global_known_map
         self.is_randomize = is_randomize
         self.randomize_control = randomize_control
         self.is_egocetric = is_egocetric
         self.max_targets_found = last_targets_found
-        self.avg_targets_found = (
-                                         self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
+        if self.reset_count == 0:
+            self.avg_targets_found = 0
+        else:
+            self.avg_targets_found = (
+                                             self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
+        self.reset_count += 1
+
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
         self.allowed_range = np.array([128, 128, 128])
