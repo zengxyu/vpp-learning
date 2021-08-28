@@ -52,6 +52,7 @@ class P3DTrainer(object):
             rewards = []
             found_targets = []
             unknown_cells = []
+            known_cells = []
             actions = []
             step = 0
             self.agent.reset()
@@ -107,6 +108,7 @@ class P3DTrainer(object):
                 rewards.append(reward)
                 found_targets.append(found_target_num)
                 unknown_cells.append(0.001 * unknown_cells_num)
+                known_cells.append(known_cells_num)
                 losses.append(loss)
                 time_step += 1
                 step += 1
@@ -123,12 +125,13 @@ class P3DTrainer(object):
                     print("actions:{}".format(np.array(actions)))
                     print("rewards:{}".format(np.array(rewards)))
                     print("found_targets:{}".format(np.array(found_targets)))
-                    print("Episode : {} | Mean loss : {} | Reward : {} | Found_targets : {} | unknown_cells :{}".format(
+
+                    print("Episode : {} | Mean loss : {} | Reward : {} | Found_targets : {} | unknown_cells :{} | known cells :{}".format(
                         i_episode,
                         np.mean(losses),
                         np.sum(rewards),
                         np.sum(
-                            found_targets), np.sum(unknown_cells)))
+                            found_targets), np.sum(unknown_cells), np.sum(known_cells)))
 
                     mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
                                                                                             np.sum(found_targets),
