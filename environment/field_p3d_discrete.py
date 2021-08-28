@@ -86,6 +86,7 @@ class Field:
         self.is_randomize = False
         self.randomize_control = False
         self.is_egocetric = False
+        self.max_targets_found = 0
         self.reset_count = 0
         self.upper_scale = 1
         self.ratio = 0.1
@@ -430,29 +431,22 @@ class Field:
 
     def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, last_targets_found):
         "randomize_control: 如果这张地图学完了，就换下一张，没学完，就始终使用一张图"
+        self.reset_count += 1
         self.is_sph_pos = is_sph_pos
         self.is_global_known_map = is_global_known_map
         self.is_randomize = is_randomize
         self.randomize_control = randomize_control
         self.is_egocetric = is_egocetric
-        self.reset_count += 1
+        self.max_targets_found = last_targets_found
+        self.avg_targets_found = (self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
         self.allowed_range = np.array([128, 128, 128])
         self.allowed_lower_bound = np.array([128, 128, 128]) - self.allowed_range
         self.allowed_upper_bound = np.array([128, 128, 128]) + self.allowed_range - 1
-        # if self.reset_count % 2 == 0:
-        #     self.upper_scale += 1
-        # upper = np.array([1.0, 1.0, 1.0]) * self.upper_scale
-        # self.robot_pos = np.random.uniform(self.allowed_lower_bound, self.allowed_upper_bound)
-        # upper = np.clip(upper, np.array([0.0, 0.0, 0.0]), np.array([255.0, 255.0, 255.0]))
-
-        # self.robot_pos = np.random.uniform(np.array([0.0, 0.0, 0.0]), upper)
         self.robot_pos = np.array([0.0, 0.0, 0.0])
         # print("upper:{}; reset robot pose as:{}".format(upper, self.robot_pos))
         print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
-
-        # self.robot_rot = Rotation.from_euler("xyz", np.array([0, 0, np.pi / 2]))
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
         self.step_count = 0
@@ -468,11 +462,12 @@ class Field:
             if not self.randomize_control:
                 self.global_map = self.augment_env()
             else:
-                threshold = 20000
-                if self.reset_count >= 100:
-                    threshold = 30000
-                if self.reset_count >= 200:
-                    threshold = 40000
+                # threshold = 20000
+                # if self.reset_count >= 100:
+                #     threshold = 30000
+                # if self.reset_count >= 200:
+                #     threshold = 40000
+                threshold = self.avg_targets_found
                 if last_targets_found >= threshold:
                     print("last_targets_found :{} >= {}; RESET THE ENV".format(last_targets_found, threshold))
                     self.global_map = self.augment_env()
