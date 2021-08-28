@@ -11,3 +11,4 @@ from . import Agent_DDQN_PER_VAE_Temporal
 from . import Agent_DDQN_PER_Temporal
 from . import Agent_DDQN_PER_KnownMap
 from . import Agent_DDQN_PER_Time_Known_Map
+from . import Agent_DDQN_PER_Temporal_Pose

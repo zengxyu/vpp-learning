@@ -85,6 +85,7 @@ class Field:
         self.is_global_known_map = False
         self.is_randomize = False
         self.randomize_control = False
+        self.is_egocetric = False
         self.reset_count = 0
         self.upper_scale = 1
         self.ratio = 0.1
@@ -380,9 +381,8 @@ class Field:
         spherical_coordinate_map = np.transpose(spherical_coordinate_map, (2, 0, 1))
         return spherical_coordinate_map
 
-    def compute_global_known_map(self, cam_pos):
+    def compute_global_known_map(self, cam_pos, neighbor_dist):
         generate_spherical_coordinate_map = self.generate_spherical_coordinate_map(cam_pos)
-        neighbor_dist = 250
         step_size = 10
         res = np.zeros(shape=(2, int(neighbor_dist / step_size), 36, 18))
 
@@ -418,19 +418,23 @@ class Field:
             robot_pos = self.robot_pos
 
         if self.is_global_known_map:
-            global_known_map = self.compute_global_known_map(np.array([128, 128, 128]))
+            if self.is_egocetric:
+                global_known_map = self.compute_global_known_map(cam_pos, neighbor_dist=120)
+            else:
+                global_known_map = self.compute_global_known_map(np.array([128, 128, 128]), neighbor_dist=120)
             return (global_known_map, map, np.concatenate(
                 (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, done, {}
 
         return (map, np.concatenate(
             (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, done, {}
 
-    def reset(self, is_sph_pos, is_global_known_map, is_randomize, randomize_control, last_targets_found):
+    def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, last_targets_found):
         "randomize_control: 如果这张地图学完了，就换下一张，没学完，就始终使用一张图"
         self.is_sph_pos = is_sph_pos
         self.is_global_known_map = is_global_known_map
         self.is_randomize = is_randomize
         self.randomize_control = randomize_control
+        self.is_egocetric = is_egocetric
         self.reset_count += 1
         self.known_map = np.zeros(self.shape)
         self.observed_area = np.zeros(self.shape, dtype=bool)
@@ -486,6 +490,9 @@ class Field:
         else:
             robot_pos = self.robot_pos
         if self.is_global_known_map:
-            global_known_map = self.compute_global_known_map(np.array([128, 128, 128]))
+            if self.is_egocetric:
+                global_known_map = self.compute_global_known_map(cam_pos, neighbor_dist=120)
+            else:
+                global_known_map = self.compute_global_known_map(np.array([128, 128, 128]), neighbor_dist=120)
             return global_known_map, map, np.concatenate((robot_pos, self.robot_rot.as_quat()))
         return map, np.concatenate((robot_pos, self.robot_rot.as_quat()))

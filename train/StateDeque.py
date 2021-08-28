@@ -1,6 +1,7 @@
 from collections import deque
 import numpy as np
 
+
 class State_DEQUE:
     def __init__(self, capacity):
         self.capacity = capacity
@@ -36,6 +37,38 @@ class State_DEQUE:
     def get_next_states(self):
         next_states = np.array(self.next_states_deque, dtype=float)
         return next_states
+
+    def get_robot_poses(self):
+        robot_poses = np.array(self.robot_poses, dtype=float)
+        return robot_poses
+
+    def get_next_robot_poses(self):
+        next_robot_poses = np.array(self.next_robot_poses, dtype=float)
+        return next_robot_poses
+
+    def is_full(self):
+        return self.__len__() == self.capacity
+
+
+class Pose_State_DEQUE:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.robot_poses = deque([])
+        self.next_robot_poses = deque([])
+
+    def __len__(self):
+        assert self.robot_poses.__len__() == self.next_robot_poses.__len__()
+        return self.robot_poses.__len__()
+
+    def append(self, robot_pose):
+        self.robot_poses.append(robot_pose)
+        if self.robot_poses.__len__() > self.capacity:
+            self.robot_poses.popleft()
+
+    def append_next(self, next_robot_pose):
+        self.next_robot_poses.append(next_robot_pose)
+        if self.next_robot_poses.__len__() > self.capacity:
+            self.next_robot_poses.popleft()
 
     def get_robot_poses(self):
         robot_poses = np.array(self.robot_poses, dtype=float)
