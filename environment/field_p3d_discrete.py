@@ -469,11 +469,11 @@ class Field:
                 # if self.reset_count >= 200:
                 #     threshold = 40000
                 threshold = self.avg_targets_found
-                if last_targets_found > threshold:
-                    print("last_targets_found :{} > {}; RESET THE ENV".format(last_targets_found, threshold))
+                if last_targets_found >= threshold:
+                    print("last_targets_found :{} >= {}; RESET THE ENV".format(last_targets_found, threshold))
                     self.global_map = self.augment_env()
                 else:
-                    print("last_targets_found :{} <= {}, NOT RESET THE ENV".format(last_targets_found, threshold))
+                    print("last_targets_found :{} < {}, NOT RESET THE ENV".format(last_targets_found, threshold))
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
