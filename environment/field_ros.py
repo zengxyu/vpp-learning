@@ -7,6 +7,7 @@ import time
 
 from action_space import ActionMoRo12
 from scripts.vpp_env_client import EnvironmentClient
+from utilities.util import get_state_size, get_action_size
 
 
 class FieldValues(IntEnum):
@@ -26,7 +27,7 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, Action, shape, sensor_range, hfov, vfov, max_steps, handle_simulation):
+    def __init__(self, config, Action, shape, sensor_range, hfov, vfov, max_steps, handle_simulation):
         self.found_targets = 0
         self.free_cells = 0
         self.sensor_range = sensor_range
@@ -42,6 +43,14 @@ class Field:
         self.MOVE_STEP = 0.1
         self.ROT_STEP = 15.0
 
+        self.is_sph_pos = False
+        self.is_global_known_map = False
+        self.is_randomize = False
+        self.randomize_control = False
+        self.is_egocetric = False
+        self.max_targets_found = 0
+        self.avg_targets_found = 0
+
         self.reset_count = 0
         self.upper_scale = 1
         self.ratio = 0.1
@@ -52,6 +61,14 @@ class Field:
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
+
+        config.environment = {
+            "is_vpp": True,
+            "reward_threshold": 0,
+            "state_size": get_state_size(self),
+            "action_size": get_action_size(self),
+            "action_shape": get_action_size(self)
+        }
 
     def get_action_size(self):
         return self.action_instance.get_action_size()
@@ -85,38 +102,67 @@ class Field:
 
         return (map, robotPose), reward, done, {}
 
-    def reset(self):
-        print("-----------------------------------reset!-------------------------------------------")
+    def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, last_targets_found):
+        print("-----------------------------------reset or randomize!-------------------------------------------")
+        self.is_sph_pos = is_sph_pos
+        self.is_global_known_map = is_global_known_map
+        self.is_randomize = is_randomize
+        self.randomize_control = randomize_control
+        self.is_egocetric = is_egocetric
+        self.max_targets_found = last_targets_found
+        if self.reset_count == 0:
+            self.avg_targets_found = 0
+        else:
+            self.avg_targets_found = (
+                                             self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
         self.reset_count += 1
+
         self.known_map = np.zeros(self.shape)
 
         self.step_count = 0
         self.found_targets = 0
         self.free_cells = 0
-        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendReset()
-        # unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward, totalRoiCells = self.client.sendReset()
-        # print("total roi cells:{}".format(totalRoiCells))
+
+        if self.is_randomize:
+            if self.randomize_control:
+                threshold = 1.2 * self.avg_targets_found
+                if last_targets_found >= threshold:
+                    print("last_targets_found :{} >= {}; Randomize THE ENV".format(last_targets_found, threshold))
+                    unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendResetAndRandomize(
+                        [-1, -1, -0.1], [1, 1, 0.1], 0.4)
+                else:
+                    print("last_targets_found :{} < {}, NOT Randomize THE ENV".format(last_targets_found, threshold))
+                    unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendReset()
+            else:
+                unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendResetAndRandomize(
+                    [-1, -1, -0.1], [1, 1, 0.1], 0.4)
+        else:
+            unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendReset()
 
         map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
         return (map, robotPose)
 
-    def reset_and_randomize(self):
-        print("-------------------------------reset and randomize!-----------------------------------")
-        self.reset_count += 1
-        self.known_map = np.zeros(self.shape)
+    # def reset_and_randomize(self):
+    #     print("-------------------------------reset and randomize!-----------------------------------")
+    #     self.reset_count += 1
+    #     self.known_map = np.zeros(self.shape)
+    #
+    #     self.step_count = 0
+    #     self.found_targets = 0
+    #     self.free_cells = 0
+    #
+    #     unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendResetAndRandomize(
+    #         [-1, -1, -0.1], [1, 1, 0.1], 0.4)
+    #     # print("total roi cells:{}".format(totalRoiCells))
+    #
+    #     map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
+    #
+    #     return (map, robotPose)
 
-        self.step_count = 0
-        self.found_targets = 0
-        self.free_cells = 0
-
-        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendResetAndRandomize(
-            [-1, -1, -0.1], [1, 1, 0.1], 0.4)
-        # print("total roi cells:{}".format(totalRoiCells))
-
-        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
-
-        return (map, robotPose)
+    def reset_stuck_env(self):
+        self.shutdown_environment()
+        self.start_environment()
 
     def shutdown_environment(self):
         print('-----------------------------------SHUTDOWN--------------------------------')

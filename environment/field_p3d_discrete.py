@@ -468,9 +468,7 @@ class Field:
             self.gui.gui_done.clear()
             # self.gui.reset()
         if self.is_randomize:
-            if not self.randomize_control:
-                self.global_map = self.augment_env()
-            else:
+            if self.randomize_control:
                 # threshold = 20000
                 # if self.reset_count >= 100:
                 #     threshold = 30000
@@ -478,10 +476,12 @@ class Field:
                 #     threshold = 40000
                 threshold = 1.1 * self.avg_targets_found
                 if last_targets_found >= threshold:
-                    print("last_targets_found :{} >= {}; RESET THE ENV".format(last_targets_found, threshold))
+                    print("last_targets_found :{} >= {}; RANDOMIZE THE ENV".format(last_targets_found, threshold))
                     self.global_map = self.augment_env()
                 else:
-                    print("last_targets_found :{} < {}, NOT RESET THE ENV".format(last_targets_found, threshold))
+                    print("last_targets_found :{} < {}, NOT RANDOMIZE THE ENV".format(last_targets_found, threshold))
+            else:
+                self.global_map = self.augment_env()
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
