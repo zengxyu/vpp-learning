@@ -373,7 +373,7 @@ py::array_t<int> generate_spherical_coordinate_map(const py::array_t<int> &known
     return spherical_coordinate_map;
 }
 
-std::tuple<py::array_t<int>, int,int, int,std::vector<int>, std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
+std::tuple<py::array_t<int>, int,int, int,std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
 {
     std::vector<Vec3D> points = {cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up};
     auto[bb_min, bb_max] = get_bb_points(points, known_map.shape());
@@ -385,7 +385,6 @@ std::tuple<py::array_t<int>, int,int, int,std::vector<int>, std::vector<int>, st
     int unknown_cell = 0;
     int total = 0;
     std::vector<int> coords, values;
-    std::vector<int> coords_in_view, values_in_view;
 
     for (size_t z = (size_t)bb_min.z; z < (size_t)bb_max.z; z++)
     {
@@ -400,9 +399,6 @@ std::tuple<py::array_t<int>, int,int, int,std::vector<int>, std::vector<int>, st
                     if (point_in_rectangle(p_proj, ep_right_down, v1, v2))
                     {
                         total += 1;
-                        coords_in_view.push_back(x);
-                        coords_in_view.push_back(y);
-                        coords_in_view.push_back(z);
                         if (*known_map.data(x, y, z) == 0){
                             *known_map.mutable_data(x, y, z) = *global_map.data(x, y, z);
                             // for now, occupied cells are targets, change later
@@ -428,7 +424,7 @@ std::tuple<py::array_t<int>, int,int, int,std::vector<int>, std::vector<int>, st
         }
     }
 //    double reward = found_targets*0.7+free_cells*0.3;
-    return std::make_tuple(known_map, found_targets, free_cells, total, coords, values, coords_in_view);
+    return std::make_tuple(known_map, found_targets, free_cells, total, coords, values);
 }
 
 void test()

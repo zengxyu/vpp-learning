@@ -205,7 +205,7 @@ class Field:
 
     def generate_unknown_map(self, cam_pos):
 
-        rot_vecs = self.compute_rot_vecs(-180, 180, 90, 0, 180, 45)
+        rot_vecs = self.compute_rot_vecs(-180, 180, 60, 0, 180, 30)
 
         unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
                                                       250.0)
@@ -222,10 +222,10 @@ class Field:
 
     def make_up_map(self, one_map):
         # 5 * 90 * 45
-        one_map = np.reshape(one_map, (5, 6, 15, 3, 15))
+        one_map = np.reshape(one_map, (5, 4, 15, 2, 15))
         one_map = np.transpose(one_map, (0, 1, 3, 2, 4))
-        # 5 * 10 * 10 * 36 * 18
-        one_map = np.reshape(one_map, (5 * 6 * 3, 15, 15))
+        # 5 * 4 * 2 * 15 * 15
+        one_map = np.reshape(one_map, (-1, 15, 15))
         return one_map
 
     def sum_block(self, one_map):
@@ -277,7 +277,7 @@ class Field:
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
-        self.known_map, found_targets, free_cells, total, coords, values, coords_in_view = field_env_3d_helper.update_grid_inds_in_view(
+        self.known_map, found_targets, free_cells, total, coords, values = field_env_3d_helper.update_grid_inds_in_view(
             self.known_map,
             self.global_map,
             Vec3D(*tuple(
@@ -290,7 +290,6 @@ class Field:
                 ep_right_down)),
             Vec3D(*tuple(
                 ep_right_up)))
-        self.coords = np.reshape(np.array(coords), (-1, 3))
         if not self.headless:
             self.gui.messenger.send('update_fov_and_cells',
                                     [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up,
