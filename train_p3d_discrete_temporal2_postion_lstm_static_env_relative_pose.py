@@ -22,9 +22,9 @@ def train_fun():
     Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
     Agent = agents.DQN_agents.Agent_DDQN_PER_Temporal_Pose.Agent_DDQN_PER_Temporal_Pose
     Field = environment.field_p3d_discrete.Field
-    Action = action_space.ActionMoRoMultiplier36
+    Action = action_space.ActionMoRoMul108
     Trainer = train.P3DTrainer_Temporal_Pose.P3DTrainer
-    out_folder = "out_p3d_static_env_action36"
+    out_folder = "out_p3d_static_env"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
@@ -48,7 +48,7 @@ def train_fun():
 
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
-                  is_reward_plus_unknown_cells=False,
+                  is_reward_plus_unknown_cells=True,
                   randomize_control=False, seq_len=seq_len)
 
 
