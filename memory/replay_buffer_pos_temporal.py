@@ -21,7 +21,7 @@ class PriorityReplayBufferPoseTemporal:
     beta_increment_per_sampling = 0.001
     abs_err_upper = 1.  # clipped abs error
 
-    def __init__(self, buffer_size, batch_size, device, is_discrete, seed=1337):
+    def __init__(self, buffer_size, batch_size, device, is_discrete, seed=1337, seq_len=5):
         self.tree = SumTree(buffer_size)
         self.buffer_size = buffer_size
         self.size = 0
@@ -29,6 +29,7 @@ class PriorityReplayBufferPoseTemporal:
         self.device = device
         self.is_discrete = is_discrete
         self.seed = random.seed(seed)
+        self.seq_len = seq_len
 
     def add_experience(self, state, action, reward, next_state, done):
         transition = np.array(
@@ -91,8 +92,8 @@ class PriorityReplayBufferPoseTemporal:
                 idx, p, data_idx, data = self.tree.get_leaf(v)
                 prob = p / self.tree.total_p
                 ISWeights[i, 0] = np.power(prob / min_prob, -self.beta)
-                data_idx = max(4, data_idx)
-                transformed_data = self.transform(self.tree.data[data_idx - 4:data_idx + 1])
+                data_idx = max(self.seq_len - 1, data_idx)
+                transformed_data = self.transform(self.tree.data[data_idx - (self.seq_len - 1):data_idx + 1])
                 b_idx[i], b_memory[i, :] = idx, transformed_data
 
         else:

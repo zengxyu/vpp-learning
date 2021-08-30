@@ -15,15 +15,16 @@ def minmaxscaler(data):
     return (data - min) / (max - min)
 
 
-class Agent_DDQN_PER_Time_KnownMap(DDQN):
+class Agent_DDQN_PER_Temporal_Pose(DDQN):
     """A DQN agent with prioritised experience replay"""
     agent_name = "DDQN with Prioritised Replay"
 
-    def __init__(self, config):
+    def __init__(self, config, seq_len):
         DDQN.__init__(self, config)
         self.memory = PriorityReplayBufferPoseTemporal(buffer_size=self.hyper_parameters['buffer_size'],
                                                        batch_size=self.hyper_parameters['batch_size'],
-                                                       device=self.device, is_discrete=True, seed=self.seed)
+                                                       device=self.device, is_discrete=True, seed=self.seed,
+                                                       seq_len=seq_len)
 
     def learn(self):
         """Runs a learning iteration for the Q network after sampling from the replay buffer in a prioritised way"""

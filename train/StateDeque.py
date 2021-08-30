@@ -55,6 +55,12 @@ class Pose_State_DEQUE:
         self.capacity = capacity
         self.robot_poses = deque([])
         self.next_robot_poses = deque([])
+        self.init()
+
+    def init(self):
+        for i in range(self.capacity):
+            self.robot_poses.append(np.zeros(shape=(6,)))
+            self.next_robot_poses.append(np.zeros(shape=(6,)))
 
     def __len__(self):
         assert self.robot_poses.__len__() == self.next_robot_poses.__len__()

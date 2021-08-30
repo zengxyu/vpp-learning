@@ -67,7 +67,7 @@ class RosRandomTrainerTemporalPose(object):
                 else:
                     zero_reward_consistent_count = 0
                 # # reward redefine
-                if zero_reward_consistent_count >= 10:
+                if zero_reward_consistent_count >= 20:
                     done = True
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
