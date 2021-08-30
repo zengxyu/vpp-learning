@@ -14,3 +14,10 @@ def nan_to_num(n):
 
 
 print(nan_to_num(np.NaN))
+import pickle
+
+path = "/home/zeng/workspace/vpp-learning/output/out_p3d_temporal_pose_random_108_control2/loss_reward/loss_reward.obj"
+f = open(path, "rb")
+a = pickle.load(f)
+
+print(a)

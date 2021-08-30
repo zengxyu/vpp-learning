@@ -34,7 +34,9 @@ def train_fun():
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   max_steps=400, handle_simulation=True)
-    config.set_parameters({"learning_rate": 3e-5})
+    config.set_parameters({"learning_rate": 1e-4})
+    config.set_parameters({"buffer_size": 12000})
+
     # Agent
     agent = Agent(config)
 

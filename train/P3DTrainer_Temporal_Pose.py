@@ -24,11 +24,14 @@ class P3DTrainer(object):
         self.agent = agent
         self.field = field
         self.seq_len = 5
-        self.deque = Pose_State_DEQUE(capacity=self.seq_len)
         self.max_steps = self.field.max_steps
+        self.deque = None
 
     def train(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize,
-              is_reward_plus_unknown_cells, randomize_control):
+              is_reward_plus_unknown_cells, randomize_control, seq_len):
+        self.seq_len = seq_len
+        self.deque = Pose_State_DEQUE(capacity=self.seq_len)
+
         if headless:
             self.main_loop(is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
                            randomize_control)
@@ -74,10 +77,7 @@ class P3DTrainer(object):
                 self.deque.append(robot_pose_input)
 
                 # 前5步，随便选择一个动作
-                if step <= self.seq_len:
-                    action = random.randint(0, self.field.get_action_size() - 1)
-                else:
-                    action = self.agent.pick_action([observed_map, self.deque.get_robot_poses()])
+                action = self.agent.pick_action([observed_map, self.deque.get_robot_poses()])
                 (observed_map_next,
                  robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, done, _ = self.field.step(
                     action)
