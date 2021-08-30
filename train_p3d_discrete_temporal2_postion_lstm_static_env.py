@@ -19,7 +19,7 @@ if not headless:
 
 
 def train_fun():
-    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
+    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM4
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
