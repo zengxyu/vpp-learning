@@ -396,10 +396,10 @@ class DQN_Network11_Temporal_LSTM3(torch.nn.Module):
 class DQN_Network11_Temporal_LSTM4(torch.nn.Module):
     def __init__(self, action_size):
         super().__init__()
-        self.frame_con1 = torch.nn.Conv2d(90, 180, kernel_size=4, stride=2, padding=0)
-        self.frame_con2 = torch.nn.Conv2d(180, 360, kernel_size=4, stride=2, padding=0)
+        self.frame_con1 = torch.nn.Conv2d(270, 360, kernel_size=4, stride=2, padding=0)
+        self.frame_con2 = torch.nn.Conv2d(360, 540, kernel_size=4, stride=2, padding=0)
 
-        self.frame_fc1 = torch.nn.Linear(1440, 784)
+        self.frame_fc1 = torch.nn.Linear(2160, 784)
         self.frame_fc2 = torch.nn.Linear(784, 128)
 
         self.pose_fc1a = torch.nn.Linear(3, 32)
