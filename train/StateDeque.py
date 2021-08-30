@@ -88,4 +88,6 @@ class Pose_State_DEQUE:
         return self.__len__() == self.capacity
 
     def clear(self):
+        self.robot_poses = deque([])
+        self.next_robot_poses = deque([])
         self.init()
