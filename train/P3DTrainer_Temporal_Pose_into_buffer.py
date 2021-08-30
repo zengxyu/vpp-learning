@@ -98,7 +98,7 @@ class P3DTrainer(object):
                 robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
 
                 self.deque.append_next(robot_pose_input_next)
-
+                a = self.deque.get_robot_poses()
                 self.agent.step(state=[observed_map, self.deque.get_robot_poses()], action=action, reward=reward,
                                 next_state=[observed_map_next, self.deque.get_next_robot_poses()], done=done)
 

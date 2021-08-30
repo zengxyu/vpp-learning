@@ -189,7 +189,8 @@ class PriorityReplayBuffer:
         return [state_in, actions, rewards, next_state_in, dones]
 
     def to_float_tensor(self, object_array):
-        return torch.FloatTensor(np.array(object_array.tolist()).astype(np.float)).to(self.device)
+        a = np.array(object_array.tolist())
+        return torch.FloatTensor(a.astype(np.float)).to(self.device)
 
     def to_long_tensor(self, object_array):
         return torch.LongTensor(np.array(object_array.tolist()).astype(np.long)).to(self.device)
