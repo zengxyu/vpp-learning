@@ -148,8 +148,6 @@ class PriorityReplayBuffer:
                 prob = p / self.tree.total_p
                 ISWeights[i, 0] = np.power(prob / min_prob, -self.beta)
                 b_idx[i], b_memory[i, :] = idx, data
-                # data_idx = max(5, data_idx)
-                # b_idx[i], b_memory[i, :] = idx, self.tree.data[data_idx - 4:data_idx + 1]
 
         else:
             for i in range(batch_size):
