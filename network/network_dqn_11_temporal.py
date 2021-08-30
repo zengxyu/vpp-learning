@@ -522,7 +522,7 @@ class DQN_Network11_Temporal_LSTM5(torch.nn.Module):
         c0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
             torch.device("cpu"))
         outs = None
-        for i in range(seq_len):
+        for i in range(16):
             out = self.encode_region(frame[i])
             out = out.unsqueeze(1)
             if outs is None:
