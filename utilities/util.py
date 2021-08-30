@@ -123,7 +123,7 @@ def get_action_size(field):
 
 if __name__ == '__main__':
     # print(get_project_path())
-    a = compute_conv_out_width(i=9, k=4, s=2, p=1)
+    a = compute_conv_out_width(i=6, k=4, s=2, p=0)
     b = compute_conv_out_width(i=18, k=4, s=2, p=1)
 
     print(a, b)
