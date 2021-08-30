@@ -474,7 +474,7 @@ class Field:
                 #     threshold = 30000
                 # if self.reset_count >= 200:
                 #     threshold = 40000
-                threshold = 1.1 * self.avg_targets_found
+                threshold = 1.2 * self.avg_targets_found
                 if last_targets_found >= threshold:
                     print("last_targets_found :{} >= {}; RANDOMIZE THE ENV".format(last_targets_found, threshold))
                     self.global_map = self.augment_env()
