@@ -20,10 +20,10 @@ if not headless:
 
 def train_fun():
     Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
-    Agent = agents.DQN_agents.Agent_DDQN_PER_Temporal_Pose.Agent_DDQN_PER_Temporal_Pose
+    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
-    Trainer = train.P3DTrainer_Temporal_Pose.P3DTrainer
+    Trainer = train.P3DTrainer_Temporal_Pose_into_buffer.P3DTrainer
     out_folder = "out_p3d_static_env_action36"
     in_folder = ""
     # network
@@ -44,7 +44,7 @@ def train_fun():
                   max_steps=max_step, init_file=init_file_path, headless=headless)
     config.set_parameters({"learning_rate": 3e-5})
     # Agent
-    agent = Agent(config, seq_len)
+    agent = Agent(config)
 
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,

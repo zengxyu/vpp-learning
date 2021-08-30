@@ -256,17 +256,7 @@ class Field(gym.Env):
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
 
-        # print("Updating field took {} s".format(time.perf_counter() - time_start))
         unknown_cells = found_targets + free_cells
-        # if total_cells == 0:
-        #     uncertainty = 1
-        # else:
-        #     uncertainty = unknown_cells / total_cells
-        # print("found_targets:{};free_cells:{};unknown_cells:{};total_cells:{};uncertainty:{}".format(found_targets,
-        #                                                                                              free_cells,
-        #                                                                                              unknown_cells,
-        #                                                                                              total_cells,
-        #                                                                                              uncertainty))
         return found_targets, free_cells, unknown_cells
 
     def update_grid_inds_in_view_old(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
