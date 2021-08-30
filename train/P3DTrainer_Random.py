@@ -63,8 +63,9 @@ class P3DTrainer(object):
             while not done:
                 loss = 0
 
-                action = random.randint(0, 107)
-                (observed_map_next, robot_pose_next), found_target_num, unknown_cells_num, done, _ = self.field.step(
+                action = random.randint(0, self.field.get_action_size()-1)
+                (observed_map_next,
+                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, done, _ = self.field.step(
                     action)
                 if is_reward_plus_unknown_cells:
                     reward = found_target_num + 0.001 * unknown_cells_num
