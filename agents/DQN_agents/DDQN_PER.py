@@ -38,7 +38,7 @@ class DDQN_PER(DDQN):
         if self.global_step_number % 10000 == 0:
             pickle.dump(self.memory, open(os.path.join(self.config.folder['exp_sv'], "buffer.obj"), 'wb'))
             print("save replay buffer to local")
-        print(loss.detach().cpu().numpy(), torch.mean(torch.abs(td_errors)).detach().cpu().numpy())
+        # print(loss.detach().cpu().numpy(), torch.mean(torch.abs(td_errors)).detach().cpu().numpy())
 
         return loss.detach().cpu().numpy()
 
