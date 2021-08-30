@@ -367,11 +367,12 @@ class DQN_Network11_Temporal_LSTM3(torch.nn.Module):
         robot_pose_reshape = torch.transpose(robot_pose, 0, 1)
         outs = None
         batch_size = frame.shape[0]
+        seq_len = robot_pose_reshape.shape[0]
         h0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
             torch.device("cpu"))
         c0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
             torch.device("cpu"))
-        for i in range(5):
+        for i in range(seq_len):
             out = self.encode_pos(robot_pose_reshape[i])
             out = out.unsqueeze(1)
             if outs is None:
