@@ -482,11 +482,11 @@ class DQN_Network11_Temporal_LSTM5(torch.nn.Module):
         self.frame_fc1 = torch.nn.Linear(1920, 784)
         self.frame_fc2 = torch.nn.Linear(784, 128)
 
-        self.frame_nb_con1 = torch.nn.Conv2d(3, 5, kernel_size=4, stride=2, padding=0)
+        self.frame_nb_con1 = torch.nn.Conv2d(15, 24, kernel_size=4, stride=2, padding=0)
         self.frame_nb_fc1 = torch.nn.Linear(180, 32)
 
-        self.hn_neighbor_state_dim = 256
-        self.lstm_neighbor = torch.nn.LSTM(32, self.hn_neighbor_state_dim, batch_first=True)
+        self.hn_neighbor_state_dim = 216
+        self.lstm_neighbor = torch.nn.LSTM(96, self.hn_neighbor_state_dim, batch_first=True)
         self.lstm_neighbor_fc = torch.nn.Linear(self.hn_neighbor_state_dim, 128)
         # lstm neighbor output = 128
 
@@ -512,17 +512,20 @@ class DQN_Network11_Temporal_LSTM5(torch.nn.Module):
 
     def encode_neighbor(self, frame):
         batch_size, depth, w, h = frame.shape
-        frame = torch.reshape(frame, (batch_size, 3, -1, w, h))
+        frame = torch.reshape(frame, (batch_size, 15, 8, w, h))
+        # bs, 3, 5, 4, 2, 15, 15
         frame = torch.transpose(frame, 1, 2)
+        # bs, 40, 3, 15, 15
         frame = torch.transpose(frame, 0, 1)
-
+        # 40, bs, 3, 15, 15
+        # 5 4 2
         seq_len = int(depth / 3)
         h0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
             torch.device("cpu"))
         c0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
             torch.device("cpu"))
         outs = None
-        for i in range(16):
+        for i in range(8):
             out = self.encode_region(frame[i])
             out = out.unsqueeze(1)
             if outs is None:
