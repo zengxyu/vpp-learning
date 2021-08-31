@@ -24,7 +24,7 @@ def train_fun():
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = train.P3DTrainer_Temporal_Pose_into_buffer.P3DTrainer
-    out_folder = "out_p3d_random_env_seq_len_10_spacial"
+    out_folder = "out_p3d_static_env_seq_len_10_spacial"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
