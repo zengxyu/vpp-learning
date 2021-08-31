@@ -25,7 +25,7 @@ def train_fun():
     Agent = agents.DQN_agents.Agent_DDQN_PER_Temporal_Pose.Agent_DDQN_PER_Temporal_Pose
     Field = environment.field_ros.Field
     Action = action_space.ActionMoRoMul108
-    Trainer = trainer_ros.RosTrainer.RosTrainer
+    Trainer = trainer_ros.RosTrainer_Temporal.RosTrainer
     out_folder = "out_ros_static_env_seq_len_10"
     in_folder = ""
     # network
@@ -47,7 +47,8 @@ def train_fun():
     agent = Agent(config, seq_len)
 
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(seq_len=seq_len)
+    trainer.train(is_sph_pos=False, is_global_known_map=False, is_egocetric=False,
+                  is_randomize=False, randomize_control=False, seq_len=seq_len)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')

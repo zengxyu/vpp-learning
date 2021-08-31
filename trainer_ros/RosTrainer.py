@@ -21,14 +21,13 @@ class RosTrainer(object):
         self.seq_len = 5
         self.deque = None
 
-    def train(self, seq_len):
+    def train(self, is_sph_pos, is_global_known_map, is_egocetric,
+              is_randomize, randomize_control, seq_len):
         self.seq_len = seq_len
         self.deque = Pose_State_DEQUE(capacity=self.seq_len)
-        self.main_loop()
-
-    def main_loop(self):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
+        last_targets_found = 0
         for i_episode in range(self.config.num_episodes_to_run):
             print("\nepisode {}".format(i_episode))
             step_count = 0
@@ -39,7 +38,10 @@ class RosTrainer(object):
             losses = []
             zero_reward_consistent_count = 0
             self.agent.reset()
-            observed_map, robot_pose = self.field.reset()
+            observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos, is_global_known_map=is_global_known_map,
+                                                        is_egocetric=is_egocetric, is_randomize=is_randomize,
+                                                        randomize_control=randomize_control,
+                                                        last_targets_found=last_targets_found)
             while not done:
                 start_step_time = time.time()
                 # robot direction
@@ -93,6 +95,10 @@ class RosTrainer(object):
                     threading.Thread.considerYield()
 
                 if done:
+                    step_count = 0
+                    self.deque.clear()
+                    last_targets_found = np.sum(rewards)
+
                     print("\nepisode {} over".format(i_episode))
                     print("mean rewards1:{}".format(np.sum(rewards)))
                     print("robot pose: {}".format(robot_pose[:3]))
