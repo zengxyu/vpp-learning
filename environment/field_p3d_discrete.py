@@ -87,6 +87,7 @@ class Field:
         self.is_randomize = False
         self.randomize_control = False
         self.is_egocetric = False
+        self.is_spacial = False
         self.max_targets_found = 0
         self.avg_targets_found = 0
         self.reset_count = 0
@@ -204,20 +205,30 @@ class Field:
         return unknown_map, known_free_map, known_target_map
 
     def generate_unknown_map(self, cam_pos):
+        if self.is_spacial:
+            rot_vecs = self.compute_rot_vecs(-180, 180, 60, 0, 180, 30)
 
-        rot_vecs = self.compute_rot_vecs(-180, 180, 60, 0, 180, 30)
+            unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
+                                                          250.0)
+            known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+                                                                1.0, 250.0)
+            known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                                    rot_vecs, 1.0, 250.0)
+            # 5 * 360 * 180
+            unknown_map = self.make_up_map(unknown_map)
+            known_free_map = self.make_up_map(known_free_map)
+            known_target_map = self.make_up_map(known_target_map)
+        else:
+            rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
 
-        unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
-                                                      250.0)
-        known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
-                                                            1.0, 250.0)
-        known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
-                                                                rot_vecs, 1.0, 250.0)
-        # 5 * 360 * 180
-        unknown_map = self.make_up_map(unknown_map)
-        known_free_map = self.make_up_map(known_free_map)
-        known_target_map = self.make_up_map(known_target_map)
-
+            unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+                                                          1.0,
+                                                          250.0)
+            known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                                rot_vecs,
+                                                                1.0, 250.0)
+            known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                                    rot_vecs, 1.0, 250.0)
         return unknown_map, known_free_map, known_target_map
 
     def make_up_map(self, one_map):
@@ -465,13 +476,15 @@ class Field:
         return (map, np.concatenate(
             (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, done, {}
 
-    def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, last_targets_found):
+    def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, is_spacial,
+              last_targets_found):
         "randomize_control: 如果这张地图学完了，就换下一张，没学完，就始终使用一张图"
         self.is_sph_pos = is_sph_pos
         self.is_global_known_map = is_global_known_map
         self.is_randomize = is_randomize
         self.randomize_control = randomize_control
         self.is_egocetric = is_egocetric
+        self.is_spacial = is_spacial
         self.max_targets_found = last_targets_found
         if self.reset_count == 0:
             self.avg_targets_found = 0

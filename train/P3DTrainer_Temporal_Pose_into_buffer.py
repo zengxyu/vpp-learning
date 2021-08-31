@@ -28,13 +28,13 @@ class P3DTrainer(object):
         self.deque = None
 
     def train(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize,
-              is_reward_plus_unknown_cells, randomize_control, seq_len):
+              is_reward_plus_unknown_cells, randomize_control, is_spacial, seq_len):
         self.seq_len = seq_len
         self.deque = Pose_State_DEQUE(capacity=self.seq_len)
 
         if headless:
             self.main_loop(is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                           randomize_control)
+                           randomize_control, is_spacial)
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
@@ -43,7 +43,7 @@ class P3DTrainer(object):
             self.field.gui.run()
 
     def main_loop(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                  randomize_control):
+                  randomize_control, is_spacial):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         last_targets_found = 0
@@ -65,6 +65,7 @@ class P3DTrainer(object):
                                                         is_egocetric=is_egocetric,
                                                         is_randomize=is_randomize,
                                                         randomize_control=randomize_control,
+                                                        is_spacial=is_spacial,
                                                         last_targets_found=last_targets_found)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
@@ -105,7 +106,7 @@ class P3DTrainer(object):
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
                 # train
-                if time_step % self.config.learn_every == 0:
+                if time_step % self.config.learn_every == 0 and self.config.is_train:
                     loss = self.agent.learn()
 
                 actions.append(action)
