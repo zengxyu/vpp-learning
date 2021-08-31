@@ -8,7 +8,7 @@ import network
 from environment import field_ros
 
 from config.config_dqn import ConfigDQN
-from train.RosTrainer import RosTrainer
+from trainer_ros.RosTrainer import RosTrainer
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 

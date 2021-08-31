@@ -119,7 +119,7 @@ class Agent_DDQN_PER_VAE(Base_Agent_DQN):
         self.memory.batch_update(tree_idx, loss_reward_each_item)
 
     def compute_q_values_for_next_states(self, next_states):
-        """Computes the q_values for next state we will use to create the loss to train the Q network. Double DQN
+        """Computes the q_values for next state we will use to create the loss to trainer_p3d the Q network. Double DQN
         uses the local index to pick the maximum q_value action and then the target network to calculate the q_value.
         The reasoning behind this is that it will help stop the network from overestimating q values"""
         max_action_indexes = self.q_network_local(next_states)[0].detach().argmax(1)
@@ -174,18 +174,18 @@ class Agent_DDQN_PER_VAE(Base_Agent_DQN):
         return torch.sum(weight * (input - target) ** 2)
 
     def compute_q_targets(self, next_states, rewards, dones):
-        """Computes the q_targets we will compare to predicted q values to create the loss to train the Q network"""
+        """Computes the q_targets we will compare to predicted q values to create the loss to trainer_p3d the Q network"""
         Q_targets_next = self.compute_q_values_for_next_states(next_states)
         Q_targets = self.compute_q_values_for_current_states(rewards, Q_targets_next, dones)
         return Q_targets
 
     def compute_q_values_for_current_states(self, rewards, Q_targets_next, dones):
-        """Computes the q_values for current state we will use to create the loss to train the Q network"""
+        """Computes the q_values for current state we will use to create the loss to trainer_p3d the Q network"""
         Q_targets_current = rewards + (self.hyper_parameters["discount_rate"] * Q_targets_next * (1 - dones))
         return Q_targets_current
 
     def compute_expected_q_values(self, states, actions):
-        """Computes the expected q_values we will use to create the loss to train the Q network"""
+        """Computes the expected q_values we will use to create the loss to trainer_p3d the Q network"""
         Q_expected = self.q_network_local(states)[0].gather(1,
                                                             actions.long())  # must convert actions to long so can be used as index
         return Q_expected

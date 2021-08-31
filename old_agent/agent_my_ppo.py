@@ -31,7 +31,7 @@ class Agent:
 
         self.train_device = torch.device('cuda') if torch.cuda.is_available() and params["use_gpu"] else torch.device(
             'cpu')  # 'cuda' if torch.cuda.is_available() else 'cpu'
-        print("train device : {}".format(self.train_device))
+        print("trainer_p3d device : {}".format(self.train_device))
 
         print("Action size : {}".format(self.action_size))
         print("Train device : {}".format(self.train_device))
@@ -116,7 +116,7 @@ class Agent:
         self.h_ins, self.c_ins, self.h_outs, self.c_outs = [], [], [], []
 
     def train_net(self):
-        # print("train net")
+        # print("trainer_p3d net")
         loss_values = []
         loss_clip_values = []
         loss_val_values = []

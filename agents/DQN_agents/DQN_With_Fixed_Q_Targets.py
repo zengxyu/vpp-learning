@@ -36,7 +36,7 @@ class DQN_With_Fixed_Q_Targets(DQN):
         return loss.detach().cpu().numpy()
 
     def compute_q_values_for_next_states(self, next_states):
-        """Computes the q_values for next state we will use to create the loss to train the Q network"""
+        """Computes the q_values for next state we will use to create the loss to trainer_p3d the Q network"""
         Q_targets_next = self.q_network_target(next_states).detach().max(1)[0].unsqueeze(1)
         return Q_targets_next
 

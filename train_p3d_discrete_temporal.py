@@ -8,7 +8,7 @@ import agents
 import network
 from environment import field_p3d_discrete
 
-from train.P3DTrainer_Temporal import P3DTrainer
+from trainer_p3d.P3DTrainer_Temporal import P3DTrainer
 
 from config.config_dqn import ConfigDQN
 from utilities.util import get_project_path

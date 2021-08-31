@@ -10,7 +10,7 @@ from agents.DQN_agents.Dueling_DDQN import Dueling_DDQN
 # from agents.actor_critic_agents.SAC_Discrete import SAC_Discrete
 # from agents.actor_critic_agents.A3C import A3C
 # from agents.policy_gradient_agents.PPO import PPO
-from train.Trainer import Trainer
+from trainer_p3d.Trainer import Trainer
 from config.config import Config
 from agents.DQN_agents.DDQN import DDQN
 from agents.DQN_agents.DDQN_PER import DDQN_PER

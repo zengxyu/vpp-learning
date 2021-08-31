@@ -20,7 +20,7 @@ tensorflow-probability 0.6.0
 tensorlayer >=2.0.0
 To run
 ------
-python tutorial_PPO.py --train/test
+python tutorial_PPO.py --trainer_p3d/test
 """
 import argparse
 import os
@@ -35,7 +35,7 @@ import tensorflow_probability as tfp
 import tensorlayer as tl
 
 parser = argparse.ArgumentParser(description='Train or test neural net motor controller.')
-parser.add_argument('--train', dest='train', action='store_true', default=False)
+parser.add_argument('--trainer_p3d', dest='trainer_p3d', action='store_true', default=False)
 parser.add_argument('--test', dest='test', action='store_true', default=True)
 args = parser.parse_args()
 
