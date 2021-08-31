@@ -60,7 +60,7 @@ class DQN(Base_Agent_DQN):
         return loss.detach().cpu().numpy()
 
     def compute_loss(self, states, next_states, rewards, actions, dones):
-        """Computes the loss required to train the Q network"""
+        """Computes the loss required to trainer_p3d the Q network"""
         with torch.no_grad():
             Q_targets = self.compute_q_targets(next_states, rewards, dones)
         Q_expected = self.compute_expected_q_values(states, actions)
@@ -68,25 +68,25 @@ class DQN(Base_Agent_DQN):
         return loss
 
     def compute_q_targets(self, next_states, rewards, dones):
-        """Computes the q_targets we will compare to predicted q values to create the loss to train the Q network"""
+        """Computes the q_targets we will compare to predicted q values to create the loss to trainer_p3d the Q network"""
         Q_targets_next = self.compute_q_values_for_next_states(next_states)
         Q_targets = self.compute_q_values_for_current_states(rewards, Q_targets_next, dones)
         return Q_targets
 
     def compute_q_values_for_next_states(self, next_states):
-        """Computes the q_values for next state we will use to create the loss to train the Q network"""
+        """Computes the q_values for next state we will use to create the loss to trainer_p3d the Q network"""
         """这里应该是q_network_target()"""
 
         Q_targets_next = self.q_network_local(next_states).detach().max(1)[0].unsqueeze(1)
         return Q_targets_next
 
     def compute_q_values_for_current_states(self, rewards, Q_targets_next, dones):
-        """Computes the q_values for current state we will use to create the loss to train the Q network"""
+        """Computes the q_values for current state we will use to create the loss to trainer_p3d the Q network"""
         Q_targets_current = rewards + (self.hyper_parameters["discount_rate"] * Q_targets_next * (1 - dones))
         return Q_targets_current
 
     def compute_expected_q_values(self, states, actions):
-        """Computes the expected q_values we will use to create the loss to train the Q network"""
+        """Computes the expected q_values we will use to create the loss to trainer_p3d the Q network"""
         Q_expected = self.q_network_local(states).gather(1,
                                                          actions.long())  # must convert actions to long so can be used as index
         return Q_expected

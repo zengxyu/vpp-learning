@@ -42,7 +42,7 @@ class Agent:
         self.last_value = None
 
         print("\nis cuda available:", torch.cuda.is_available())
-        print("train device:", self.train_device)
+        print("trainer_p3d device:", self.train_device)
         print("TRAJ_COLLECTION_NUM:", self.TRAJ_COLLECTION_NUM)
         print("TRAJ_LEN:", self.TRAJ_LEN)
         print("gamma:", self.gamma)

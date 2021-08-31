@@ -7,8 +7,8 @@ import network
 from environment import field_ros
 import action_space
 from config.config_dqn import ConfigDQN
-from train.RosRandomeTrainer import RosRandomTrainer
-from train.RosTrainer import RosTrainer
+from trainer_ros.RosRandomeTrainer import RosRandomTrainer
+from trainer_ros.RosTrainer import RosTrainer
 from utilities.data_structures.Constant import EpsExplorationStrategy
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))

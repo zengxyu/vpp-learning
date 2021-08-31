@@ -157,7 +157,7 @@ class Agent:
         self.h_ins, self.c_ins, self.h_outs, self.c_outs = [], [], [], []
 
     def train_net(self):
-        # print("train net")
+        # print("trainer_p3d net")
         loss_v = 0
         for i in range(self.K_epoch):
             frames, robot_poses, actions, rewards, frames_prime, robot_poses_prime, probs, returns, advantages, h_in, c_in, h_out, c_out = self.memory.make_batch(

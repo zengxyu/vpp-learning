@@ -4,7 +4,7 @@ import agents
 import network
 from config.config_ac import ConfigAC
 from config.config_dqn import ConfigDQN
-from train.GymTrainer import GymTrainer
+from trainer_p3d.GymTrainer import GymTrainer
 from utilities.action_type import ActionType
 from utilities.util import *
 

@@ -6,7 +6,7 @@ import action_space
 import agents
 import network
 
-from train.P3DTrainer import P3DTrainer
+from trainer_p3d.P3DTrainer import P3DTrainer
 
 from config.config_ac import ConfigAC
 from environment import field_p3d_continuous

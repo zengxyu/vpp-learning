@@ -6,10 +6,9 @@ import os
 import action_space
 import agents
 import network
-import train
 import environment
 from config.config_dqn import ConfigDQN
-from utilities.util import get_project_path, get_state_size, get_action_size
+from utilities.util import get_project_path
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -19,7 +18,7 @@ def train_fun():
     Agent = agents.DQN_agents.Agent_DDQN_PER_Temporal_Pose.Agent_DDQN_PER_Time_KnownMap
     Field = environment.field_ros.Field
     Action = action_space.ActionMoRoMul108
-    Trainer = train.RosRandomeTrainer_Temporal_Pose.RosRandomTrainerTemporalPose
+    Trainer = trainer_ros.RosRandomeTrainer_Temporal_Pose.RosRandomTrainerTemporalPose
     out_folder = "out_ros_random_temporal_pose_random_108_control2"
     in_folder = ""
     # network

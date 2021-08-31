@@ -9,7 +9,7 @@ class Config(object):
     def __init__(self, out_folder, in_folder, learn_every, console_logging_level, file_logging_level):
         self.seed = 1
 
-        # train config
+        # trainer_p3d config
         self.use_GPU = False
         self.is_train = True
         self.debug_mode = False

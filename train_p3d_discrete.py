@@ -7,10 +7,7 @@ import action_space
 import agents
 import environment
 import network
-import train
-from environment import field_p3d_discrete
-
-from train.P3DTrainer import P3DTrainer
+import trainer_p3d
 
 from config.config_dqn import ConfigDQN
 from utilities.util import get_project_path
@@ -27,7 +24,7 @@ def train_fun():
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
-    Trainer = train.P3DTrainer.P3DTrainer
+    Trainer = trainer_p3d.P3DTrainer.P3DTrainer
     out_folder = "out_p3d_01"
     in_folder = ""
     # network

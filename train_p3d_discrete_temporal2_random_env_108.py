@@ -6,7 +6,7 @@ import os
 import action_space
 import agents
 import network
-import train
+import trainer_p3d
 import environment
 from config.config_dqn import ConfigDQN
 from utilities.util import get_project_path, get_state_size, get_action_size
@@ -23,7 +23,7 @@ def train_fun():
     Agent = agents.DQN_agents.Agent_DDQN_PER_Time.Agent_DDQN_PER_Time
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMul108
-    Trainer = train.P3DTrainer_Temporal2.P3DTrainer
+    Trainer = trainer_p3d.P3DTrainer_Temporal2.P3DTrainer
     out_folder = "out_p3d_temporal_random_108"
     in_folder = ""
     # network

@@ -7,7 +7,7 @@ import network
 from environment import field_ros
 
 from config.config_dqn import ConfigDQN
-from train.RosRandomeTrainer import RosRandomTrainer
+from trainer_ros.RosRandomeTrainer import RosRandomTrainer
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
