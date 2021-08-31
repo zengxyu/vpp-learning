@@ -44,7 +44,7 @@ def train_fun():
                   max_steps=max_step, init_file=init_file_path, headless=headless)
     config.set_parameters({"learning_rate": 3e-5})
     # Agent
-    agent = Agent(config, seq_len)
+    agent = Agent(config)
 
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=True, is_global_known_map=False, is_egocetric=False,
