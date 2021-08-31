@@ -485,7 +485,7 @@ class DQN_Network11_Temporal_LSTM5(torch.nn.Module):
         self.frame_nb_con1 = torch.nn.Conv2d(3, 5, kernel_size=4, stride=2, padding=0)
         self.frame_nb_fc1 = torch.nn.Linear(180, 32)
 
-        self.hn_neighbor_state_dim = 512
+        self.hn_neighbor_state_dim = 256
         self.lstm_neighbor = torch.nn.LSTM(32, self.hn_neighbor_state_dim, batch_first=True)
         self.lstm_neighbor_fc = torch.nn.Linear(self.hn_neighbor_state_dim, 128)
         # lstm neighbor output = 128
