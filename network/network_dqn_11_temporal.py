@@ -483,9 +483,11 @@ class DQN_Network11_Temporal_LSTM5(torch.nn.Module):
         self.frame_fc2 = torch.nn.Linear(784, 128)
 
         self.frame_nb_con1 = torch.nn.Conv2d(15, 24, kernel_size=4, stride=2, padding=0)
-        self.frame_nb_fc1 = torch.nn.Linear(180, 32)
+        self.frame_nb_con2 = torch.nn.Conv2d(24, 48, kernel_size=4, stride=2, padding=0)
 
-        self.hn_neighbor_state_dim = 216
+        self.frame_nb_fc1 = torch.nn.Linear(192, 96)
+
+        self.hn_neighbor_state_dim = 256
         self.lstm_neighbor = torch.nn.LSTM(96, self.hn_neighbor_state_dim, batch_first=True)
         self.lstm_neighbor_fc = torch.nn.Linear(self.hn_neighbor_state_dim, 128)
         # lstm neighbor output = 128
@@ -539,6 +541,8 @@ class DQN_Network11_Temporal_LSTM5(torch.nn.Module):
 
     def encode_region(self, region_frame):
         out_frame = F.relu(self.frame_nb_con1(region_frame))
+        out_frame = F.relu(self.frame_nb_con2(out_frame))
+
         out_frame = out_frame.reshape(out_frame.size()[0], -1)
         out_frame = F.relu(self.frame_nb_fc1(out_frame))
         return out_frame
