@@ -19,7 +19,7 @@ if not headless:
 
 
 def train_fun():
-    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM5
+    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM6
     Agent = agents.DQN_agents.Agent_DDQN_PER_spacial.Agent_DDQN_PER_spacial
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
@@ -42,7 +42,7 @@ def train_fun():
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
                   max_steps=max_step, init_file=init_file_path, headless=headless)
-    config.set_parameters({"learning_rate": 1e-4})
+    config.set_parameters({"learning_rate": 5e-5})
     # Agent
     agent = Agent(config)
 
