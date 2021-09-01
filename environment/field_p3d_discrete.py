@@ -206,7 +206,7 @@ class Field:
 
     def generate_unknown_map(self, cam_pos):
         if self.is_spacial:
-            rot_vecs = self.compute_rot_vecs(-180, 180, 60, 0, 180, 30)
+            rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
 
             unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
                                                           250.0)
@@ -215,9 +215,9 @@ class Field:
             known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
                                                                     rot_vecs, 1.0, 250.0)
             # 5 * 360 * 180
-            unknown_map = self.make_up_map(unknown_map)
-            known_free_map = self.make_up_map(known_free_map)
-            known_target_map = self.make_up_map(known_target_map)
+            # unknown_map = self.make_up_map(unknown_map)
+            # known_free_map = self.make_up_map(known_free_map)
+            # known_target_map = self.make_up_map(known_target_map)
         else:
             rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
 
@@ -233,10 +233,10 @@ class Field:
 
     def make_up_map(self, one_map):
         # 5 * 90 * 45
-        one_map = np.reshape(one_map, (5, 4, 15, 2, 15))
+        one_map = np.reshape(one_map, (5, 2, 18, 1, 18))
         one_map = np.transpose(one_map, (0, 1, 3, 2, 4))
         # 5 * 4 * 2 * 15 * 15
-        one_map = np.reshape(one_map, (-1, 15, 15))
+        one_map = np.reshape(one_map, (-1, 18, 18))
         return one_map
 
     def sum_block(self, one_map):
