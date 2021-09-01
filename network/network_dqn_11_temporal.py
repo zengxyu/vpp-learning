@@ -692,7 +692,7 @@ class DQN_Network11_Temporal_LSTM6(torch.nn.Module):
 
     def encode_observation_map(self, frame):
         out_frame = F.relu(self.frame_con1(frame))
-        out_frame = F.relu(self.frame_con2(out_frame))
+        # out_frame = F.relu(self.frame_con2(out_frame))
         out_frame = out_frame.reshape(out_frame.size()[0], -1)
         out_frame = F.relu(self.frame_fc1(out_frame))
         out_frame = F.relu(self.frame_fc2(out_frame))
