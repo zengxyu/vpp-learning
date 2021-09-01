@@ -24,9 +24,9 @@ def train_fun():
     Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
     Agent = agents.DQN_agents.Agent_DDQN_PER_Temporal_Pose.Agent_DDQN_PER_Temporal_Pose
     Field = environment.field_ros.Field
-    Action = action_space.ActionMoRoMul108
+    Action = action_space.ActionMoRo12
     Trainer = trainer_ros.RosTrainer_Temporal.RosTrainer
-    out_folder = "out_ros_static_env_seq_len_10"
+    out_folder = "out_ros_static_env_seq_len_10_2"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
@@ -42,7 +42,7 @@ def train_fun():
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   max_steps=max_step, handle_simulation=False)
-    config.set_parameters({"learning_rate": 3e-5})
+    config.set_parameters({"learning_rate": 5e-5})
     # Agent
     agent = Agent(config, seq_len)
 
