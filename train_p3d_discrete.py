@@ -40,7 +40,7 @@ def train_fun():
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
-                  max_steps=500, init_file=init_file_path, headless=headless)
+                  max_steps=300, init_file=init_file_path, headless=headless)
     config.is_train = True
     # config.set_parameters({"learning_rate": 3e-5})
     # config.set_parameters({"epsilon": 0.0})

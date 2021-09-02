@@ -1,4 +1,6 @@
 #!/usr/bin/environment python
+import os.path
+import pickle
 import random
 
 import gym
@@ -57,6 +59,7 @@ class GuiFieldValues(IntEnum):
 class Field:
     def __init__(self, config, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
                  scale=0.05):
+        self.config = config
         self.found_targets = 0
         self.free_cells = 0
         self.sensor_range = sensor_range
@@ -161,6 +164,8 @@ class Field:
         self.found_targets = 0
         self.free_cells = 0
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
+        # pickle.dump(self.global_map, open(os.path.join(self.config.folder['out_folder'], "global_map.obj"), "wb"))
+        # print("save global map to local")
         self.shape = self.global_map.shape
         self.known_map = np.zeros(self.shape)
 
@@ -208,9 +213,11 @@ class Field:
         if self.is_spacial:
             rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
 
-            unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
+            unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+                                                          1.0,
                                                           250.0)
-            known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+            known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                                rot_vecs,
                                                                 1.0, 250.0)
             known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
                                                                     rot_vecs, 1.0, 250.0)

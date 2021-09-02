@@ -45,7 +45,6 @@ def train_fun():
     config.set_parameters({"learning_rate": 5e-5})
     # Agent
     agent = Agent(config)
-
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
                   is_reward_plus_unknown_cells=False,

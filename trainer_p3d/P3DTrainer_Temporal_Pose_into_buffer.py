@@ -1,3 +1,6 @@
+import os.path
+import pickle
+
 import numpy as np
 import time
 from scipy.spatial.transform.rotation import Rotation
@@ -24,13 +27,13 @@ class P3DTrainer(object):
         self.deque = None
 
     def train(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize,
-              is_reward_plus_unknown_cells, randomize_control, is_spacial, seq_len):
+              is_reward_plus_unknown_cells, randomize_control, is_spacial, seq_len, save_path):
         self.seq_len = seq_len
         self.deque = Pose_State_DEQUE(capacity=self.seq_len)
 
         if headless:
             self.main_loop(is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                           randomize_control, is_spacial)
+                           randomize_control, is_spacial, save_path)
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
@@ -39,10 +42,11 @@ class P3DTrainer(object):
             self.field.gui.run()
 
     def main_loop(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                  randomize_control, is_spacial):
+                  randomize_control, is_spacial, save_path):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         last_targets_found = 0
+        paths = []
         for i_episode in range(self.config.num_episodes_to_run):
             print("\nepisode {}".format(i_episode))
             e_start_time = time.time()
@@ -53,6 +57,7 @@ class P3DTrainer(object):
             unknown_cells = []
             known_cells = []
             actions = []
+            path = []
             step = 0
             self.agent.reset()
 
@@ -96,7 +101,8 @@ class P3DTrainer(object):
 
                 self.deque.append_next(robot_pose_input_next)
                 self.agent.step(state=[observed_map, self.deque.get_robot_poses()], action=action, reward=reward,
-                                    next_state=[observed_map_next, self.deque.get_next_robot_poses()], done=done)
+                                next_state=[observed_map_next, self.deque.get_next_robot_poses()], done=done)
+                path.append(robot_pose)
                 # to the next state
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
@@ -120,6 +126,8 @@ class P3DTrainer(object):
                     step = 0
                     self.deque.clear()
                     last_targets_found = np.sum(found_targets)
+                    paths.append(path.copy())
+
                     print("\nepisode {} over".format(i_episode))
                     print("robot pose: {}".format(robot_pose[:3]))
                     print("actions:{}".format(np.array(actions)))
@@ -133,7 +141,10 @@ class P3DTrainer(object):
                             np.sum(rewards),
                             np.sum(
                                 found_targets), np.sum(unknown_cells), np.sum(known_cells)))
-
+                    if save_path:
+                        file_path = os.path.join(self.config.folder["out_folder"], "path.obj")
+                        pickle.dump(paths, open(file_path, "wb"))
+                        print("save robot path to file_path:{}".format(file_path))
                     mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
                                                                                             np.sum(found_targets),
                                                                                             i_episode, verbose=False)
