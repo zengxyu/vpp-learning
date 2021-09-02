@@ -20,7 +20,7 @@ if not headless:
 
 def train_fun():
     Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM6
-    Agent = agents.DQN_agents.Agent_DDQN_PER_spacial.Agent_DDQN_PER_spacial
+    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal_Pose_into_buffer.P3DTrainer
