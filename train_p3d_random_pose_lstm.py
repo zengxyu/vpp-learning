@@ -23,7 +23,7 @@ def train_fun():
     Agent = agents.DQN_agents.Agent_DDQN_PER_Time.Agent_DDQN_PER_Time
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
-    Trainer = trainer_p3d.P3DTrainer_Temporal2.P3DTrainer
+    Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
     out_folder = "out_p3d_temporal_random_36_action"
     in_folder = ""
     # network
