@@ -7,7 +7,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from utilities.basic_logger import BasicLogger
 
-from ray import tune
+
+# from ray import tune
 
 
 class MySummaryWriter:
@@ -141,7 +142,7 @@ class SummaryWriterLogger:
         ep_reward_smoothed = np.mean(self.ep_reward_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):])
         self.writer.add_scalar('trainer_p3d/ep_loss_smoothed', ep_loss_smoothed, i_episode)
         self.writer.add_scalar('trainer_p3d/ep_reward_smoothed', ep_reward_smoothed, i_episode)
-        tune.report(ep_loss_smoothed=ep_loss_smoothed, ep_reward_smoothed=ep_reward_smoothed)
+        # tune.report(ep_loss_smoothed=ep_loss_smoothed, ep_reward_smoothed=ep_reward_smoothed)
         if i_episode % self.tb_save_l_r_every_n_episode == 0:
             self.save_loss_reward()
 

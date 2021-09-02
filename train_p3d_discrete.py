@@ -25,7 +25,7 @@ def train_fun():
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
     Trainer = trainer_p3d.P3DTrainer.P3DTrainer
-    out_folder = "out_p3d_01"
+    out_folder = "out_p3d_original"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
@@ -41,13 +41,18 @@ def train_fun():
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
                   max_steps=500, init_file=init_file_path, headless=headless)
-    config.set_parameters({"learning_rate": 3e-5})
+    config.is_train = True
+    # config.set_parameters({"learning_rate": 3e-5})
+    # config.set_parameters({"epsilon": 0.0})
+    # config.set_parameters({"epsilon_decay_rate": 0.985})
+    # config.set_parameters({"epsilon_min": 0})
     # Agent
     agent = Agent(config)
-
+    # agent.load_model(151)
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_reward_plus_unknown_cells=False,
-                  randomize_control=False)
+    trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
+                  is_reward_plus_unknown_cells=False,
+                  randomize_control=False, is_spacial=False, seq_len=0)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
