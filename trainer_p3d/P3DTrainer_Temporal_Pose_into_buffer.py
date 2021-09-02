@@ -96,8 +96,7 @@ class P3DTrainer(object):
 
                 self.deque.append_next(robot_pose_input_next)
                 self.agent.step(state=[observed_map, self.deque.get_robot_poses()], action=action, reward=reward,
-                                next_state=[observed_map_next, self.deque.get_next_robot_poses()], done=done)
-
+                                    next_state=[observed_map_next, self.deque.get_next_robot_poses()], done=done)
                 # to the next state
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()

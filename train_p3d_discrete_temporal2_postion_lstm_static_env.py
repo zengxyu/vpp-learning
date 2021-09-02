@@ -19,12 +19,12 @@ if not headless:
 
 
 def train_fun():
-    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM5
+    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
-    Action = action_space.ActionMoRoMultiplier36
+    Action = action_space.ActionMoRo12
     Trainer = trainer_p3d.P3DTrainer_Temporal_Pose_into_buffer.P3DTrainer
-    out_folder = "out_p3d_static_env_action36"
+    out_folder = "out_p3d_static_env_action12"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
@@ -36,7 +36,7 @@ def train_fun():
                        )
 
     init_file_path = os.path.join(project_path, 'VG07_6.binvox')
-    max_step = 400
+    max_step = 300
     seq_len = 10
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
@@ -49,7 +49,7 @@ def train_fun():
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
                   is_reward_plus_unknown_cells=False,
-                  randomize_control=False, seq_len=seq_len)
+                  randomize_control=False, is_spacial=False, seq_len=seq_len)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')

@@ -68,7 +68,8 @@ class Agent_DDQN_PER_Temporal_Pose(DDQN):
         loss_reward_each_item = 0.05 * loss_each_item + rewards
         loss_reward_each_item = loss_reward_each_item.detach().cpu().numpy()
         tree_idx = tree_idx[:, np.newaxis]
-
+        # print(torch.mean(torch.abs(td_errors)).detach().cpu().numpy(),
+        #       torch.mean(torch.abs(rewards)).detach().cpu().numpy())
         self.memory.batch_update(tree_idx, loss_reward_each_item)
 
     def compute_loss_and_td_errors(self, states, next_states, rewards, actions, dones, importance_sampling_weights):

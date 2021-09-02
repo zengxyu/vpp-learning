@@ -23,10 +23,11 @@ class P3DTrainer(object):
         self.agent = agent
         self.field = field
 
-    def train(self, is_sph_pos=False, is_global_known_map=False, is_randomize=False,
-              is_reward_plus_unknown_cells=False, randomize_control=False):
+    def train(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize,
+              is_reward_plus_unknown_cells, randomize_control, is_spacial, seq_len):
         if headless:
-            self.main_loop(is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells, randomize_control)
+            self.main_loop(is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
+                           randomize_control, is_spacial)
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
@@ -34,7 +35,8 @@ class P3DTrainer(object):
             main_thread.start()
             self.field.gui.run()
 
-    def main_loop(self, is_sph_pos, is_global_known_map, is_randomize, is_reward_plus_unknown_cells, randomize_control):
+    def main_loop(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
+                  randomize_control, is_spacial):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         mean_loss_last_n_ep, mean_reward_last_n_ep = 0, 0
@@ -52,8 +54,10 @@ class P3DTrainer(object):
             self.agent.reset()
             observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
                                                         is_global_known_map=is_global_known_map,
+                                                        is_egocetric=is_egocetric,
                                                         is_randomize=is_randomize,
                                                         randomize_control=randomize_control,
+                                                        is_spacial=is_spacial,
                                                         last_targets_found=last_targets_found)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
@@ -66,7 +70,9 @@ class P3DTrainer(object):
 
                 action = self.agent.pick_action([observed_map, robot_pose_input])
 
-                (observed_map_next, robot_pose_next), found_target_num, unknown_cells_num, done, _ = self.field.step(action)
+                (observed_map_next,
+                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, done, _ = self.field.step(
+                    action)
                 reward = found_target_num
 
                 # if robot_pose is the same with the robot_pose_next, then reward--

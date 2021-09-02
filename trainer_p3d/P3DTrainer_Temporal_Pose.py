@@ -61,6 +61,7 @@ class P3DTrainer(object):
                                                         is_egocetric=is_egocetric,
                                                         is_randomize=is_randomize,
                                                         randomize_control=randomize_control,
+                                                        is_spacial=False,
                                                         last_targets_found=last_targets_found)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))

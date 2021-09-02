@@ -43,6 +43,9 @@ def train_fun():
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   max_steps=max_step, handle_simulation=False)
     config.set_parameters({"learning_rate": 5e-5})
+    config.set_parameters({"epsilon": 0.4})
+    config.set_parameters({"epsilon_decay_rate": 0.985})
+    config.set_parameters({"epsilon_min": 0.01})
     # Agent
     agent = Agent(config, seq_len)
 
