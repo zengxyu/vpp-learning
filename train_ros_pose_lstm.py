@@ -13,7 +13,6 @@ import os
 import action_space
 import agents
 import network
-import environment
 from config.config_dqn import ConfigDQN
 from utilities.util import get_project_path
 
@@ -22,11 +21,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 def train_fun():
     Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
-    Agent = agents.DQN_agents.Agent_DDQN_PER_Temporal_Pose.Agent_DDQN_PER_Temporal_Pose
-    Field = environment.field_ros.Field
+    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
+    Field = field_ros.Field
     Action = action_space.ActionMoRo12
     Trainer = trainer_ros.RosTrainer_Temporal.RosTrainer
-    out_folder = "out_ros_static_env_seq_len_10_2"
+    out_folder = "out_ros_static_env_pose_lstm"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
@@ -43,11 +42,11 @@ def train_fun():
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   max_steps=max_step, handle_simulation=False)
     config.set_parameters({"learning_rate": 5e-5})
-    config.set_parameters({"epsilon": 0.4})
-    config.set_parameters({"epsilon_decay_rate": 0.985})
-    config.set_parameters({"epsilon_min": 0.01})
+    # config.set_parameters({"epsilon": 0.4})
+    # config.set_parameters({"epsilon_decay_rate": 0.985})
+    # config.set_parameters({"epsilon_min": 0.01})
     # Agent
-    agent = Agent(config, seq_len)
+    agent = Agent(config)
 
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_global_known_map=False, is_egocetric=False,

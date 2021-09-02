@@ -1,5 +1,5 @@
 from trainer_p3d import P3DTrainer_Temporal2
 from trainer_p3d import P3DTrainer
 from trainer_p3d import P3DTrainer_Temporal_Pose
-from trainer_p3d import P3DTrainer_Temporal_Pose_into_buffer
+from trainer_p3d import P3DTrainer_Temporal
 from trainer_p3d import P3DTrainer_Random

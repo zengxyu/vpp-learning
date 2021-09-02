@@ -23,7 +23,7 @@ def train_fun():
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
-    Trainer = trainer_p3d.P3DTrainer_Temporal_Pose_into_buffer.P3DTrainer
+    Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
     out_folder = "out_p3d_random_env_spacial_lstm"
     in_folder = ""
 
@@ -50,7 +50,7 @@ def train_fun():
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=True, is_global_known_map=False, is_egocetric=False,
                   is_reward_plus_unknown_cells=True,
-                  randomize_control=True, is_spacial=True, seq_len=seq_len, save_path=False)
+                  randomize_control=True, is_spacial=True, seq_len=seq_len, is__save_path=False)
     # save_path: 是否保存机器人走过的路径
 
 parser = argparse.ArgumentParser(description='Process some integers.')
