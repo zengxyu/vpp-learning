@@ -108,7 +108,7 @@ class P3DTrainer(object):
                 # 奖励好奇心，如果map差别比较大，那么奖励大
                 map_diff_reward = 0
                 if is_map_diff_reward:
-                    map_diff_reward = np.sqrt(np.sum(np.square(observed_map_next - observed_map)))
+                    map_diff_reward = np.sqrt(np.sum(np.square(observed_map_next - observed_map))) / 50
                     print(map_diff_reward)
 
                 reward = reward + acc_convergence_reward + map_diff_reward
