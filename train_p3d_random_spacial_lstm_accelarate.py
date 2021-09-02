@@ -24,7 +24,7 @@ def train_fun():
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "out_p3d_random_env_spacial_lstm"
+    out_folder = "out_p3d_random_env_spacial_lstm_acc"
     in_folder = ""
 
     # network
