@@ -23,7 +23,7 @@ def train_fun():
     Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = field_ros.Field
-    Action = action_space.ActionMoRo12
+    Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_ros.RosTrainer_Temporal.RosTrainer
     out_folder = "out_ros_static_env_pose_lstm"
     in_folder = ""
@@ -39,9 +39,10 @@ def train_fun():
     max_step = 300
     seq_len = 10
     # field
+    # 原本move_step = 1
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
-                  max_steps=max_step, handle_simulation=False)
-    config.set_parameters({"learning_rate": 5e-5})
+                  max_steps=max_step, move_step=0.05, handle_simulation=False)
+    config.set_parameters({"learning_rate": 1e-4})
     # config.set_parameters({"epsilon": 0.4})
     # config.set_parameters({"epsilon_decay_rate": 0.985})
     # config.set_parameters({"epsilon_min": 0.01})
