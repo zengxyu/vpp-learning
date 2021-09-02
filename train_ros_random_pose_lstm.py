@@ -6,20 +6,20 @@ import os
 import action_space
 import agents
 import network
-import environment
 from config.config_dqn import ConfigDQN
 from utilities.util import get_project_path
-
+from environment.__init2__ import *
+import trainer_ros
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def train_fun():
     Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
-    Agent = agents.DQN_agents.Agent_DDQN_PER_Temporal_Pose.Agent_DDQN_PER_Time_KnownMap
-    Field = environment.field_ros.Field
+    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
+    Field = field_ros.Field
     Action = action_space.ActionMoRoMul108
     Trainer = trainer_ros.RosRandomeTrainer_Temporal_Pose.RosRandomTrainerTemporalPose
-    out_folder = "out_ros_random_temporal_pose_random_108_control2"
+    out_folder = "output_ros_random_pose_lstm"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
@@ -32,7 +32,7 @@ def train_fun():
 
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
-                  max_steps=400, handle_simulation=True)
+                  max_steps=300, handle_simulation=True)
     config.set_parameters({"learning_rate": 1e-4})
     config.set_parameters({"buffer_size": 12000})
 

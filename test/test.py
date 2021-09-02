@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 
@@ -26,8 +28,9 @@ class Children(Parent):
 
 
 if __name__ == '__main__':
-    arr = np.array([0, 0, 0, 1, 1])
-    print(np.sum(arr == 1))
+    # arr = np.array([0, 0, 0, 1, 1])
+    # print(np.sum(arr == 1))
+    print(math.log2(3000))
 # if __name__ == '__main__':
 #     child = Children()
 #     child.say()
