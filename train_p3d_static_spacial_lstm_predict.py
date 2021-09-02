@@ -24,12 +24,12 @@ def train_fun():
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "out_p3d_static_env_seq_len_10_spacial"
+    out_folder = "p3d_static_env_seq_len_10_spacial_lstm_action_36"
     # 动态环境中训练的模型
     in_folder = "output_remote5/out_p3d_random_env_seq_len_10_spacial"
 
     # 静态环境中训练的模型
-    # in_folder = "output_remote5/out_p3d_static_env_seq_len_10_spacial"
+    # in_folder = "output_remote5/p3d_static_env_seq_len_10_spacial_lstm_action_36"
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
