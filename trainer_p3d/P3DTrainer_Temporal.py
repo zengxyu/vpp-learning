@@ -30,13 +30,13 @@ class P3DTrainer(object):
 
     def train(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize,
               is_reward_plus_unknown_cells, randomize_control, is_spacial, seq_len, is__save_path,
-              is_stop_n_zero_rewards):
+              is_stop_n_zero_rewards, is_map_diff_reward):
         self.seq_len = seq_len
         self.deque = Pose_State_DEQUE(capacity=self.seq_len)
 
         if headless:
             self.main_loop(is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                           randomize_control, is_spacial, is__save_path, is_stop_n_zero_rewards)
+                           randomize_control, is_spacial, is__save_path, is_stop_n_zero_rewards, is_map_diff_reward)
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
@@ -45,7 +45,7 @@ class P3DTrainer(object):
             self.field.gui.run()
 
     def main_loop(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                  randomize_control, is_spacial, is_save_path, is_stop_n_zero_rewards):
+                  randomize_control, is_spacial, is_save_path, is_stop_n_zero_rewards, is_map_diff_reward):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         last_targets_found = 0
@@ -88,21 +88,31 @@ class P3DTrainer(object):
                 (observed_map_next,
                  robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, done, _ = self.field.step(
                     action)
+
+                # a = found_target_num
+                # b = 0.05 * unknown_cells_num ** (
+                #         1 - step / self.max_steps / 2)
+                # c = - (known_cells_num / 2000) ** 1.1
+                reward = found_target_num
+
+                # 奖励unknown
                 if is_reward_plus_unknown_cells:
-                    # a = found_target_num
-                    # b = 0.05 * unknown_cells_num ** (
-                    #         1 - step / self.max_steps / 2)
-                    # c = - (known_cells_num / 2000) ** 1.1
-                    reward = found_target_num + 0.008 * unknown_cells_num
-                    if found_target_num == 0:
-                        acc_convergence_reward = 0
-                    else:
-                        acc_convergence_reward = (found_target_num / 1000 + 1) ** (5 - log2(step + 1))
-                    reward = reward + acc_convergence_reward
-                    if reward < 0:
-                        reward = 0
+                    reward += 0.008 * unknown_cells_num
+
+                # 奖励前150step获得的targets
+                if found_target_num == 0:
+                    acc_convergence_reward = 0
                 else:
-                    reward = found_target_num
+                    acc_convergence_reward = (found_target_num / 1000 + 1) ** (5 - log2(step + 1))
+
+                # 奖励好奇心，如果map差别比较大，那么奖励大
+                map_diff_reward = 0
+                if is_map_diff_reward:
+                    map_diff_reward = np.sqrt(np.sum(np.square(observed_map_next - observed_map)))
+                    print(map_diff_reward)
+
+                reward = reward + acc_convergence_reward + map_diff_reward
+
                 # 如果连续N个奖励都是0，那么终止该序列，为了让它尽快找到
                 if is_stop_n_zero_rewards:
                     if found_target_num == 0:
@@ -174,10 +184,13 @@ class P3DTrainer(object):
 
                     e_end_time = time.time()
                     print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
-        print('Complete')
 
-    def get_state_size(self, field):
-        return 0
+    print('Complete')
 
-    def get_action_size(self, field):
-        return field.get_action_size()
+
+def get_state_size(self, field):
+    return 0
+
+
+def get_action_size(self, field):
+    return field.get_action_size()
