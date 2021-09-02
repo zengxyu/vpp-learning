@@ -5,11 +5,12 @@ import os
 
 import action_space
 import agents
+import environment
 import network
 import trainer_p3d
-import environment
+
 from config.config_dqn import ConfigDQN
-from utilities.util import get_project_path, get_state_size, get_action_size
+from utilities.util import get_project_path
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -19,13 +20,13 @@ if not headless:
 
 
 def train_fun():
-    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM2
-    Agent = agents.DQN_agents.Agent_DDQN_PER_Time.Agent_DDQN_PER_Time
+    Network = network.network_dqn_11.DQN_Network11
+    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
-    Action = action_space.ActionMoRoMul108
-    Trainer = trainer_p3d.P3DTrainer_Temporal2.P3DTrainer
-    out_folder = "out_p3d_temporal_random_108"
-    in_folder = ""
+    Action = action_space.ActionMoRo12
+    Trainer = trainer_p3d.P3DTrainer.P3DTrainer
+    out_folder = "out_p3d_original"
+    in_folder = "output_remote6/out_p3d_original"
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
@@ -40,12 +41,18 @@ def train_fun():
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
                   max_steps=300, init_file=init_file_path, headless=headless)
+    config.is_train = False
     config.set_parameters({"learning_rate": 3e-5})
+    config.set_parameters({"epsilon": 0.3})
+    config.set_parameters({"epsilon_decay_rate": 0.985})
+    config.set_parameters({"epsilon_min": 0})
     # Agent
     agent = Agent(config)
-
+    agent.load_model(151)
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_sph_pos=False, is_randomize=True, is_global_known_map=False)
+    trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
+                  is_reward_plus_unknown_cells=False,
+                  randomize_control=False, is_spacial=False, seq_len=0)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
