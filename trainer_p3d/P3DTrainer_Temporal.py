@@ -94,7 +94,10 @@ class P3DTrainer(object):
                     #         1 - step / self.max_steps / 2)
                     # c = - (known_cells_num / 2000) ** 1.1
                     reward = found_target_num + 0.008 * unknown_cells_num
-                    acc_convergence_reward = (found_target_num / 1000) ** (5 - log2(step + 1))
+                    if found_target_num == 0:
+                        acc_convergence_reward = 0
+                    else:
+                        acc_convergence_reward = (found_target_num / 1000) ** (5 - log2(step + 1))
                     reward = reward + acc_convergence_reward
                     if reward < 0:
                         reward = 0
