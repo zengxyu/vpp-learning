@@ -109,7 +109,7 @@ class P3DTrainer(object):
                 map_diff_reward = 0
                 if is_map_diff_reward:
                     map_diff_reward = np.sqrt(np.sum(np.square(observed_map_next - observed_map))) / 50
-                    print(map_diff_reward)
+                    # print(map_diff_reward)
 
                 reward = reward + acc_convergence_reward + map_diff_reward
 
