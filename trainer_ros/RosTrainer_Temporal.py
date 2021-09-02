@@ -68,14 +68,14 @@ class RosTrainer(object):
                 robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
                 self.deque.append_next(robot_pose_input_next)
 
-                self.agent.step(state=[observed_map, robot_pose_input], action=action, reward=reward,
-                                next_state=[observed_map_next, robot_pose_input_next], done=done)
+                self.agent.step(state=[observed_map, self.deque.get_robot_poses()], action=action, reward=reward,
+                                next_state=[observed_map_next, self.deque.get_next_robot_poses()], done=done)
 
                 # to the next state
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
                 # trainer_p3d
-                if self.config.is_train and time_step > self.seq_len:
+                if self.config.is_train:
                     loss = self.agent.learn()
                 else:
                     loss = 0

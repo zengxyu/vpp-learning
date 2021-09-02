@@ -27,7 +27,7 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, config, Action, shape, sensor_range, hfov, vfov, max_steps, handle_simulation):
+    def __init__(self, config, Action, shape, sensor_range, hfov, vfov, max_steps, move_step, handle_simulation):
         self.found_targets = 0
         self.free_cells = 0
         self.sensor_range = sensor_range
@@ -40,7 +40,7 @@ class Field:
         self.max_steps = max_steps
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 0.1
+        self.MOVE_STEP = move_step
         self.ROT_STEP = 15.0
 
         self.is_sph_pos = False

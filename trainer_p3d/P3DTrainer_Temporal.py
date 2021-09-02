@@ -97,7 +97,7 @@ class P3DTrainer(object):
                     if found_target_num == 0:
                         acc_convergence_reward = 0
                     else:
-                        acc_convergence_reward = (found_target_num / 1000) ** (5 - log2(step + 1))
+                        acc_convergence_reward = (found_target_num / 1000 + 1) ** (5 - log2(step + 1))
                     reward = reward + acc_convergence_reward
                     if reward < 0:
                         reward = 0
