@@ -62,13 +62,16 @@ def read_global_map():
 
 if __name__ == '__main__':
     gxs, gys, gzs, free_xs, free_ys, free_zs = read_global_map()
-    ax1.scatter3D(gxs, gys, gzs, cmap='Blues')  # 绘制散点图
+    ax1.scatter3D(gzs, gys, gxs, cmap='Blues')  # 绘制散点图
 
     file_path = "/home/zeng/workspace/vpp-learning/output/predict_p3d_static_pose_lstm/path_bak2.obj"
     xs, ys, zs = read_path_data(file_path)
     xs, ys, zs = xs[:300], ys[:300], zs[:300]
-    ax1.scatter3D(xs, ys, zs, cmap='Blacks')  # 绘制散点图
-    ax1.plot3D(xs, ys, zs, 'gray')  # 绘制散点图
+    ax1.scatter3D(zs, ys, xs, cmap='Blacks')  # 绘制散点图
+    ax1.plot3D(zs, ys, xs, 'gray')  # 绘制散点图
     # ax1.scatter3D(free_xs, free_ys, free_zs)  # 绘制散点图
-
+    ax1.set_xlim(0, 256)
+    ax1.set_ylim(0, 256)
+    ax1.set_zlim(0, 256)
+    ax1.view_init(10, -70)
     plt.show()

@@ -24,7 +24,7 @@ def train_fun():
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
-    Trainer = trainer_p3d.P3DTrainer_Temporal_Pose_into_buffer.P3DTrainer
+    Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
     out_folder = "predict_p3d_static_pose_lstm"
     # 在静态环境中训练的模型
     in_folder = "output/out_p3d_static_env_action36"
@@ -58,7 +58,7 @@ def train_fun():
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
                   is_reward_plus_unknown_cells=False,
-                  randomize_control=False, is_spacial=False, seq_len=seq_len, save_path = True)
+                  randomize_control=False, is_spacial=False, seq_len=seq_len, is__save_path= True)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
