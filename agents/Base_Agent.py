@@ -52,9 +52,8 @@ class Base_Agent(ModelHelper):
         # if clipping_norm is not None:
         # for p in network.parameters():
         #     p.grad.data.clamp_(-1, 1)
-        for net in network:
-            torch.nn.utils.clip_grad_norm_(net.parameters(),
-                                           0.7)  # clip gradients to help stabilise training
+        torch.nn.utils.clip_grad_norm_(network.parameters(),
+                                       0.7)  # clip gradients to help stabilise training
         optimizer.step()
 
     def step(self, state, action, reward, next_state, done):
