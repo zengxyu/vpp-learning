@@ -56,6 +56,9 @@ class DDQN_PER(DDQN):
         self.q_network_local.eval()
         with torch.no_grad():
             action_values = self.q_network_local(state)
+            # a = action_values.detach().cpu().numpy()
+            # print(a)
+            # print("max one:{};index {}".format(np.max(a),np.argmax(a)))
         self.q_network_local.train()
         action = self.exploration_strategy.perturb_action_for_exploration_purposes({"action_values": action_values,
                                                                                     "turn_off_exploration": self.turn_off_exploration,
