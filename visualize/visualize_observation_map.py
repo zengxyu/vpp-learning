@@ -5,7 +5,9 @@ import cv2
 import torch
 import os
 
-save_path = "/home/zeng/workspace/vpp-learning/results_paper/visualize_observation_map"
+save_path = "/home/zeng/workspace/vpp-learning/results_paper/visualize_observation_map2"
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
 
 
 def save_image(name, image):
@@ -28,7 +30,8 @@ def con_frame(frame):
     return con_frames
 
 
-def con_frame2(frame):
+def con_frame2(frame, title):
+    "将一个observation map合成彩色图像"
     results = None
     for i in range(5):
         a = [frame[0 + i]]
@@ -40,7 +43,7 @@ def con_frame2(frame):
             results = [a]
         else:
             results.append(a)
-        save_image("observation_map_{}.png".format(i), a)
+        save_image(title + "_{}.png".format(i), a)
     results = np.hstack(results)
     return results
 
@@ -53,7 +56,7 @@ def display_image(image, title):
     cv2.destroyAllWindows()
 
 
-path = "/home/zeng/workspace/vpp-learning/output/out_p3d_temporal_pose_random_108_control2/experience/buffer.obj"
+path = "/home/zeng/workspace/vpp-learning/output_remote5/out_p3d_static_env_seq_len_10_spacial/experience/buffer.obj"
 exp_obj = open(path, 'rb')
 memory = pickle.load(exp_obj)
 memory.seq_len = 10
@@ -72,10 +75,12 @@ frames_next, poses_next = next_states
 frames_next = minmaxscaler(frames_next).numpy()
 frame_next = frames_next[index]
 
-resize_frame = con_frame(frame)
-resize_frame_next = con_frame(frame_next)
-vertical_con_frame = np.vstack([resize_frame, resize_frame_next])
-cf2 = con_frame2(frame)
+# resize_frame = con_frame(frame)
+# resize_frame_next = con_frame(frame_next)
+# vertical_con_frame = np.vstack([resize_frame, resize_frame_next])
+cf2 = con_frame2(frame, title="observation_map")
+cf3 = con_frame2(frame_next, title="observation_map_next")
+
 display_image(cf2, "color")
 # display_image(vertical_con_frame, "resize_frame")
 # display_image(resize_frame_next, "resize_frame_next")

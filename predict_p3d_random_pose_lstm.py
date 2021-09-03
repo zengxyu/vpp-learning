@@ -35,7 +35,7 @@ def train_fun():
                        console_logging_level=logging.DEBUG,
                        file_logging_level=logging.WARNING,
                        )
-    config.is_train = True
+    config.is_train = False
     config.save_model_every = 10
 
     init_file_path = os.path.join(project_path, 'VG07_6.binvox')
@@ -53,11 +53,12 @@ def train_fun():
     config.set_parameters({"epsilon_min": 0})
     # Agent
     agent = Agent(config)
-    agent.load_model(801)
+    agent.load_model(501)
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=True, is_global_known_map=False, is_egocetric=False,
-                  is_reward_plus_unknown_cells=False,
-                  randomize_control=False, is_spacial=False, seq_len=seq_len)
+                  is_reward_plus_unknown_cells=True,
+                  randomize_control=True, is_spacial=False, seq_len=seq_len, is_map_diff_reward=False,
+                  is_add_negative_reward=False, is__save_path=False, is_stop_n_zero_rewards=False)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
