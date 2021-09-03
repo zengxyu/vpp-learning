@@ -36,7 +36,7 @@ def train_fun():
                        )
 
     init_file_path = os.path.join(project_path, 'VG07_6.binvox')
-    max_step = 400
+    max_step = 300
     seq_len = 10
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
