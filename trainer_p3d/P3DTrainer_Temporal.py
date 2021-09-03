@@ -121,7 +121,7 @@ class P3DTrainer(object):
                 negative_reward = 0
                 if is_add_negative_reward:
                     negative_reward = -10 * zero_found_target_consistent_count
-                print(negative_reward)
+                # print(negative_reward)
                 reward = reward + acc_convergence_reward + map_diff_reward + negative_reward
                 reward = int(reward)
 
