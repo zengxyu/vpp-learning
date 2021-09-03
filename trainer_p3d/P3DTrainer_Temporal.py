@@ -30,13 +30,14 @@ class P3DTrainer(object):
 
     def train(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize,
               is_reward_plus_unknown_cells, randomize_control, is_spacial, seq_len, is__save_path,
-              is_stop_n_zero_rewards, is_map_diff_reward):
+              is_stop_n_zero_rewards, is_map_diff_reward, is_add_negative_reward):
         self.seq_len = seq_len
         self.deque = Pose_State_DEQUE(capacity=self.seq_len)
 
         if headless:
             self.main_loop(is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                           randomize_control, is_spacial, is__save_path, is_stop_n_zero_rewards, is_map_diff_reward)
+                           randomize_control, is_spacial, is__save_path, is_stop_n_zero_rewards, is_map_diff_reward,
+                           is_add_negative_reward)
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
@@ -45,7 +46,8 @@ class P3DTrainer(object):
             self.field.gui.run()
 
     def main_loop(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                  randomize_control, is_spacial, is_save_path, is_stop_n_zero_rewards, is_map_diff_reward):
+                  randomize_control, is_spacial, is_save_path, is_stop_n_zero_rewards, is_map_diff_reward,
+                  is_add_negative_reward):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         last_targets_found = 0
@@ -108,17 +110,23 @@ class P3DTrainer(object):
                 # 奖励好奇心，如果map差别比较大，那么奖励大
                 map_diff_reward = 0
                 if is_map_diff_reward:
-                    map_diff_reward = np.sqrt(np.sum(np.square(observed_map_next - observed_map))) / 50
+                    map_diff_reward = np.sqrt(np.sum(np.square(observed_map_next - observed_map))) / 100
                     # print(map_diff_reward)
 
-                reward = reward + acc_convergence_reward + map_diff_reward
+                if found_target_num == 0:
+                    zero_found_target_consistent_count += 1
+                else:
+                    zero_found_target_consistent_count = 0
+
+                negative_reward = 0
+                if is_add_negative_reward:
+                    negative_reward = -10 * zero_found_target_consistent_count
+                print(negative_reward)
+                reward = reward + acc_convergence_reward + map_diff_reward + negative_reward
+                reward = int(reward)
 
                 # 如果连续N个奖励都是0，那么终止该序列，为了让它尽快找到
                 if is_stop_n_zero_rewards:
-                    if found_target_num == 0:
-                        zero_found_target_consistent_count += 1
-                    else:
-                        zero_found_target_consistent_count = 0
                     # # reward redefine
                     if zero_found_target_consistent_count >= 30:
                         done = True
@@ -165,12 +173,13 @@ class P3DTrainer(object):
                     print("found_targets:{}".format(np.array(found_targets)))
 
                     print(
-                        "Episode : {} | Mean loss : {} | Reward : {} | Found_targets : {} | unknown_cells :{} | known cells :{}".format(
+                        "Episode : {} | Mean loss : {} | Reward : {} | Found_targets : {} | unknown_cells :{}-{} | known cells :{}".format(
                             i_episode,
                             np.mean(losses),
                             np.sum(rewards),
                             np.sum(
-                                found_targets), np.sum(unknown_cells), np.sum(known_cells)))
+                                found_targets), np.sum(unknown_cells), 0.008 * np.sum(unknown_cells),
+                            np.sum(known_cells)))
                     if is_save_path:
                         file_path = os.path.join(self.config.folder["out_folder"], "path.obj")
                         pickle.dump(paths, open(file_path, "wb"))

@@ -20,12 +20,12 @@ if not headless:
 
 def train_fun():
     Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM6
-    Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
+    Agent = agents.DQN_agents.Agent_DDQN_PER_spacial.Agent_DDQN_PER_spacial
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "out_p3d_static_env_action12_test"
-    in_folder = "output_remote5/out_p3d_static_env_seq_len_10_spacial"
+    out_folder = "p3d_static_env_seq_len_10_spacial_lstm_action_36"
+    in_folder = ""
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
@@ -42,19 +42,17 @@ def train_fun():
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
                   max_steps=max_step, init_file=init_file_path, headless=headless)
-    config.is_train = True
-    config.set_parameters({"learning_rate": 3e-5})
-    config.set_parameters({"epsilon": 0.1})
-    config.set_parameters({"epsilon_decay_rate": 0.985})
-    config.set_parameters({"epsilon_min": 0})
+    config.set_parameters({"learning_rate": 5e-5})
     # Agent
     agent = Agent(config)
-    agent.load_model(601)
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
-                  is_reward_plus_unknown_cells=False,
-                  randomize_control=False, is_spacial=False, seq_len=seq_len, is__save_path=False,
-                  is_stop_n_zero_rewards=False, is_map_diff_reward=False)
+    trainer.train(is_sph_pos=False, is_randomize=True, randomize_control=True, is_global_known_map=False,
+                  is_egocetric=False,
+                  is_reward_plus_unknown_cells=True,
+                  is_stop_n_zero_rewards=False,
+                  is_map_diff_reward=False,
+                  is_spacial=True, seq_len=seq_len,
+                  is__save_path=False, is_add_negative_reward=True)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
