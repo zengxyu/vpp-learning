@@ -97,6 +97,7 @@ class Field:
         self.upper_scale = 1
         self.ratio = 0.1
 
+        self.visit_map = np.zeros(shape=(256, 256, 256))
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
@@ -458,6 +459,10 @@ class Field:
                                                                                                           ep_left_up,
                                                                                                           ep_right_down,
                                                                                                           ep_right_up)
+        # revisit_penalty 是一个处罚 如果这个位置已经被拜访多次，就惩罚多少
+        revisit_penalty = -self.visit_map[int(cam_pos[0]), int(cam_pos[1]), int(cam_pos[2])]
+        self.visit_map[int(cam_pos[0]), int(cam_pos[1]), int(cam_pos[2])] += 1
+        revisit_map = np.resize(self.visit_map, (16, 16, 16))
         self.free_cells += new_free_cells
         self.found_targets += new_targets_found
 
@@ -480,8 +485,9 @@ class Field:
             return (global_known_map, map, np.concatenate(
                 (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, done, {}
 
-        return (map, np.concatenate(
-            (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, done, {}
+        return (revisit_map, map, np.concatenate(
+            (robot_pos,
+             self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, revisit_penalty, done, {}
 
     def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, is_spacial,
               last_targets_found):
@@ -513,6 +519,8 @@ class Field:
         self.step_count = 0
         self.found_targets = 0
         self.free_cells = 0
+        self.visit_map = np.zeros(shape=(256, 256, 256))
+        revisit_map = np.resize(self.visit_map, (16, 16, 16))
 
         if not self.headless:
             self.gui.messenger.send('reset', [], 'default')
@@ -552,4 +560,4 @@ class Field:
             else:
                 global_known_map = self.compute_global_known_map(np.array([128, 128, 128]), neighbor_dist=120)
             return global_known_map, map, np.concatenate((robot_pos, self.robot_rot.as_quat()))
-        return map, np.concatenate((robot_pos, self.robot_rot.as_quat()))
+        return revisit_map, map, np.concatenate((robot_pos, self.robot_rot.as_quat()))
