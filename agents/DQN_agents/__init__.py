@@ -13,3 +13,4 @@ from . import Agent_DDQN_PER_KnownMap
 from . import Agent_DDQN_PER_Time_Known_Map
 from . import Agent_DDQN_PER_Temporal_Pose
 from . import Agent_DDQN_PER_spacial
+from . import Agent_DQN_With_Fixed_Q_Targets
