@@ -68,13 +68,13 @@ class P3DTrainer(object):
 
             self.agent.reset()
 
-            observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
-                                                        is_global_known_map=is_global_known_map,
-                                                        is_egocetric=is_egocetric,
-                                                        is_randomize=is_randomize,
-                                                        randomize_control=randomize_control,
-                                                        is_spacial=is_spacial,
-                                                        last_targets_found=last_targets_found)
+            _, observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
+                                                           is_global_known_map=is_global_known_map,
+                                                           is_egocetric=is_egocetric,
+                                                           is_randomize=is_randomize,
+                                                           randomize_control=randomize_control,
+                                                           is_spacial=is_spacial,
+                                                           last_targets_found=last_targets_found)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
             while not done:
@@ -87,8 +87,8 @@ class P3DTrainer(object):
 
                 # 前5步，随便选择一个动作
                 action = self.agent.pick_action([observed_map, self.deque.get_robot_poses()])
-                (observed_map_next,
-                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, done, _ = self.field.step(
+                (_, observed_map_next,
+                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, _, done, _ = self.field.step(
                     action)
 
                 # a = found_target_num
@@ -146,7 +146,8 @@ class P3DTrainer(object):
                 robot_pose = robot_pose_next.copy()
                 # trainer_p3d
                 if time_step % self.config.learn_every == 0 and self.config.is_train:
-                    loss = self.agent.learn()
+                    for i in range(12):
+                        loss = self.agent.learn()
 
                 actions.append(action)
                 rewards.append(reward)

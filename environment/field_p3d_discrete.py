@@ -98,6 +98,9 @@ class Field:
         self.ratio = 0.1
 
         self.visit_map = np.zeros(shape=(256, 256, 256))
+        self.allowed_range = np.array([128, 128, 128])
+        self.allowed_lower_bound = np.array([128, 128, 128]) - self.allowed_range
+        self.allowed_upper_bound = np.array([128, 128, 128]) + self.allowed_range - 1
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
@@ -472,47 +475,24 @@ class Field:
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        if self.is_sph_pos:
-            robot_pos = self.robot_pose_cart_2_polor(self.robot_pos)
-        else:
-            robot_pos = self.robot_pos
-
-        if self.is_global_known_map:
-            if self.is_egocetric:
-                global_known_map = self.compute_global_known_map(cam_pos, neighbor_dist=120)
-            else:
-                global_known_map = self.compute_global_known_map(np.array([128, 128, 128]), neighbor_dist=120)
-            return (global_known_map, map, np.concatenate(
-                (robot_pos, self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, done, {}
-
         return (revisit_map, map, np.concatenate(
-            (robot_pos,
+            (self.robot_pos,
              self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, revisit_penalty, done, {}
 
-    def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, is_spacial,
-              last_targets_found):
+    def reset(self, is_randomize, randomize_control, last_targets_found):
         "randomize_control: 如果这张地图学完了，就换下一张，没学完，就始终使用一张图"
-        self.is_sph_pos = is_sph_pos
-        self.is_global_known_map = is_global_known_map
         self.is_randomize = is_randomize
         self.randomize_control = randomize_control
-        self.is_egocetric = is_egocetric
-        self.is_spacial = is_spacial
         self.max_targets_found = last_targets_found
         if self.reset_count == 0:
             self.avg_targets_found = 0
         else:
             self.avg_targets_found = (
-                                             self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
+                                                 self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
         self.reset_count += 1
 
         self.known_map = np.zeros(self.shape)
-        self.observed_area = np.zeros(self.shape, dtype=bool)
-        self.allowed_range = np.array([128, 128, 128])
-        self.allowed_lower_bound = np.array([128, 128, 128]) - self.allowed_range
-        self.allowed_upper_bound = np.array([128, 128, 128]) + self.allowed_range - 1
         self.robot_pos = np.array([0.0, 0.0, 0.0])
-        # print("upper:{}; reset robot pose as:{}".format(upper, self.robot_pos))
         print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
@@ -529,11 +509,6 @@ class Field:
             # self.gui.reset()
         if self.is_randomize:
             if self.randomize_control:
-                # threshold = 20000
-                # if self.reset_count >= 100:
-                #     threshold = 30000
-                # if self.reset_count >= 200:
-                #     threshold = 40000
                 threshold = 1.2 * self.avg_targets_found
                 if last_targets_found >= threshold:
                     print("last_targets_found :{} >= {}; RANDOMIZE THE ENV".format(last_targets_found, threshold))
@@ -550,14 +525,4 @@ class Field:
 
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        if self.is_sph_pos:
-            robot_pos = self.robot_pose_cart_2_polor(self.robot_pos)
-        else:
-            robot_pos = self.robot_pos
-        if self.is_global_known_map:
-            if self.is_egocetric:
-                global_known_map = self.compute_global_known_map(cam_pos, neighbor_dist=120)
-            else:
-                global_known_map = self.compute_global_known_map(np.array([128, 128, 128]), neighbor_dist=120)
-            return global_known_map, map, np.concatenate((robot_pos, self.robot_rot.as_quat()))
-        return revisit_map, map, np.concatenate((robot_pos, self.robot_rot.as_quat()))
+        return revisit_map, map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))

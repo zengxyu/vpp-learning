@@ -19,12 +19,12 @@ if not headless:
 
 
 def train_fun():
-    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM6
+    Network = network.network_dqn_11_spacial.DQN_Network11_Temporal_Spacial1
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
-    Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "out_p3d_random_env_spacial_lstm"
+    Trainer = trainer_p3d.P3DTrainer_relative_pose.P3DTrainer
+    out_folder = "out_p3d_spacial_relative_pose"
     in_folder = ""
 
     # network
@@ -50,10 +50,9 @@ def train_fun():
     agent = Agent(config, is_add_revisit_map=False)
 
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_sph_pos=False, is_randomize=True, is_global_known_map=False, is_egocetric=False,
-                  is_reward_plus_unknown_cells=True,
-                  randomize_control=True, is_spacial=True, seq_len=seq_len, is__save_path=False,
-                  is_stop_n_zero_rewards=False, is_add_negative_reward=False, is_map_diff_reward=False)
+    trainer.train(is_randomize=True, is_reward_plus_unknown_cells=True, randomize_control=True, seq_len=seq_len,
+                  is_save_path=False, is_stop_n_zero_rewards=False, is_add_negative_reward=False,
+                  is_map_diff_reward=False)
     # save_path: 是否保存机器人走过的路径
 
 

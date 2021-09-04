@@ -42,13 +42,13 @@ def train_fun():
                   scale=0.05,
                   max_steps=300, init_file=init_file_path, headless=headless)
     config.is_train = False
-    config.set_parameters({"learning_rate": 3e-5})
-    config.set_parameters({"epsilon": 0.3})
-    config.set_parameters({"epsilon_decay_rate": 0.985})
+    # config.set_parameters({"learning_rate": 3e-5})
+    config.set_parameters({"epsilon": 0.0})
+    # config.set_parameters({"epsilon_decay_rate": 0.985})
     config.set_parameters({"epsilon_min": 0})
     # Agent
-    agent = Agent(config)
-    agent.load_model(151)
+    agent = Agent(config, is_add_revisit_map=False)
+    agent.load_model(301)
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
                   is_reward_plus_unknown_cells=False,
