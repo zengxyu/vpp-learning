@@ -120,7 +120,6 @@ class DQN_Network11_Temporal_Spacial1(torch.nn.Module):
 
     def forward(self, state):
         frame, robot_pose = state
-        print(robot_pose)
         batch_size = robot_pose.shape[0]
         seq_len = robot_pose.shape[1]
         robot_pose_reshape = torch.transpose(robot_pose, 0, 1)
