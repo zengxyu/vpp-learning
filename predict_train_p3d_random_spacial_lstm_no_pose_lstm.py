@@ -24,8 +24,8 @@ def train_fun():
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "out_p3d_random_env_spacial_lstm_no_lstm"
-    in_folder = ""
+    out_folder = "out_p3d_random_env_spacial_lstm_no_lstm_predict"
+    in_folder = "output/out_p3d_random_env_spacial_lstm_no_lstm"
 
     # network
     config = ConfigDQN(network=Network,
@@ -44,12 +44,13 @@ def train_fun():
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
                   max_steps=max_step, init_file=init_file_path, headless=headless)
+    config.is_train = False
     config.set_parameters({"learning_rate": 5e-5})
-    config.set_parameters({"epsilon": 1.0})
+    config.set_parameters({"epsilon": 0.14})
     config.set_parameters({"epsilon_min": 0})
     # Agent
     agent = Agent(config, is_add_revisit_map=False)
-
+    agent.load_model(351)
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_randomize=True, is_reward_plus_unknown_cells=True, randomize_control=True, seq_len=seq_len,
                   is_save_path=False, is_stop_n_zero_rewards=False, is_add_negative_reward=False,
