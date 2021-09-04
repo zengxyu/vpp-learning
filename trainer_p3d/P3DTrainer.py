@@ -52,13 +52,13 @@ class P3DTrainer(object):
             found_targets = []
 
             self.agent.reset()
-            observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
-                                                        is_global_known_map=is_global_known_map,
-                                                        is_egocetric=is_egocetric,
-                                                        is_randomize=is_randomize,
-                                                        randomize_control=randomize_control,
-                                                        is_spacial=is_spacial,
-                                                        last_targets_found=last_targets_found)
+            _, observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
+                                                           is_global_known_map=is_global_known_map,
+                                                           is_egocetric=is_egocetric,
+                                                           is_randomize=is_randomize,
+                                                           randomize_control=randomize_control,
+                                                           is_spacial=is_spacial,
+                                                           last_targets_found=last_targets_found)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
             while not done:
@@ -70,8 +70,8 @@ class P3DTrainer(object):
 
                 action = self.agent.pick_action([observed_map, robot_pose_input])
 
-                (observed_map_next,
-                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, done, _ = self.field.step(
+                (_, observed_map_next,
+                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, revisit_penalty, done, _ = self.field.step(
                     action)
                 reward = found_target_num
 
