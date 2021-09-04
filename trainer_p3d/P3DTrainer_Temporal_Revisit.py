@@ -123,10 +123,11 @@ class P3DTrainer(object):
                 if is_add_negative_reward:
                     negative_reward = -10 * zero_found_target_consistent_count
                 # print(negative_reward)
+                revisit_penalty2 = 0
                 if is_revisit_penalty:
-                    revisit_penalty = 10 * revisit_penalty
+                    revisit_penalty2 = 10 * revisit_penalty
                     # print(revisit_penalty)
-                reward = reward + acc_convergence_reward + map_diff_reward + negative_reward + revisit_penalty
+                reward = reward + acc_convergence_reward + map_diff_reward + negative_reward + revisit_penalty2
                 reward = int(reward)
 
                 # 如果连续N个奖励都是0，那么终止该序列，为了让它尽快找到
@@ -142,9 +143,11 @@ class P3DTrainer(object):
                 robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
 
                 self.deque.append_next(robot_pose_input_next)
-                self.agent.step(state=[revisit_map.astype(np.int8), observed_map, self.deque.get_robot_poses()], action=action,
+                self.agent.step(state=[revisit_map.astype(np.int8), observed_map, self.deque.get_robot_poses()],
+                                action=action,
                                 reward=reward,
-                                next_state=[revisit_map_next.astype(np.int8), observed_map_next, self.deque.get_next_robot_poses()],
+                                next_state=[revisit_map_next.astype(np.int8), observed_map_next,
+                                            self.deque.get_next_robot_poses()],
                                 done=done)
                 path.append(robot_pose)
                 # to the next state

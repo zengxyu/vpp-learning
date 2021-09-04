@@ -94,6 +94,9 @@ class SummaryWriterLogger:
         self.ep_loss_ll = []
         self.ep_reward_ll = []
 
+        self.ep_inference_loss_ll = []
+        self.ep_inference_reward_ll = []
+
         self.init(self.tb_l_r_in_dir)
         self.show_config(config)
 
@@ -151,9 +154,48 @@ class SummaryWriterLogger:
 
         return mean_loss_last_n_ep, mean_reward_last_n_ep
 
+    def update_inference_data(self, ep_loss, ep_reward, i_episode, verbose=True):
+        """
+        # ep_loss : mean loss of this episode
+        # ep_reward : sum reward of this episode
+        return : mean ep_loss of last n episodes
+                mean ep_reward of last n episodes
+        """
+        self.ep_inference_loss_ll.append(ep_loss)
+        self.ep_inference_reward_ll.append(ep_reward)
+
+        self.writer.add_scalar('tester_p3d/ep_loss', ep_loss, i_episode)
+        self.writer.add_scalar('tester_p3d/ep_reward', ep_reward, i_episode)
+
+        if verbose:
+            print("Episode : {} | Mean loss : {} | Reward : {}".format(i_episode, ep_loss, ep_reward))
+
+        ep_loss_smoothed = np.mean(self.ep_inference_loss_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):])
+        ep_reward_smoothed = np.mean(
+            self.ep_inference_reward_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):])
+        self.writer.add_scalar('tester_p3d/ep_loss_smoothed', ep_loss_smoothed, i_episode)
+        self.writer.add_scalar('tester_p3d/ep_reward_smoothed', ep_reward_smoothed, i_episode)
+
+        if i_episode % self.tb_save_l_r_every_n_episode == 0:
+            self.save_loss_reward()
+
+        mean_loss_last_n_ep = np.mean(
+            self.ep_inference_loss_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):])
+        mean_reward_last_n_ep = np.mean(
+            self.ep_inference_reward_ll[max(0, i_episode - self.tb_smooth_l_r_every_n_episode):])
+
+        return mean_loss_last_n_ep, mean_reward_last_n_ep
+
     def save_loss_reward(self):
         """save ep_loss_ll and ep_reward_ll"""
         print("Save ep_loss_ll and ep_reward_ll to {} !".format(self.tb_l_r_sv_dir))
         file = open(os.path.join(self.tb_l_r_sv_dir, "loss_reward.obj"), 'wb')
         obj = [self.ep_loss_ll, self.ep_reward_ll]
+        pickle.dump(obj, file)
+
+    def save_inference_loss_reward(self):
+        """save ep_loss_ll and ep_reward_ll"""
+        print("Save ep_inference_loss_ll and ep_inference_reward_ll to {} !".format(self.tb_l_r_sv_dir))
+        file = open(os.path.join(self.tb_l_r_sv_dir, "inference_loss_reward.obj"), 'wb')
+        obj = [self.ep_inference_loss_ll, self.ep_inference_reward_ll]
         pickle.dump(obj, file)
