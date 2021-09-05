@@ -24,7 +24,7 @@ def train_fun():
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_relative_pose.P3DTrainer
-    out_folder = "out_p3d_spacial_relative_pose_sort_region"
+    out_folder = "out_p3d_spacial_relative_pose_sort_region2"
     in_folder = ""
 
     # network
@@ -43,7 +43,7 @@ def train_fun():
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
                   max_steps=max_step, init_file=init_file_path, headless=headless)
-    config.set_parameters({"learning_rate": 5e-5})
+    config.set_parameters({"learning_rate": 1e-4})
     config.set_parameters({"epsilon": 1.0})
     config.set_parameters({"epsilon_min": 0})
     # Agent
