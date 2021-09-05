@@ -6,3 +6,4 @@ from network import network_known_map
 from network import network_dqn_11
 from network import network_dqn_11_temporal
 from network import network_dqn_11_spacial
+from network import network_dqn_11_double_network
