@@ -143,8 +143,9 @@ class P3DTrainer(object):
                 robot_pose = robot_pose_next.copy()
                 relative_pose = relative_pose_next.copy()
                 # trainer_p3d
-                if self.global_time_step % self.config.learn_every == 0 and self.config.is_train:
-                    loss = self.agent.learn()
+                if self.global_time_step % 20 == 0 and self.config.is_train:
+                    for i in range(12):
+                        loss = self.agent.learn()
 
                 actions.append(action)
                 rewards.append(reward)
