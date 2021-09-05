@@ -172,7 +172,6 @@ class Field:
         # print("save global map to local")
         self.shape = self.global_map.shape
         self.known_map = np.zeros(self.shape)
-
         if not self.headless:
             from field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, scale)
@@ -213,33 +212,15 @@ class Field:
 
         return unknown_map, known_free_map, known_target_map
 
-    def generate_unknown_map(self, cam_pos):
-        if self.is_spacial:
-            rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
+    def generate_unknown_map(self, cam_pos, dist=250.0):
+        rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
 
-            unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
-                                                          1.0,
-                                                          250.0)
-            known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
-                                                                rot_vecs,
-                                                                1.0, 250.0)
-            known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
-                                                                    rot_vecs, 1.0, 250.0)
-            # 5 * 360 * 180
-            # unknown_map = self.make_up_map(unknown_map)
-            # known_free_map = self.make_up_map(known_free_map)
-            # known_target_map = self.make_up_map(known_target_map)
-        else:
-            rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
-
-            unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
-                                                          1.0,
-                                                          250.0)
-            known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
-                                                                rot_vecs,
-                                                                1.0, 250.0)
-            known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
-                                                                    rot_vecs, 1.0, 250.0)
+        unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+                                                      1.0, dist)
+        known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                            rot_vecs, 1.0, dist)
+        known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                                rot_vecs, 1.0, dist)
         return unknown_map, known_free_map, known_target_map
 
     def make_up_map(self, one_map):
@@ -450,6 +431,27 @@ class Field:
         res = np.concatenate((res[0], res[1]), axis=0)
         return res
 
+    def count_neighbor_rate(self, unknown_map, known_free_map, known_target_map, neighbor_layer=2):
+        unknown_map_nb = unknown_map[:neighbor_layer, :, :].copy()
+        known_free_map_nb = known_free_map[:neighbor_layer, :, :].copy()
+        known_target_map_nb = known_target_map[:neighbor_layer, :, :].copy()
+        # make the item < 0 to be 0
+        unknown_map_nb[unknown_map_nb < 0] = 0
+        known_free_map_nb[known_free_map_nb < 0] = 0
+        known_target_map_nb[known_target_map_nb < 0] = 0
+
+        unknown_num = np.sum(unknown_map_nb)
+        known_free_num = np.sum(known_free_map_nb)
+        known_target_num = np.sum(known_target_map_nb)
+
+        known_num = known_free_num + known_target_num
+        total_num = known_num + unknown_num
+
+        known_target_rate = known_target_num / known_num
+        unknown_rate = unknown_num / total_num
+
+        return known_target_rate, unknown_rate
+
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
@@ -471,13 +473,17 @@ class Field:
 
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
-
+        # 5 * 36 * 18
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
+
+        known_target_rate, unknown_rate = self.count_neighbor_rate(np.array(unknown_map), np.array(known_free_map),
+                                                                   np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
         return (revisit_map, map, np.concatenate(
             (self.robot_pos,
-             self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, revisit_penalty, done, {}
+             self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, revisit_penalty, (
+                   known_target_rate, unknown_rate), done, {}
 
     def reset(self, is_randomize, randomize_control, last_targets_found):
         "randomize_control: 如果这张地图学完了，就换下一张，没学完，就始终使用一张图"
@@ -488,7 +494,7 @@ class Field:
             self.avg_targets_found = 0
         else:
             self.avg_targets_found = (
-                                                 self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
+                                             self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
         self.reset_count += 1
 
         self.known_map = np.zeros(self.shape)
@@ -522,7 +528,9 @@ class Field:
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-
+        known_target_rate, unknown_rate = self.count_neighbor_rate(np.array(unknown_map), np.array(known_free_map),
+                                                                   np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        return revisit_map, map, np.concatenate((self.robot_pos, self.robot_rot.as_quat()))
+        return revisit_map, map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), (
+            known_target_rate, unknown_rate)
