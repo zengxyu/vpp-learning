@@ -44,8 +44,8 @@ def train_fun():
                   scale=0.05,
                   max_steps=max_step, init_file=init_file_path, headless=headless)
     config.set_parameters({"learning_rate": 1e-4})
-    config.set_parameters({"epsilon": 1.0})
-    config.set_parameters({"epsilon_min": 0})
+    # config.set_parameters({"epsilon": 1.0})
+    # config.set_parameters({"epsilon_min": 0})
     # Agent
     agent = Agent(config, is_add_revisit_map=False)
 
