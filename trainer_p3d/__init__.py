@@ -3,3 +3,4 @@ from trainer_p3d import P3DTrainer_Temporal
 from trainer_p3d import P3DTrainer_Random
 from trainer_p3d import P3DTrainer_Temporal_Revisit
 from trainer_p3d import P3DTrainer_relative_pose
+from trainer_p3d import P3DTrainer_double_rb
