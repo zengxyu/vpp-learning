@@ -291,7 +291,7 @@ std::tuple<int, int, int, int, int> count_known_free_layer5(const py::array_t<in
                 known_free--;
             }else{
                 int cell_val = *known_map.data(x, y, z);
-                if (cell_val == 0)
+                if (cell_val == 1)
                     known_free++;
             }
 //            int x = (int)cur.x;
@@ -326,7 +326,7 @@ std::tuple<int, int, int, int, int> count_known_target_layer5(const py::array_t<
                 known_target--;
             }else{
                 int cell_val = *known_map.data(x, y, z);
-                if (cell_val == 0)
+                if (cell_val == 2)
                     known_target++;
             }
 
