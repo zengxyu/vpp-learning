@@ -69,9 +69,9 @@ class P3DTrainer(object):
 
             self.agent.reset()
             relative_pose = np.zeros(shape=(6,))
-            _, observed_map, robot_pose = self.field.reset(is_randomize=is_randomize,
-                                                           randomize_control=randomize_control,
-                                                           last_targets_found=self.last_targets_found)
+            _, observed_map, robot_pose, _ = self.field.reset(is_randomize=is_randomize,
+                                                              randomize_control=randomize_control,
+                                                              last_targets_found=self.last_targets_found)
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
             while not done:
                 loss = 0
@@ -85,7 +85,7 @@ class P3DTrainer(object):
                 # 前5步，随便选择一个动作
                 action = self.agent.pick_action([observed_map, self.deque.get_robot_poses()])
                 (_, observed_map_next,
-                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, _, done, _ = self.field.step(
+                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, _, _, done, _ = self.field.step(
                     action)
                 # a = found_target_num
                 # b = 0.05 * unknown_cells_num ** (
