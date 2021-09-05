@@ -150,14 +150,15 @@ class P3DTrainer(object):
                         file_path = os.path.join(self.config.folder["out_folder"], "path.obj")
                         pickle.dump(paths, open(file_path, "wb"))
                         print("save robot path to file_path:{}".format(file_path))
-                    self.summary_writer.update(np.mean(losses), np.sum(found_targets), i_episode, verbose=False)
+                    self.summary_writer.update(np.mean(losses_unknowns), np.sum(found_targets), i_episode,
+                                               verbose=False)
 
                     if (i_episode + 1) % self.config.save_model_every == 0:
                         self.agent.store_model()
 
                     e_end_time = time.time()
                     print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
-            if (i_episode + 1) % 1 == 0:
+            if (i_episode + 1) % 10 == 0:
                 self.predict(i_episode, is_randomize, is_reward_plus_unknown_cells)
 
     def predict(self, i_episode, is_randomize, is_reward_plus_unknown_cells):
@@ -244,10 +245,10 @@ class P3DTrainer(object):
                 print("it explore :{} times".format(np.count_nonzero(explore_steps)))
                 print("it exploit :{} times".format(np.count_nonzero(exploit_steps)))
                 self.print_info(i_episode, robot_pose, actions, found_targets, found_targets, unknown_cells,
-                                known_cells,
-                                losses_unknowns, losses_knowns)
+                                known_cells, losses_unknowns, losses_knowns)
 
-                self.summary_writer.update_inference_data(np.mean(losses), np.sum(found_targets), i_episode, verbose=False)
+                self.summary_writer.update_inference_data(np.mean(losses_unknowns), np.sum(found_targets), i_episode,
+                                                          verbose=False)
 
                 if (i_episode + 1) % self.config.save_model_every == 0:
                     self.agent.store_model()
