@@ -447,7 +447,7 @@ class Field:
         known_num = known_free_num + known_target_num
         total_num = known_num + unknown_num
 
-        known_target_rate = known_target_num / known_num
+        known_target_rate = known_target_num / (known_num + 1)
         unknown_rate = unknown_num / total_num
 
         return known_target_rate, unknown_rate
@@ -467,7 +467,7 @@ class Field:
         # revisit_penalty 是一个处罚 如果这个位置已经被拜访多次，就惩罚多少
         revisit_penalty = -self.visit_map[int(cam_pos[0]), int(cam_pos[1]), int(cam_pos[2])]
         self.visit_map[int(cam_pos[0]), int(cam_pos[1]), int(cam_pos[2])] += 1
-        revisit_map = np.resize(self.visit_map, (16, 16, 16))
+        # revisit_map = np.resize(self.visit_map, (16, 16, 16))
         self.free_cells += new_free_cells
         self.found_targets += new_targets_found
 
@@ -480,7 +480,7 @@ class Field:
                                                                    np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        return (revisit_map, map, np.concatenate(
+        return ({}, map, np.concatenate(
             (self.robot_pos,
              self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, revisit_penalty, (
                    known_target_rate, unknown_rate), done, {}
@@ -506,7 +506,7 @@ class Field:
         self.found_targets = 0
         self.free_cells = 0
         self.visit_map = np.zeros(shape=(256, 256, 256))
-        revisit_map = np.resize(self.visit_map, (16, 16, 16))
+        # revisit_map = np.resize(self.visit_map, (16, 16, 16))
 
         if not self.headless:
             self.gui.messenger.send('reset', [], 'default')
@@ -532,5 +532,5 @@ class Field:
                                                                    np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        return revisit_map, map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), (
+        return {}, map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), (
             known_target_rate, unknown_rate)
