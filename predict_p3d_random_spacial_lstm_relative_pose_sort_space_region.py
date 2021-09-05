@@ -19,13 +19,13 @@ if not headless:
 
 
 def train_fun():
-    Network = network.network_dqn_11_spacial.DQN_Network11_Temporal_Spacial1_3
+    Network = network.network_dqn_11_spacial.DQN_Network11_Temporal_Spacial2
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_relative_pose.P3DTrainer
-    out_folder = "out_p3d_spacial_relative_pose_known_map_lstm"
-    in_folder = ""
+    out_folder = "out_p3d_spacial_relative_pose_sort_region2_predict"
+    in_folder = "output/out_p3d_spacial_relative_pose_sort_region2"
 
     # network
     config = ConfigDQN(network=Network,
@@ -43,14 +43,15 @@ def train_fun():
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
                   max_steps=max_step, init_file=init_file_path, headless=headless)
-    # config.set_parameters({"learning_rate": 1e-4})
-    # config.set_parameters({"epsilon": 1.0})
-    # config.set_parameters({"epsilon_min": 0})
+    config.is_train = False
+    config.set_parameters({"learning_rate": 1e-4})
+    config.set_parameters({"epsilon": 0.0})
+    config.set_parameters({"epsilon_min": 0})
     # Agent
     agent = Agent(config, is_add_revisit_map=False)
 
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_randomize=True, is_reward_plus_unknown_cells=True, randomize_control=True, seq_len=seq_len,
+    trainer.train(is_randomize=True, is_reward_plus_unknown_cells=True, randomize_control=False, seq_len=seq_len,
                   is_save_path=False, is_stop_n_zero_rewards=False, is_add_negative_reward=False,
                   is_map_diff_reward=False)
     # save_path: 是否保存机器人走过的路径
