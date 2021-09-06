@@ -66,9 +66,9 @@ class P3DTrainer(object):
 
             self.agent.reset()
 
-            _, observed_map, robot_pose = self.field.reset(is_randomize=is_randomize,
-                                                           randomize_control=randomize_control,
-                                                           last_targets_found=self.last_targets_found)
+            _, observed_map, robot_pose, _ = self.field.reset(is_randomize=is_randomize,
+                                                              randomize_control=randomize_control,
+                                                              last_targets_found=self.last_targets_found)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
             while not done:
@@ -82,7 +82,7 @@ class P3DTrainer(object):
                 # 前5步，随便选择一个动作
                 action = self.agent.pick_action([observed_map, self.deque.get_robot_poses()])
                 (_, observed_map_next,
-                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, _, done, _ = self.field.step(
+                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, _, _, done, _ = self.field.step(
                     action)
 
                 # a = found_target_num
@@ -140,8 +140,7 @@ class P3DTrainer(object):
                 robot_pose = robot_pose_next.copy()
                 # trainer_p3d
                 if self.time_step % self.config.learn_every == 0 and self.config.is_train:
-                    for i in range(12):
-                        loss = self.agent.learn()
+                    loss = self.agent.learn()
 
                 actions.append(action)
                 rewards.append(reward)
@@ -158,30 +157,16 @@ class P3DTrainer(object):
                 if done:
                     step = 0
                     self.deque.clear()
-                    last_targets_found = np.sum(found_targets)
+                    self.last_targets_found = np.sum(found_targets)
                     paths.append(path.copy())
 
-                    print("\nepisode {} over".format(i_episode))
-                    print("robot pose: {}".format(robot_pose[:3]))
-                    print("actions:{}".format(np.array(actions)))
-                    print("rewards:{}".format(np.array(rewards)))
-                    print("found_targets:{}".format(np.array(found_targets)))
-
-                    print(
-                        "Episode : {} | Mean loss : {} | Reward : {} | Found_targets : {} | unknown_cells :{}-{} | known cells :{}".format(
-                            i_episode,
-                            np.mean(losses),
-                            np.sum(rewards),
-                            np.sum(
-                                found_targets), np.sum(unknown_cells), 0.008 * np.sum(unknown_cells),
-                            np.sum(known_cells)))
+                    self.print_info(i_episode, robot_pose, actions, rewards, found_targets, unknown_cells, known_cells,
+                                    losses)
                     if is_save_path:
                         file_path = os.path.join(self.config.folder["out_folder"], "path.obj")
                         pickle.dump(paths, open(file_path, "wb"))
                         print("save robot path to file_path:{}".format(file_path))
-                    mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
-                                                                                            np.sum(found_targets),
-                                                                                            i_episode, verbose=False)
+                    self.summary_writer.update(np.mean(losses), np.sum(found_targets), i_episode, verbose=False)
 
                     if (i_episode + 1) % self.config.save_model_every == 0:
                         self.agent.store_model()
@@ -207,9 +192,9 @@ class P3DTrainer(object):
 
         self.agent.reset()
 
-        _, observed_map, robot_pose = self.field.reset(is_randomize=is_randomize,
-                                                       randomize_control=False,
-                                                       last_targets_found=self.last_targets_found)
+        _, observed_map, robot_pose, _ = self.field.reset(is_randomize=is_randomize,
+                                                          randomize_control=False,
+                                                          last_targets_found=self.last_targets_found)
         print("robot pose:{}".format(robot_pose))
         print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
         relative_pose = np.zeros(shape=(6,))
@@ -225,7 +210,7 @@ class P3DTrainer(object):
             # 前5步，随便选择一个动作
             action = self.agent.pick_action([observed_map, self.deque.get_robot_poses()])
             (_, observed_map_next,
-             robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, _, done, _ = self.field.step(
+             robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, _, _, done, _ = self.field.step(
                 action)
             # 奖励
             reward = found_target_num
@@ -267,9 +252,6 @@ class P3DTrainer(object):
                                 losses)
                 self.summary_writer.update_inference_data(np.mean(losses), np.sum(found_targets), i_episode,
                                                           verbose=False)
-
-                if (i_episode + 1) % self.config.save_model_every == 0:
-                    self.agent.store_model()
 
                 e_end_time = time.time()
                 print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
