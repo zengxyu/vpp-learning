@@ -22,9 +22,9 @@ def train_fun():
     Network = network.network_dqn_11_spacial.DQN_Network11_Temporal_Spacial1_3
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
-    Action = action_space.ActionMoRoMultiplier36
+    Action = action_space.ActionMoRo12
     Trainer = trainer_p3d.P3DTrainer_relative_pose.P3DTrainer
-    out_folder = "out_p3d_spacial_relative_pose_known_map_lstm"
+    out_folder = "out_p3d_spacial_relative_pose_known_map_lstm2"
     in_folder = ""
 
     # network
