@@ -7,7 +7,6 @@ from scipy.spatial.transform.rotation import Rotation
 
 from utilities.basic_logger import BasicLogger
 from utilities.summary_writer import SummaryWriterLogger
-from ray import tune
 
 headless = True
 if not headless:
