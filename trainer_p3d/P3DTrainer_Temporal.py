@@ -157,30 +157,16 @@ class P3DTrainer(object):
                 if done:
                     step = 0
                     self.deque.clear()
-                    last_targets_found = np.sum(found_targets)
+                    self.last_targets_found = np.sum(found_targets)
                     paths.append(path.copy())
 
-                    print("\nepisode {} over".format(i_episode))
-                    print("robot pose: {}".format(robot_pose[:3]))
-                    print("actions:{}".format(np.array(actions)))
-                    print("rewards:{}".format(np.array(rewards)))
-                    print("found_targets:{}".format(np.array(found_targets)))
-
-                    print(
-                        "Episode : {} | Mean loss : {} | Reward : {} | Found_targets : {} | unknown_cells :{}-{} | known cells :{}".format(
-                            i_episode,
-                            np.mean(losses),
-                            np.sum(rewards),
-                            np.sum(
-                                found_targets), np.sum(unknown_cells), 0.008 * np.sum(unknown_cells),
-                            np.sum(known_cells)))
+                    self.print_info(i_episode, robot_pose, actions, rewards, found_targets, unknown_cells, known_cells,
+                                    losses)
                     if is_save_path:
                         file_path = os.path.join(self.config.folder["out_folder"], "path.obj")
                         pickle.dump(paths, open(file_path, "wb"))
                         print("save robot path to file_path:{}".format(file_path))
-                    mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
-                                                                                            np.sum(found_targets),
-                                                                                            i_episode, verbose=False)
+                    self.summary_writer.update(np.mean(losses), np.sum(found_targets), i_episode, verbose=False)
 
                     if (i_episode + 1) % self.config.save_model_every == 0:
                         self.agent.store_model()
@@ -259,19 +245,16 @@ class P3DTrainer(object):
 
             if done:
                 step = 0
-            self.deque.clear()
-            self.last_targets_found = np.sum(found_targets)
+                self.deque.clear()
+                self.last_targets_found = np.sum(found_targets)
 
-            self.print_info(i_episode, robot_pose, actions, rewards, found_targets, unknown_cells, known_cells,
-                            losses)
-            self.summary_writer.update_inference_data(np.mean(losses), np.sum(found_targets), i_episode,
-                                                      verbose=False)
+                self.print_info(i_episode, robot_pose, actions, rewards, found_targets, unknown_cells, known_cells,
+                                losses)
+                self.summary_writer.update_inference_data(np.mean(losses), np.sum(found_targets), i_episode,
+                                                          verbose=False)
 
-            if (i_episode + 1) % self.config.save_model_every == 0:
-                self.agent.store_model()
-
-            e_end_time = time.time()
-            print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
+                e_end_time = time.time()
+                print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
 
     def print_info(self, i_episode, robot_pose, actions, rewards, found_targets, unknown_cells, known_cells, losses):
         print("\nepisode {} over".format(i_episode))
