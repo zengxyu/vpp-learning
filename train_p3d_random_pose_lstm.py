@@ -45,7 +45,7 @@ def train_fun():
     agent = Agent(config)
 
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_sph_pos=False, is_randomize=True, is_global_known_map=False)
+    trainer.train(is_randomize=True)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
