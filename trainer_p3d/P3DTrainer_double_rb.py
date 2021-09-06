@@ -81,7 +81,7 @@ class P3DTrainer(object):
                 self.deque.append(relative_pose)
                 # 如果是在探索，那么known_target_rate > 0.1 and unknown_rate > 0.2利用
                 if not exploit:
-                    exploit = known_target_rate > 0.01 and unknown_rate > 0.2
+                    exploit = known_target_rate > 0.1 and unknown_rate > 0.2
                 #  如果是在利用，那么unknown_rate < 0.2 转为探索
                 if exploit and unknown_rate < 0.3:
                     exploit = False
@@ -193,7 +193,7 @@ class P3DTrainer(object):
             self.deque.append(relative_pose)
             # 如果是在探索，那么known_target_rate > 0.1 and unknown_rate > 0.2利用
             if not exploit:
-                exploit = known_target_rate > 0.01 and unknown_rate > 0.2
+                exploit = known_target_rate > 0.1 and unknown_rate > 0.2
             #  如果是在利用，那么unknown_rate < 0.2 转为探索
             if exploit and unknown_rate < 0.3:
                 exploit = False
