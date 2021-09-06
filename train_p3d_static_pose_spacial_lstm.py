@@ -22,10 +22,10 @@ def train_fun():
     Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM6
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
-    Action = action_space.ActionMoRoMultiplier36
+    Action = action_space.ActionMoRo12
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "out_p3d_static_env_action12_test"
-    in_folder = "output_remote5/out_p3d_static_env_seq_len_10_spacial"
+    out_folder = "out_p3d_static_pose_spacial_lstm_action12"
+    in_folder = ""
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
@@ -44,11 +44,8 @@ def train_fun():
                   max_steps=max_step, init_file=init_file_path, headless=headless)
     config.is_train = True
     config.set_parameters({"learning_rate": 3e-5})
-    config.set_parameters({"epsilon": 0.5})
-    config.set_parameters({"epsilon_min": 0})
     # Agent
     agent = Agent(config, is_add_revisit_map=False)
-    agent.load_model(601)
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_randomize=False, is_reward_plus_unknown_cells=False, randomize_control=False, seq_len=seq_len,
                   is_save_path=False, is_stop_n_zero_rewards=False, is_map_diff_reward=False,
