@@ -168,7 +168,9 @@ class Field:
         self.found_targets = 0
         self.free_cells = 0
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-        # pickle.dump(self.global_map, open(os.path.join(self.config.folder['out_folder'], "global_map.obj"), "wb"))
+        # pickle.dump(self.global_map,
+        #             open(os.path.join(self.config.folder['out_folder'], "global_map_{}.obj".format(self.reset_count)),
+        #                  "wb"))
         # print("save global map to local")
         self.shape = self.global_map.shape
         self.known_map = np.zeros(self.shape)
