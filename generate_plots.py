@@ -8,42 +8,48 @@ import csv
 import os
 import bisect
 
-def readInterpolatedValues(files, times, time_column, columns = []):
-    
+from utilities.util import get_project_path
+
+
+def readInterpolatedValues(files, times, time_column, columns=[]):
     first_file = True
+    results = None
+    column_names = None
     for filename in files:
-        c0 = [] # Times
+        if not os.path.exists(filename):
+            print("file not exist")
+        c0 = []  # Times
         try:
-            with open(filename,'r') as csvfile:
+            with open(filename, 'r') as csvfile:
                 csv_reader = csv.reader(csvfile, delimiter=',')
                 read_types = False
                 if first_file:
                     column_names = next(csv_reader)
-                    if not columns: # if no columns given, read all but time
-                        columns = range(1,len(column_names))
+                    if not columns:  # if no columns given, read all but time
+                        columns = range(1, len(column_names))
                     column_names = [column_names[i] for i in columns]
                 else:
-                    next(csv_reader) # skip first line
+                    next(csv_reader)  # skip first line
 
-                cs = [[] for _ in range(len(columns))] # colums to read
+                cs = [[] for _ in range(len(columns))]  # colums to read
                 for row in csv_reader:
                     c0.append(float(row[time_column]))
                     for i in range(len(cs)):
                         cs[i].append(float(row[columns[i]]))
         except IOError:
             print('File \'{}\' could not be opened; skipping file'.format(filename))
-            continue 
-    
-        # interpolate data to whole seconds for easier averaging
-        cs_n = [[] for _ in range(len(columns))] # colums adjusted to specified times
-        ci = 0 # current index
+            continue
+
+            # interpolate data to whole seconds for easier averaging
+        cs_n = [[] for _ in range(len(columns))]  # colums adjusted to specified times
+        ci = 0  # current index
         for t in times:
             if ci < len(c0):
                 ci = bisect.bisect_left(c0, t, ci)
-            if ci >= len(c0): # end of times reached; keep last value
+            if ci >= len(c0):  # end of times reached; keep last value
                 for i in range(len(cs_n)):
                     cs_n[i].append(cs[i][-1])
-            elif ci == 0: # if t smaller than first value, keep first
+            elif ci == 0:  # if t smaller than first value, keep first
                 for i in range(len(cs_n)):
                     cs_n[i].append(cs[i][0])
             else:
@@ -51,8 +57,8 @@ def readInterpolatedValues(files, times, time_column, columns = []):
                 t2 = c0[ci]
                 for i in range(len(cs_n)):
                     val = cs[i][ci - 1] * (t - t1) / (t2 - t1) + cs[i][ci] * (t2 - t) / (t2 - t1)
-                    cs_n[i].append(float(val))  
-    
+                    cs_n[i].append(float(val))
+
         if first_file:
             results = [[] for _ in range(len(columns))]
 
@@ -62,6 +68,7 @@ def readInterpolatedValues(files, times, time_column, columns = []):
         first_file = False
 
     return results, column_names
+
 
 def generatePlots(plot_names, times, results_avg, out_folder):
     for i in range(len(plot_names)):
@@ -75,14 +82,13 @@ def generatePlots(plot_names, times, results_avg, out_folder):
 
         FONT_SIZE = 14
 
-        plt.rc('font', size=FONT_SIZE)          # controls default text sizes
-        plt.rc('axes', titlesize=FONT_SIZE)     # fontsize of the axes title
-        plt.rc('axes', labelsize=FONT_SIZE)    # fontsize of the x and y labels
-        plt.rc('xtick', labelsize=FONT_SIZE)    # fontsize of the tick labels
-        plt.rc('ytick', labelsize=FONT_SIZE)    # fontsize of the tick labels
-        plt.rc('legend', fontsize=FONT_SIZE)    # legend fontsize
+        plt.rc('font', size=FONT_SIZE)  # controls default text sizes
+        plt.rc('axes', titlesize=FONT_SIZE)  # fontsize of the axes title
+        plt.rc('axes', labelsize=FONT_SIZE)  # fontsize of the x and y labels
+        plt.rc('xtick', labelsize=FONT_SIZE)  # fontsize of the tick labels
+        plt.rc('ytick', labelsize=FONT_SIZE)  # fontsize of the tick labels
+        plt.rc('legend', fontsize=FONT_SIZE)  # legend fontsize
         plt.rc('figure', titlesize=FONT_SIZE)  # fontsize of the figure title
-
 
         plt.xlabel('Plan length (s)')
         plt.ylabel(plot_names[i])
@@ -92,13 +98,14 @@ def generatePlots(plot_names, times, results_avg, out_folder):
         elif (plot_names[i] == 'Volume accuracy' or plot_names[i] == 'Covered ROI volume'):
             plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
             plt.ylim((0, 1))
-        #plt.title(plot_names[i])
+        # plt.title(plot_names[i])
         plt.legend()
         plt.grid()
         plt.tight_layout()
         figname = plot_names[i].lower().replace(" ", "_") + ".png"
         plt.savefig(os.path.join(out_folder, figname))
         plt.clf()
+
 
 def generateResultsFile(plot_names, results, out_folder):
     for i in range(len(plot_names)):
@@ -107,17 +114,38 @@ def generateResultsFile(plot_names, results, out_folder):
         for j in range(len(results)):
             final_results.append([])
             for result in results[j][i]:
-                #plt.plot(times, result[i], 'C{}--'.format(i), alpha=0.2)
+                # plt.plot(times, result[i], 'C{}--'.format(i), alpha=0.2)
                 final_results[j].append(result[-1])
+
 
 ## Parameters
 
-out_folder = "plots_w14"
-out_folder_old = out_folder + "_old"
+# out_folder = "plots_w14"
+# out_folder_old = out_folder + "_old"
 
-input_folders = ['world14', 'world14_m2s', 'w14_learned_policy', 'w14_learned_policy_36x18', 'w14_dueling_dqn']
-labels = ['Global planner only', 'With M2S', 'Learned Policy', 'Learned Policy (36x18)', 'Dualing DQN']
-input_ranges = [range(0, 20), range(0, 20), range(1, 21), range(1, 21), range(2, 22)]
+# input_folders = ['world14', 'world14_m2s', 'w14_learned_policy', 'w14_learned_policy_36x18', 'w14_dueling_dqn']
+# labels = ['Global planner only', 'With M2S', 'Learn2ed Policy', 'Learned Policy (36x18)', 'Dualing DQN']
+# input_ranges = [range(0, 20), range(0, 20), range(1, 21), range(1, 21), range(2, 22)]
+input_folder1 = os.path.join(get_project_path(), "evaluation_results", "evaluation_dueling_dqn_w36_h18",
+                             "evaluation_dueling_dqn")
+input_folder2 = os.path.join(get_project_path(), "evaluation_results", "evaluation_result_w36_h18", "evaluation")
+input_folder3 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world14")
+input_folder4 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world14_m2s")
+input_folder5 = os.path.join(get_project_path(), "evaluation_results", "evaluation_lstm2")
+input_folder6 = os.path.join(get_project_path(), "evaluation_results", "evaluation")
+
+out_folder = os.path.join(get_project_path(), "result_paper_plot", "plots_w14")
+out_folder_old = os.path.join(get_project_path(), "result_paper_plot", "plots_w14_old")
+if not os.path.exists(input_folder1):
+    print("{} directory not exist".format(input_folder1))
+if not os.path.exists(input_folder2):
+    print("{} directory not exist".format(input_folder2))
+if not os.path.exists(out_folder):
+    os.makedirs(out_folder)
+    os.makedirs(out_folder_old)
+input_folders = [input_folder1, input_folder2, input_folder3, input_folder4, input_folder5, input_folder6]
+labels = ['dueling_dqn_w36_h18', 'ddqn', 'Global planner only', 'With M2S', 'lstm', 'unknown']
+input_ranges = [range(2, 22), range(1, 21), range(0, 20), range(0, 20), range(1, 21), range(1, 21)]
 
 time_column = 1
 columns = [3, 4, 5, 6, 7, 8, 9]
