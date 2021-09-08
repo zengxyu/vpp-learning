@@ -500,7 +500,7 @@ class Field:
         self.reset_count += 1
 
         self.known_map = np.zeros(self.shape)
-        self.robot_pos = np.array([0.0, 0.0, 0.0])
+        self.robot_pos = np.array([128.0, 128.0, 128.0])
         print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
