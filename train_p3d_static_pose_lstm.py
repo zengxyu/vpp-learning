@@ -25,7 +25,7 @@ def train_fun():
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
     out_folder = "out_p3d_static_env_action36"
-    in_folder = "output/test_out_p3d_static_env_action36"
+    in_folder = ""
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
@@ -36,24 +36,18 @@ def train_fun():
                        )
 
     init_file_path = os.path.join(project_path, 'VG07_6.binvox')
-    max_step = 300
+    max_step = 400
     seq_len = 10
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
-                  scale=0.05,
-                  max_steps=max_step, init_file=init_file_path, headless=headless)
-    config.set_parameters({"learning_rate": 5e-5})
-    config.set_parameters({"epsilon": 0.3})
-    config.set_parameters({"epsilon_decay_rate": 0.985})
-    config.set_parameters({"epsilon_min": 0})
+                  scale=0.05, max_steps=max_step, init_file=init_file_path, headless=headless)
     # Agent
-    agent = Agent(config)
-    agent.load_model(201)
+    agent = Agent(config, is_add_revisit_map=False)
 
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
-                  is_reward_plus_unknown_cells=False,
-                  randomize_control=False, is_spacial=False, seq_len=seq_len)
+    trainer.train(is_randomize=False, is_reward_plus_unknown_cells=False,
+                  randomize_control=False, seq_len=seq_len, is_save_path=False, is_stop_n_zero_rewards=False,
+                  is_map_diff_reward=False, is_add_negative_reward=False)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
