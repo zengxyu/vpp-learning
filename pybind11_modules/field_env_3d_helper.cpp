@@ -258,7 +258,7 @@ std::tuple<int, int, int, int, int> count_unknown_layer5(const py::array_t<int> 
                 if (cell_val == 0)
                     unknown++;
             }
-
+//            Vec3D cur = start + frac * dir_vec;
 //            int x = (int)cur.x;
 //            if (!in_range(x, known_map.shape()[0])) break;
 //            int y = (int)cur.y;
@@ -294,6 +294,7 @@ std::tuple<int, int, int, int, int> count_known_free_layer5(const py::array_t<in
                 if (cell_val == 1)
                     known_free++;
             }
+//            Vec3D cur = start + frac * dir_vec;
 //            int x = (int)cur.x;
 //            if (!in_range(x, known_map.shape()[0])) break;
 //            int y = (int)cur.y;
@@ -329,7 +330,7 @@ std::tuple<int, int, int, int, int> count_known_target_layer5(const py::array_t<
                 if (cell_val == 2)
                     known_target++;
             }
-
+//            Vec3D cur = start + frac * dir_vec;
 //            int x = (int)cur.x;
 //            if (!in_range(x, known_map.shape()[0])) break;
 //            int y = (int)cur.y;
