@@ -126,13 +126,14 @@ def generateResultsFile(plot_names, results, out_folder):
 # input_folders = ['world14', 'world14_m2s', 'w14_learned_policy', 'w14_learned_policy_36x18', 'w14_dueling_dqn']
 # labels = ['Global planner only', 'With M2S', 'Learn2ed Policy', 'Learned Policy (36x18)', 'Dualing DQN']
 # input_ranges = [range(0, 20), range(0, 20), range(1, 21), range(1, 21), range(2, 22)]
-input_folder1 = os.path.join(get_project_path(), "evaluation_results", "evaluation_dueling_dqn_w36_h18",
+input_folder1 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world14")
+input_folder2 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world14_m2s")
+
+input_folder3 = os.path.join(get_project_path(), "evaluation_results", "evaluation_dueling_dqn_w36_h18",
                              "evaluation_dueling_dqn")
-input_folder2 = os.path.join(get_project_path(), "evaluation_results", "evaluation_result_w36_h18", "evaluation")
-input_folder3 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world14")
-input_folder4 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world14_m2s")
+input_folder4 = os.path.join(get_project_path(), "evaluation_results", "evaluation_result_w36_h18", "evaluation")
+
 input_folder5 = os.path.join(get_project_path(), "evaluation_results", "evaluation_lstm2")
-input_folder6 = os.path.join(get_project_path(), "evaluation_results", "evaluation")
 
 out_folder = os.path.join(get_project_path(), "result_paper_plot", "plots_w14")
 out_folder_old = os.path.join(get_project_path(), "result_paper_plot", "plots_w14_old")
@@ -143,9 +144,9 @@ if not os.path.exists(input_folder2):
 if not os.path.exists(out_folder):
     os.makedirs(out_folder)
     os.makedirs(out_folder_old)
-input_folders = [input_folder1, input_folder2, input_folder3, input_folder4, input_folder5, input_folder6]
-labels = ['dueling_dqn_w36_h18', 'ddqn', 'Global planner only', 'With M2S', 'lstm', 'unknown']
-input_ranges = [range(2, 22), range(1, 21), range(0, 20), range(0, 20), range(1, 21), range(1, 21)]
+input_folders = [input_folder1, input_folder2, input_folder3, input_folder4, input_folder5]
+labels = ['Global planner only', 'With M2S', 'Dueling DQN', 'DDQN', 'DDQN With TM']
+input_ranges = [range(0, 20), range(0, 20), range(2, 22), range(1, 21), range(1, 21)]
 
 time_column = 1
 columns = [3, 4, 5, 6, 7, 8, 9]
