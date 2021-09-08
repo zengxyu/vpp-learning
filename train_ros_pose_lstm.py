@@ -47,7 +47,7 @@ def train_fun():
     # config.set_parameters({"epsilon_decay_rate": 0.985})
     # config.set_parameters({"epsilon_min": 0.01})
     # Agent
-    agent = Agent(config)
+    agent = Agent(config, is_add_revisit_map=False)
 
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_global_known_map=False, is_egocetric=False,

@@ -30,10 +30,14 @@ class Children(Parent):
 if __name__ == '__main__':
     # arr = np.array([0, 0, 0, 1, 1])
     # print(np.sum(arr == 1))
-    print(math.log2(3000))
-    a = np.array([[1, 2, -1, -1], [1, -1, -1, -1]])
-    a[a < 0] = 0
-    print(a)
+    # print(math.log2(3000))
+    # a = np.array([[1, 2, -1, -1], [1, -1, -1, -1]])
+    # a[a < 0] = 0
+    # print(a)
+    file = open("/home/zeng/workspace/vpp-learning/output/out_p3d_random_env_seq_len_10_spacial/experience/buffer.obj",
+                'rb')
+    print()
+
 # if __name__ == '__main__':
 #     child = Children()
 #     child.say()
