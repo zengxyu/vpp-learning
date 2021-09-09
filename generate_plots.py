@@ -131,7 +131,7 @@ input_folder2 = os.path.join(get_project_path(), "evaluation_results", "exp_resu
 
 input_folder3 = os.path.join(get_project_path(), "evaluation_results", "evaluation_dueling_dqn_w36_h18",
                              "evaluation_dueling_dqn")
-input_folder4 = os.path.join(get_project_path(), "evaluation_results", "evaluation_result_w36_h18", "evaluation")
+input_folder4 = os.path.join(get_project_path(), "evaluation_results", "evaluation_ddqn")
 
 input_folder5 = os.path.join(get_project_path(), "evaluation_results", "evaluation_lstm2")
 
@@ -145,7 +145,7 @@ if not os.path.exists(out_folder):
     os.makedirs(out_folder)
     os.makedirs(out_folder_old)
 input_folders = [input_folder1, input_folder2, input_folder3, input_folder4, input_folder5]
-labels = ['Global planner only', 'With M2S', 'Dueling DQN', 'DDQN', 'DDQN With TM']
+labels = ['Global planner only', 'With M2S', 'Dueling DQN with SO', 'DDQN with SO', 'DDQN with SOT']
 input_ranges = [range(0, 20), range(0, 20), range(2, 22), range(1, 21), range(1, 21)]
 
 time_column = 1
