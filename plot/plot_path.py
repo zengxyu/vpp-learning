@@ -26,7 +26,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 def read_path_data(file_path):
     arr = pickle.load(open(file_path, "rb"))
-    path = arr[3]
+    path = arr[0]
     xs = []
     ys = []
     zs = []
@@ -62,7 +62,7 @@ def read_global_map():
 
 
 def plot1():
-    file_path = "/home/zeng/workspace/vpp-learning/output/predict_p3d_static_pose_lstm/path_bak2.obj"
+    file_path = "/home/zeng/workspace/vpp-learning/output/predict_p3d_static_pose_lstm/path.obj"
     xs, ys, zs = read_path_data(file_path)
     gxs, gys, gzs, free_xs, free_ys, free_zs = read_global_map()
 

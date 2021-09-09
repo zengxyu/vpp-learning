@@ -18,15 +18,16 @@ class RosRandomTrainerTemporalPose(object):
         self.agent = agent
         self.field = field
         self.seq_len = 5
-        self.deque = Pose_State_DEQUE(capacity=self.seq_len)
+        self.deque = None
         self.max_steps = self.field.max_steps
 
     def train(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize,
-              is_reward_plus_unknown_cells, randomize_control):
+              is_reward_plus_unknown_cells, randomize_control, seq_len):
         time_step = 0
         initial_direction = np.array([[1], [0], [0]])
         last_targets_found = 0
-
+        self.seq_len = seq_len
+        self.deque = Pose_State_DEQUE(capacity=self.seq_len)
         for i_episode in range(self.config.num_episodes_to_run):
             print("\nepisode {}".format(i_episode))
             step_count = 0
