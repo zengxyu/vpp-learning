@@ -25,11 +25,11 @@ def train_fun():
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "predict_out_p3d_static_env_action362"
+    out_folder = "predict_out_p3d_random_env_to_static_env"
     # 在动态环境中训练的模型
-    in_folder = "p3d_random_env_seq_len_10_action_36_adaptive_1.2_reward"
-    buffer_obj = open(os.path.join(in_folder, "experience", "buffer.obj"),'rb')
-    memory = pickle.load(buffer_obj)
+    in_folder = "output_remote10/out_p3d_random_36_action"
+    # buffer_obj = open(os.path.join(in_folder, "experience", "buffer.obj"),'rb')
+    # memory = pickle.load(buffer_obj)
 
     # network
     config = ConfigDQN(network=Network,
@@ -52,16 +52,16 @@ def train_fun():
                   max_steps=max_step, init_file=init_file_path, headless=headless)
     # config.set_parameters({"epsilon": 0.0})
     # config.set_parameters({"epsilon_min": 0})
-    config.is_train = True
+    config.is_train = False
     config.set_parameters({"epsilon": 0.1})
     config.set_parameters({"epsilon_decay_rate": 0.997})
     config.set_parameters({"epsilon_min": 0.1})
     # Agent
     agent = Agent(config, is_add_revisit_map=False)
-    agent.memory = memory
-    agent.load_model(801)
+    # agent.memory = memory
+    agent.load_model(110)
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_randomize=True, is_reward_plus_unknown_cells=True, randomize_control=True, seq_len=seq_len,
+    trainer.train(is_randomize=False, is_reward_plus_unknown_cells=True, randomize_control=True, seq_len=seq_len,
                   is_map_diff_reward=False, is_add_negative_reward=False, is_save_path=False,
                   is_stop_n_zero_rewards=False)
 
