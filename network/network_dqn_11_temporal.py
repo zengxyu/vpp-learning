@@ -393,6 +393,108 @@ class DQN_Network11_Temporal_LSTM3(torch.nn.Module):
         return val
 
 
+class DQN_Network11_Temporal_LSTM32(torch.nn.Module):
+    def __init__(self, action_size):
+        super().__init__()
+        self.frame_unknown_fc1 = torch.nn.Linear(3240, 1280)
+        self.frame_unknown_fc2 = torch.nn.Linear(1280, 480)
+
+        self.frame_free_fc1 = torch.nn.Linear(3240, 1280)
+        self.frame_free_fc2 = torch.nn.Linear(1280, 480)
+
+        self.frame_known_fc1 = torch.nn.Linear(3240, 1280)
+        self.frame_known_fc2 = torch.nn.Linear(1280, 480)
+
+        self.frame_fc1 = torch.nn.Linear(480 * 3, 480)
+        self.frame_fc2 = torch.nn.Linear(480, 128)
+
+        self.pose_fc1a = torch.nn.Linear(3, 32)
+        self.pose_fc2a = torch.nn.Linear(32, 64)
+
+        self.pose_fc1b = torch.nn.Linear(3, 32)
+        self.pose_fc2b = torch.nn.Linear(32, 64)
+
+        self.hn_neighbor_state_dim = 256
+        self.lstm = torch.nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+        self.lstm_fc = torch.nn.Linear(self.hn_neighbor_state_dim, 128)
+
+        self.pose_fc3 = torch.nn.Linear(128 * 3, 256)
+
+        self.fc_val = torch.nn.Linear(256, action_size)
+
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+    def encode_pos(self, robot_pose):
+        out_pose_a = F.relu(self.pose_fc1a(robot_pose[:, 0:3]))
+        out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+        out_pose_b = F.relu(self.pose_fc1b(robot_pose[:, 3:6]))
+        out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+
+        out = torch.cat((out_pose_a, out_pose_b), dim=1)
+        return out
+
+    def encode_observation_map(self, frame):
+        # 128 15 38 19
+        frame = torch.reshape(frame, shape=(-1, 3, 5, 36, 18))
+        unknown = frame[:, 0, :, :, :]
+        free = frame[:, 1, :, :, :]
+        known = frame[:, 2, :, :, :]
+        unknown = torch.reshape(unknown, (-1, 5 * 36 * 18))
+        free = torch.reshape(free, (-1, 5 * 36 * 18))
+        known = torch.reshape(known, (-1, 5 * 36 * 18))
+
+
+        out_unknown = F.relu(self.frame_unknown_fc1(unknown))
+        out_unknown = F.relu(self.frame_unknown_fc2(out_unknown))
+
+        out_free = F.relu(self.frame_unknown_fc1(free))
+        out_free = F.relu(self.frame_unknown_fc2(out_free))
+
+        out_known = F.relu(self.frame_unknown_fc1(known))
+        out_known = F.relu(self.frame_unknown_fc2(out_known))
+
+        out_frame = torch.cat((out_unknown, out_free, out_known), dim=1)
+        out_frame = F.relu(self.frame_fc1(out_frame))
+        out_frame = F.relu(self.frame_fc2(out_frame))
+
+        return out_frame
+
+    def forward(self, state):
+        frame, robot_pose = state
+        robot_pose_reshape = torch.transpose(robot_pose, 0, 1)
+        outs = None
+        batch_size = frame.shape[0]
+        seq_len = robot_pose_reshape.shape[0]
+        h0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+            torch.device("cpu"))
+        c0 = torch.zeros(1, batch_size, self.hn_neighbor_state_dim).to(
+            torch.device("cpu"))
+        for i in range(seq_len):
+            out = self.encode_pos(robot_pose_reshape[i])
+            out = out.unsqueeze(1)
+            if outs is None:
+                outs = out
+            else:
+                outs = torch.cat((outs, out), dim=1)
+        lstm_neighbor_output, (hn, cn) = self.lstm(outs, (h0, c0))
+        hn = hn.squeeze(0)
+        hn = F.relu(self.lstm_fc(hn))
+
+        out_pose = self.encode_pos(robot_pose_reshape[-1])
+        out_frame = self.encode_observation_map(frame)
+        outs = torch.cat((hn, out_pose, out_frame), dim=1)
+
+        out = F.relu(self.pose_fc3(outs))
+
+        val = self.fc_val(out)
+        return val
+
+
 class DQN_Network11_Temporal_LSTM3_Revisit(torch.nn.Module):
     def __init__(self, action_size):
         super().__init__()

@@ -20,6 +20,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def train_fun():
+    # 模型保存在windows/ workspace//results_paper/output_ros/out_ros_static_dqn_per2
     Network = network.network_dqn_11.DQN_Network11
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = field_ros.Field
