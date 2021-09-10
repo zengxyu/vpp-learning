@@ -26,7 +26,7 @@ def train_fun():
     Action = action_space.ActionMoRo12
     Trainer = trainer_ros.RosTrainer_Temporal.RosTrainer
     out_folder = "predict_out_ros_static_env_pose_lstm"
-    in_folder = "output_remote8/out_ros_static_env_seq_len_10_2"
+    in_folder = "/media/zeng/Workspace/results_paper/output_ros_final/out_ros_static_env_pose_lstm"
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
@@ -36,16 +36,17 @@ def train_fun():
                        file_logging_level=logging.WARNING,
                        )
 
-    max_step = 200
+    max_step = 150
     seq_len = 10
     # field
     # 原本move_step = 1
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   max_steps=max_step, move_step=0.1, handle_simulation=False)
-    # config.set_parameters({"learning_rate": 1e-4})
+    config.set_parameters({"learning_rate": 1e-5})
     config.set_parameters({"epsilon": 0.1})
     config.num_episodes_to_run = 20
-    config.is_train = False
+    config.is_train = True
+    config.learn_every = 10
     # config.set_parameters({"epsilon_decay_rate": 0.985})
     # config.set_parameters({"epsilon_min": 0.01})
     # Agent
