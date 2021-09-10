@@ -33,7 +33,7 @@ def train_fun():
 
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
-                  max_steps=300, handle_simulation=True, move_step=0.1)
+                  max_steps=300, handle_simulation=True, move_step=0.05)
     config.set_parameters({"learning_rate": 1e-4})
     config.set_parameters({"buffer_size": 12000})
 
