@@ -60,8 +60,8 @@ class RosTrainer(object):
                 else:
                     zero_reward_consistent_count = 0
                 # # reward redefine
-                if zero_reward_consistent_count >= 10:
-                    done = True
+                # if zero_reward_consistent_count >= 10:
+                #     done = True
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
                 # diff direction
@@ -75,7 +75,7 @@ class RosTrainer(object):
                 observed_map = observed_map_next.copy()
                 robot_pose = robot_pose_next.copy()
                 # trainer_p3d
-                if self.config.is_train:
+                if time_step % self.config.learn_every == 0 and self.config.is_train:
                     loss = self.agent.learn()
                 else:
                     loss = 0
