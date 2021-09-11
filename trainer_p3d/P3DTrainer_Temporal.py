@@ -93,7 +93,7 @@ class P3DTrainer(object):
 
                 # 奖励unknown
                 if is_reward_plus_unknown_cells:
-                    reward += 0.008 * unknown_cells_num
+                    reward += 0.006 * unknown_cells_num
 
                 # 奖励前150step获得的targets
                 if found_target_num == 0:
