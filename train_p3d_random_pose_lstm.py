@@ -47,9 +47,10 @@ def train_fun():
     agent = Agent(config, is_add_revisit_map=False)
 
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_randomize=True, randomize_control=True, is_reward_plus_unknown_cells=True, seq_len=seq_len,
-                  is_save_path=False, is_stop_n_zero_rewards=False, is_map_diff_reward=False,
-                  is_add_negative_reward=False)
+    trainer.train(is_randomize=True, randomize_control=False, randomize_from_48_envs=True,
+                  is_reward_plus_unknown_cells=True, seq_len=seq_len,
+                  is_add_negative_reward=False, is_map_diff_reward=False, is_stop_n_zero_rewards=False,
+                  is_save_path=False, is_save_env=False)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
