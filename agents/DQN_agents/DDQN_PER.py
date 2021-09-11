@@ -25,6 +25,7 @@ class DDQN_PER(DDQN):
                                                                     batch_size=self.hyper_parameters['batch_size'],
                                                                     device=self.device, is_discrete=True,
                                                                     seed=self.seed)
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.q_network_optimizer, gamma=0.98)
 
     def learn(self):
         """Runs a learning iteration for the Q network after sampling from the replay buffer in a prioritised way"""

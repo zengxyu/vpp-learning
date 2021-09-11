@@ -31,14 +31,15 @@ class P3DTrainer(object):
         self.initial_direction = np.array([[1], [0], [0]])
         self.last_targets_found = 0
 
-    def train(self, is_randomize, is_reward_plus_unknown_cells, randomize_control, seq_len, is_save_path,
-              is_stop_n_zero_rewards, is_map_diff_reward, is_add_negative_reward):
+    def train(self, is_randomize, is_reward_plus_unknown_cells, randomize_control, randomize_from_48_envs, seq_len,
+              is_save_path, is_stop_n_zero_rewards, is_map_diff_reward, is_add_negative_reward, is_save_env):
         self.seq_len = seq_len
         self.deque = Pose_State_DEQUE(capacity=self.seq_len)
 
         if headless:
-            self.main_loop(is_randomize, is_reward_plus_unknown_cells, randomize_control, is_save_path,
-                           is_stop_n_zero_rewards, is_map_diff_reward, is_add_negative_reward)
+            self.main_loop(is_randomize, is_reward_plus_unknown_cells, randomize_control, randomize_from_48_envs,
+                           is_save_path, is_stop_n_zero_rewards, is_map_diff_reward, is_add_negative_reward,
+                           is_save_env)
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
@@ -46,8 +47,8 @@ class P3DTrainer(object):
             main_thread.start()
             self.field.gui.run()
 
-    def main_loop(self, is_randomize, is_reward_plus_unknown_cells, randomize_control, is_save_path,
-                  is_stop_n_zero_rewards, is_map_diff_reward, is_add_negative_reward):
+    def main_loop(self, is_randomize, is_reward_plus_unknown_cells, randomize_control, randomize_from_48_envs,
+                  is_save_path, is_stop_n_zero_rewards, is_map_diff_reward, is_add_negative_reward, is_save_env):
 
         paths = []
         for i_episode in range(self.config.num_episodes_to_run):
@@ -68,6 +69,8 @@ class P3DTrainer(object):
 
             _, observed_map, robot_pose, _ = self.field.reset(is_randomize=is_randomize,
                                                               randomize_control=randomize_control,
+                                                              randomize_from_48_envs=randomize_from_48_envs,
+                                                              is_save_env=is_save_env,
                                                               last_targets_found=self.last_targets_found)
             print("robot pose:{}".format(robot_pose))
             print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
@@ -160,6 +163,10 @@ class P3DTrainer(object):
                     self.last_targets_found = np.sum(found_targets)
                     paths.append(path.copy())
 
+                    # for i in range(25):
+                    #     loss = self.agent.learn()
+                    #     losses.append(loss)
+
                     self.print_info(i_episode, robot_pose, actions, rewards, found_targets, unknown_cells, known_cells,
                                     losses)
                     if is_save_path:
@@ -176,6 +183,10 @@ class P3DTrainer(object):
 
             if (i_episode + 1) % 10 == 0:
                 self.predict(i_episode, is_randomize, is_reward_plus_unknown_cells)
+            if (i_episode + 1) % 5 == 0:
+                self.agent.scheduler.step()
+                print("============================learning rate:",
+                      self.agent.q_network_optimizer.state_dict()['param_groups'][0]['lr'])
 
     def predict(self, i_episode, is_randomize, is_reward_plus_unknown_cells):
         print("\ninference episode {}".format(i_episode))
@@ -193,7 +204,9 @@ class P3DTrainer(object):
         self.agent.reset()
 
         _, observed_map, robot_pose, _ = self.field.reset(is_randomize=is_randomize,
-                                                          randomize_control=False,
+                                                          randomize_control=True,
+                                                          randomize_from_48_envs=False,
+                                                          is_save_env=False,
                                                           last_targets_found=self.last_targets_found)
         print("robot pose:{}".format(robot_pose))
         print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
