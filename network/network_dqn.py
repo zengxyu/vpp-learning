@@ -1,5 +1,4 @@
 import numpy as np
-import pfrl
 import torch
 from torch import nn
 import torch.nn.functional as F
