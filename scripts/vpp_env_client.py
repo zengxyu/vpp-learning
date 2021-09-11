@@ -3,8 +3,10 @@ import os
 import time
 import zmq
 import capnp
-
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "capnp"))
+sys.path.append('/home/wshi/workspace/vpp-learning/capnp')
+print(sys.path)
+
 import action_capnp
 import observation_capnp
 import numpy as np
