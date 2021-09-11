@@ -42,7 +42,7 @@ def train_fun():
     # 原本move_step = 1
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   max_steps=max_step, move_step=0.1, handle_simulation=False)
-    config.set_parameters({"learning_rate": 1e-5})
+    # config.set_parameters({"learning_rate": 1e-5})
     config.set_parameters({"epsilon": 0.1})
     config.num_episodes_to_run = 20
     config.is_train = True
