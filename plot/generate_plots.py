@@ -134,8 +134,10 @@ input_folder1 = os.path.join(get_project_path(), "evaluation_results", "evaluati
 input_folder2 = os.path.join(get_project_path(), "evaluation_results", "evaluation_ddqn")
 input_folder3 = os.path.join(get_project_path(), "evaluation_results", "evaluation_dueling_dqn_w36_h18",
                              "evaluation_dueling_dqn")
+
 input_folder4 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world14_m2s")
 input_folder5 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world14")
+input_folder6 = os.path.join(get_project_path(), "evaluation_results", "evaluation_world_sv4_2")
 
 out_folder = os.path.join(get_project_path(), "plot", "result_paper_plot", "plots_w14")
 out_folder_old = os.path.join(get_project_path(), "plot", "result_paper_plot", "plots_w14_old")
@@ -146,9 +148,9 @@ if not os.path.exists(input_folder2):
 if not os.path.exists(out_folder):
     os.makedirs(out_folder)
     os.makedirs(out_folder_old)
-input_folders = [input_folder1, input_folder2, input_folder3, input_folder4, input_folder5]
-labels = ['DDQN with SOT', 'DDQN with SO', 'Dueling DQN with SO', 'Global planner only', 'With M2S']
-input_ranges = [range(1, 21), range(1, 21), range(2, 22), range(0, 20), range(0, 20)]
+input_folders = [input_folder1, input_folder2, input_folder3, input_folder4, input_folder5,input_folder6]
+labels = ['DDQN with SOT', 'DDQN with SO', 'Dueling DQN with SO', 'Global planner only', 'With M2S', 'evaluation_world_sv4_2']
+input_ranges = [range(1, 21), range(1, 21), range(2, 22), range(0, 20), range(0, 20), range(1, 21)]
 # input_folders = [input_folder2, input_folder1]
 # labels = ['With M2S', 'Global planner only']
 # input_ranges = [range(0, 20), range(0, 20)]
