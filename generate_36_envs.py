@@ -1,5 +1,6 @@
 import argparse
 import logging
+import pickle
 import sys
 import os
 
@@ -19,12 +20,12 @@ if not headless:
 
 
 def train_fun():
-    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM32
+    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
-    Action = action_space.ActionMoRoMultiplier36
+    Action = action_space.ActionMoRo12
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "out_p3d_random_36_action_network_lstm32"
+    out_folder = "out_36_envs"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
@@ -34,23 +35,26 @@ def train_fun():
                        console_logging_level=logging.DEBUG,
                        file_logging_level=logging.WARNING,
                        )
-
-    init_file_path = os.path.join(project_path, 'VG07_6.binvox')
-    max_step = 400
     seq_len = 10
+    max_steps = 400
+    init_file_path = os.path.join(project_path, 'VG07_6.binvox')
+
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
-                  scale=0.05,
-                  max_steps=max_step, init_file=init_file_path, headless=headless)
-
+                  scale=0.05, max_steps=max_steps, init_file=init_file_path, headless=headless)
+    num_envs = 48
+    for i in range(num_envs):
+        global_map = field.augment_env()
+        pickle.dump(global_map, open(
+            os.path.join(config.folder['out_folder'], "global_map_{}.obj".format(i)), "wb"))
+        print("save global map {} to local".format(i))
     # Agent
-    agent = Agent(config, is_add_revisit_map=False)
+    # agent = Agent(config, is_add_revisit_map=False)
 
-    trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_randomize=True, randomize_control=True, is_reward_plus_unknown_cells=True, seq_len=seq_len,
-                  is_save_path=False, is_stop_n_zero_rewards=False, is_map_diff_reward=False,
-                  randomize_from_48_envs=False,
-                  is_add_negative_reward=False, is_save_env=False)
+    # trainer = Trainer(config=config, agent=agent, field=field)
+    # trainer.train(is_randomize=True, randomize_control=True, is_reward_plus_unknown_cells=True, seq_len=seq_len,
+    #               is_add_negative_reward=False, is_map_diff_reward=False, is_stop_n_zero_rewards=False,
+    #               is_save_path=False, is_save_env=False)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')

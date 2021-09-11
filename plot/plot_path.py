@@ -1,3 +1,4 @@
+import os
 import pickle
 
 import matplotlib
@@ -8,6 +9,11 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import matplotlib.cm as cmx
 from mpl_toolkits.mplot3d import Axes3D
+
+def plot_line(x, y, z):
+    # 定义坐标轴
+
+    # ax = fig.add_subplot(111,projection='3d')  #这种方法也可以画多个子图
 
 
 # def plot_line(x, y, z):
@@ -26,7 +32,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 def read_path_data(file_path):
     arr = pickle.load(open(file_path, "rb"))
-    path = arr[0]
+    path = arr[3]
     xs = []
     ys = []
     zs = []
@@ -38,8 +44,7 @@ def read_path_data(file_path):
     return xs, ys, zs
 
 
-def read_global_map():
-    path = "/home/zeng/workspace/vpp-learning/global_map.obj"
+def read_global_map(path):
     global_map = pickle.load(open(path, "rb"))
     max_v = np.max(global_map)
     print("max value:{}".format(max_v))
@@ -61,6 +66,14 @@ def read_global_map():
     return fruit_xs, fruit_ys, fruit_zs, free_xs, free_ys, free_zs
 
 
+if __name__ == '__main__':
+    for i in range(48):
+        fig = plt.figure()
+        ax1 = plt.axes(projection='3d')
+        intput_folder = "/Users/weixianshi/PycharmProjects/vpp-learning/output/out_36_envs"
+        path = os.path.join(intput_folder, "global_map_{}.obj".format(i))
+        gxs, gys, gzs, free_xs, free_ys, free_zs = read_global_map(path)
+        ax1.scatter3D(gzs, gys, gxs, cmap='Blues')  # 绘制散点图
 def plot1():
     file_path = "/home/zeng/workspace/vpp-learning/output/predict_p3d_static_pose_lstm/path.obj"
     xs, ys, zs = read_path_data(file_path)
@@ -84,6 +97,22 @@ def plot1():
     ax1.set_ylabel("y")
     ax1.set_zlabel("z")
 
+        # file_path = "/home/zeng/workspace/vpp-learning/output/predict_p3d_static_pose_lstm/path_bak2.obj"
+        # xs, ys, zs = read_path_data(file_path)
+        # xs, ys, zs = xs[:300], ys[:300], zs[:300]
+        # ax1.scatter3D(zs, ys, xs, cmap='Blacks')  # 绘制散点图
+        # ax1.plot3D(zs, ys, xs, 'gray')  # 绘制散点图
+        # ax1.scatter3D(free_xs, free_ys, free_zs)  # 绘制散点图
+        ax1.set_xlim(0, 256)
+        ax1.set_ylim(0, 256)
+        ax1.set_zlim(0, 256)
+        ax1.view_init(10, -70)
+        out_folder = os.path.join(intput_folder, "global_map_images")
+        if not os.path.exists(out_folder):
+            os.makedirs(out_folder)
+        out_path = os.path.join(out_folder, "global_map_{}.png".format(i))
+        plt.savefig(out_path)
+        # plt.show()
     plt.show()
 
 

@@ -452,11 +452,11 @@ class DQN_Network11_Temporal_LSTM32(torch.nn.Module):
         out_unknown = F.relu(self.frame_unknown_fc1(unknown))
         out_unknown = F.relu(self.frame_unknown_fc2(out_unknown))
 
-        out_free = F.relu(self.frame_unknown_fc1(free))
-        out_free = F.relu(self.frame_unknown_fc2(out_free))
+        out_free = F.relu(self.frame_free_fc1(free))
+        out_free = F.relu(self.frame_free_fc2(out_free))
 
-        out_known = F.relu(self.frame_unknown_fc1(known))
-        out_known = F.relu(self.frame_unknown_fc2(out_known))
+        out_known = F.relu(self.frame_known_fc1(known))
+        out_known = F.relu(self.frame_known_fc2(out_known))
 
         out_frame = torch.cat((out_unknown, out_free, out_known), dim=1)
         out_frame = F.relu(self.frame_fc1(out_frame))
