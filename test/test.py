@@ -44,6 +44,12 @@ if __name__ == '__main__':
     memory.sample()
     print()
 
+    # print(math.log2(3000))
+    # a = np.array([[1, 2, -1, -1], [1, -1, -1, -1]])
+    # a[a < 0] = 0
+    # print(a)
+    a = 0.98 ** 100 * 1e-4
+    print(a)
 # if __name__ == '__main__':
 #     child = Children()
 #     child.say()
