@@ -2,9 +2,10 @@ import sys
 import os
 
 import trainer_ros
-from environment import field_ros
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
+from environment import field_ros
+
 import argparse
 import logging
 import sys
