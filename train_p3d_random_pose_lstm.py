@@ -34,7 +34,7 @@ def train_fun():
                        console_logging_level=logging.DEBUG,
                        file_logging_level=logging.WARNING,
                        )
-
+    config.set_parameters({"learning_rate": 5e-5})
     init_file_path = os.path.join(project_path, 'VG07_6.binvox')
     max_step = 400
     seq_len = 10
