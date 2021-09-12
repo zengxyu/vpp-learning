@@ -44,7 +44,7 @@ class DDQN_PER(DDQN):
         self.skipping_step_update_of_target_network(self.q_network_local, self.q_network_target,
                                                     global_step_number=self.global_step_number,
                                                     update_every_n_steps=self.hyper_parameters["update_every_n_steps"])
-        if (self.global_step_number + 1) % 1000 == 0:
+        if (self.global_step_number + 1) % 10000 == 0:
             pickle.dump(self.memory, open(os.path.join(self.config.folder['exp_sv'], "buffer.obj"), 'wb'))
             print("save replay buffer to local")
         # print(loss.detach().cpu().numpy(), torch.mean(torch.abs(td_errors)).detach().cpu().numpy())
