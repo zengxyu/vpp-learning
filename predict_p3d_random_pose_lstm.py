@@ -28,7 +28,7 @@ def train_fun():
     out_folder = "predict_out_p3d_static_env_action362"
     # 在动态环境中训练的模型
     in_folder = "p3d_random_env_seq_len_10_action_36_adaptive_1.2_reward"
-    buffer_obj = open(os.path.join(in_folder, "experience", "buffer.obj"),'rb')
+    buffer_obj = open(os.path.join(in_folder, "experience", "buffer.obj"), 'rb')
     memory = pickle.load(buffer_obj)
 
     # network
@@ -63,7 +63,7 @@ def train_fun():
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_randomize=True, is_reward_plus_unknown_cells=True, randomize_control=True, seq_len=seq_len,
                   is_map_diff_reward=False, is_add_negative_reward=False, is_save_path=False,
-                  is_stop_n_zero_rewards=False)
+                  is_stop_n_zero_rewards=False, is_save_env=False)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')

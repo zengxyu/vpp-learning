@@ -393,6 +393,65 @@ class DQN_Network11_Temporal_LSTM3(torch.nn.Module):
         return val
 
 
+class DQN_Network11(torch.nn.Module):
+    def __init__(self, action_size):
+        super().__init__()
+        self.frame_con1 = torch.nn.Conv2d(15, 24, kernel_size=4, stride=2, padding=1)
+        self.frame_fc1 = torch.nn.Linear(3888, 784)
+        self.frame_fc2 = torch.nn.Linear(784, 128)
+
+        self.pose_fc1a = torch.nn.Linear(3, 32)
+        self.pose_fc2a = torch.nn.Linear(32, 64)
+
+        self.pose_fc1b = torch.nn.Linear(3, 32)
+        self.pose_fc2b = torch.nn.Linear(32, 64)
+
+        self.hn_neighbor_state_dim = 256
+        self.lstm = torch.nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
+        self.lstm_fc = torch.nn.Linear(self.hn_neighbor_state_dim, 128)
+
+        self.pose_fc3 = torch.nn.Linear(128 * 2, 128)
+
+        self.fc_val = torch.nn.Linear(128, action_size)
+
+    def init_weights(self):
+        for m in self.modules():
+            if type(m) is torch.nn.Linear or type(m) is torch.nn.Conv2d:
+                torch.nn.init.zeros_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+    def encode_pos(self, robot_pose):
+        out_pose_a = F.relu(self.pose_fc1a(robot_pose[:, 0:3]))
+        out_pose_a = F.relu(self.pose_fc2a(out_pose_a))
+
+        out_pose_b = F.relu(self.pose_fc1b(robot_pose[:, 3:6]))
+        out_pose_b = F.relu(self.pose_fc2b(out_pose_b))
+
+        out = torch.cat((out_pose_a, out_pose_b), dim=1)
+        return out
+
+    def encode_observation_map(self, frame):
+        out_frame = F.relu(self.frame_con1(frame))
+        out_frame = out_frame.reshape(out_frame.size()[0], -1)
+        out_frame = F.relu(self.frame_fc1(out_frame))
+        out_frame = F.relu(self.frame_fc2(out_frame))
+
+        return out_frame
+
+    def forward(self, state):
+        frame, robot_pose = state
+        robot_pose_reshape = torch.transpose(robot_pose, 0, 1)
+
+        out_pose = self.encode_pos(robot_pose_reshape[-1])
+        out_frame = self.encode_observation_map(frame)
+        outs = torch.cat((out_pose, out_frame), dim=1)
+
+        out = F.relu(self.pose_fc3(outs))
+
+        val = self.fc_val(out)
+        return val
+
+
 class DQN_Network11_Temporal_LSTM32(torch.nn.Module):
     def __init__(self, action_size):
         super().__init__()
@@ -447,7 +506,6 @@ class DQN_Network11_Temporal_LSTM32(torch.nn.Module):
         unknown = torch.reshape(unknown, (-1, 5 * 36 * 18))
         free = torch.reshape(free, (-1, 5 * 36 * 18))
         known = torch.reshape(known, (-1, 5 * 36 * 18))
-
 
         out_unknown = F.relu(self.frame_unknown_fc1(unknown))
         out_unknown = F.relu(self.frame_unknown_fc2(out_unknown))
