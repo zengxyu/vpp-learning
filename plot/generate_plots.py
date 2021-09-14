@@ -148,8 +148,9 @@ if not os.path.exists(input_folder2):
 if not os.path.exists(out_folder):
     os.makedirs(out_folder)
     os.makedirs(out_folder_old)
-input_folders = [input_folder1, input_folder2, input_folder3, input_folder4, input_folder5,input_folder6]
-labels = ['DDQN with SOT', 'DDQN with SO', 'Dueling DQN with SO', 'Global planner only', 'With M2S', 'evaluation_world_sv4_2']
+input_folders = [input_folder1, input_folder2, input_folder3, input_folder4, input_folder5, input_folder6]
+labels = ['DDQN with SOT', 'DDQN with SO', 'Dueling DQN with SO', 'Global planner only', 'With M2S',
+          'evaluation_world_sv4_2']
 input_ranges = [range(1, 21), range(1, 21), range(2, 22), range(0, 20), range(0, 20), range(1, 21)]
 # input_folders = [input_folder2, input_folder1]
 # labels = ['With M2S', 'Global planner only']

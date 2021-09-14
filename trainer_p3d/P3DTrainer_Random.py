@@ -64,7 +64,7 @@ class P3DTrainer(object):
                  robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, done, _ = self.field.step(
                     action)
                 if is_reward_plus_unknown_cells:
-                    reward = found_target_num + 0.001 * unknown_cells_num
+                    reward = found_target_num + 0.006 * unknown_cells_num
                 else:
                     reward = found_target_num
 

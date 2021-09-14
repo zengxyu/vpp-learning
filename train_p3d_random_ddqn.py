@@ -19,12 +19,12 @@ if not headless:
 
 
 def train_fun():
-    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
+    Network = network.network_dqn_11_temporal.DQN_Network11
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "out_p3d_random_step_len_15_36_action_with_scheduler"
+    out_folder = "out_p3d_random_ddqn_36_action_with_scheduler"
     in_folder = ""
     # network
     config = ConfigDQN(network=Network,
@@ -37,7 +37,7 @@ def train_fun():
     config.set_parameters({"learning_rate": 5e-5})
     init_file_path = os.path.join(project_path, 'VG07_6.binvox')
     max_step = 400
-    seq_len = 15
+    seq_len = 10
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
