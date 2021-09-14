@@ -4,3 +4,7 @@ from trainer_p3d import P3DTrainer_Random
 from trainer_p3d import P3DTrainer_Temporal_Revisit
 from trainer_p3d import P3DTrainer_relative_pose
 from trainer_p3d import P3DTrainer_double_rb
+from trainer_p3d import P3DTrainer_Z
+from trainer_p3d import P3DTrainer_Random2
+from trainer_p3d import P3DTrainer_Temporal_Statistic_Time
+from trainer_p3d import P3DTrainer_Random2_statistic_time

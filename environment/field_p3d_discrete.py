@@ -170,10 +170,7 @@ class Field:
         self.found_targets = 0
         self.free_cells = 0
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-        # pickle.dump(self.global_map,
-        #             open(os.path.join(self.config.folder['out_folder'], "global_map_{}.obj".format(self.reset_count)),
-        #                  "wb"))
-        # print("save global map to local")
+
         self.shape = self.global_map.shape
         self.known_map = np.zeros(self.shape)
         if not self.headless:
@@ -490,6 +487,12 @@ class Field:
                    known_target_rate, unknown_rate), done, {}
 
     def reset(self, is_randomize, randomize_control, randomize_from_48_envs, is_save_env, last_targets_found):
+        print("is_randomize:{}".format(is_randomize))
+        print("randomize_control:{}".format(randomize_control))
+        print("randomize_from_48_envs:{}".format(randomize_from_48_envs))
+        print("is_save_env:{}".format(is_save_env))
+        print("last_targets_found:{}".format(last_targets_found))
+
         "randomize_control: 如果这张地图学完了，就换下一张，没学完，就始终使用一张图"
         self.is_randomize = is_randomize
         self.randomize_control = randomize_control
@@ -536,11 +539,11 @@ class Field:
                     print("last_targets_found :{} < {}, NOT RANDOMIZE THE ENV".format(last_targets_found, threshold))
             else:
                 self.global_map = self.augment_env()
-            # 保存随机环境
-            if self.is_save_env:
-                pickle.dump(self.global_map, open(
-                    os.path.join(self.config.folder['out_folder'], "global_map_{}.obj".format(self.reset_count)), "wb"))
-                print("save global map to local")
+        # 保存随机环境
+        if self.is_save_env:
+            pickle.dump(self.global_map, open(
+                os.path.join(self.config.folder['out_folder'], "global_map_{}.obj".format(self.reset_count)), "wb"))
+            print("save global map to local")
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)

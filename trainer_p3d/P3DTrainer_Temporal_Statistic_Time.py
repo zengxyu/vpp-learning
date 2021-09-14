@@ -33,6 +33,7 @@ class P3DTrainer(object):
         self.rewards = []
         self.rewards_sum_n_episodes = []
         self.found_targets_sum_n_episodes = []
+        self.taken_steps = []
 
     def train(self, is_randomize, is_reward_plus_unknown_cells, randomize_control, randomize_from_48_envs, seq_len,
               is_save_path, is_stop_n_zero_rewards, is_map_diff_reward, is_add_negative_reward, is_save_env):
@@ -90,7 +91,6 @@ class P3DTrainer(object):
                 (_, observed_map_next,
                  robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, _, _, done, _ = self.field.step(
                     action)
-
                 reward = found_target_num
 
                 # 奖励unknown
@@ -152,11 +152,15 @@ class P3DTrainer(object):
                 losses.append(loss)
                 self.time_step += 1
                 step += 1
+                done = np.sum(found_targets) > 0.5 * 75370
+
                 # record
                 if not headless:
                     threading.Thread.considerYield()
 
                 if done:
+                    print("Taken {} steps".format(step))
+                    self.taken_steps.append(step)
                     step = 0
                     self.deque.clear()
                     self.last_targets_found = np.sum(found_targets)
@@ -178,14 +182,14 @@ class P3DTrainer(object):
                     e_end_time = time.time()
                     print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
 
-            if (i_episode + 1) % 10 == 0:
-                self.predict(i_episode, is_randomize, is_reward_plus_unknown_cells)
+            # if (i_episode + 1) % 10 == 0:
+            #     self.predict(i_episode, is_randomize, is_reward_plus_unknown_cells)
             if (i_episode + 1) % 5 == 0:
                 self.agent.scheduler.step()
                 print("============================learning rate:",
                       self.agent.q_network_optimizer.state_dict()['param_groups'][0]['lr'])
-        result = [self.rewards_sum_n_episodes, self.found_targets_sum_n_episodes]
-        result_sv_path = os.path.join(self.config.folder['out_folder'], "reward_found_targets.obj")
+        result = self.taken_steps
+        result_sv_path = os.path.join(self.config.folder['out_folder'], "steps.obj")
         pickle.dump(result, open(result_sv_path, "wb"))
 
     def predict(self, i_episode, is_randomize, is_reward_plus_unknown_cells):
