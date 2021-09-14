@@ -97,7 +97,7 @@ class SummaryWriterLogger:
         self.ep_inference_loss_ll = []
         self.ep_inference_reward_ll = []
 
-        self.init(self.tb_l_r_in_dir)
+        # self.init(self.tb_l_r_in_dir)
         self.show_config(config)
 
     def init(self, verbose=True):
