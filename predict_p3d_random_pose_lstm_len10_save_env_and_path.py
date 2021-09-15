@@ -25,7 +25,7 @@ def train_fun():
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
-    out_folder = "out_p3d_random_step_len_10_36_action_predict_model_550_plot"
+    out_folder = "out_p3d_random_step_len_10_36_action_predict_model_550_save_env_and_path"
     in_folder = "output/out_p3d_random_step_len_10_36_action_with_scheduler"
     # network
     config = ConfigDQN(network=Network,
