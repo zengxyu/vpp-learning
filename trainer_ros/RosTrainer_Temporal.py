@@ -60,8 +60,8 @@ class RosTrainer(object):
                 else:
                     zero_reward_consistent_count = 0
                 # # reward redefine
-                # if zero_reward_consistent_count >= 10:
-                #     done = True
+                if zero_reward_consistent_count >= 15:
+                    done = True
                 robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
 
                 # diff direction
@@ -110,6 +110,8 @@ class RosTrainer(object):
                     mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
                                                                                             np.sum(rewards),
                                                                                             i_episode)
+                    if np.sum(rewards) == 0:
+                        self.field.reset_stuck_env()
                     if (i_episode + 1) % 3 == 0:
                         self.agent.store_model()
 
