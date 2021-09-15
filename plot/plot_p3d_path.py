@@ -106,19 +106,12 @@ def plot1(global_map_path, path_path, out_dir_path):
 
 
 if __name__ == '__main__':
-    # in_dir = "out_p3d_random_to_static_step_len_5_36_action_predict_keep_training_model_440_plot"
-    # in_dir = "out_p3d_random_step_len_5_36_action_predict_keep_training_model_385_plot"
-
-    in_dir = os.path.join(get_project_path(), "output",
-                          "out_p3d_random_step_len_10_36_action_predict_model_550_plot")
+    out_dir = os.path.join(get_project_path(), "plot", "p3d_evaluation_plot")
+    in_parent_dir = "/media/zeng/Workspace/results_paper/out_p3d_final/evaluation"
+    in_dir = os.path.join(in_parent_dir, "out_p3d_random_step_len_10_36_action_predict_model_550_save_env_and_path")
     loss, rewards = pickle.load(open(os.path.join(in_dir, "loss_reward", "loss_reward.obj"), "rb"))
     print(rewards)
-    out_dir = os.path.join(get_project_path(), "plot", "p3d_plot_images")
     path_path = os.path.join(in_dir, "path_5.obj")
     global_map_path = os.path.join(in_dir, "global_map_5.obj")
 
     plot1(global_map_path, path_path, out_dir)
-
-# if __name__ == '__main__':
-#     map_path = "/Users/weixianshi/PycharmProjects/vpp-learning/output/out_36_envs/global_map_42.obj"
-#     plot_global_map(map_path)
