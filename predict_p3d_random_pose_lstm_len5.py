@@ -26,7 +26,8 @@ def train_fun():
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_p3d.P3DTrainer_Temporal.P3DTrainer
     out_folder = "out_p3d_random_step_len_5_36_action_predict_model_440"
-    in_folder = "output/out_p3d_random_step_len_5_36_action"
+    input_dir = "/media/zeng/Workspace/results_paper/out_p3d_final"
+    in_folder = os.path.join(input_dir, "out_p3d_random_step_len_5_36_action")
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
