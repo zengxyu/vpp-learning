@@ -20,8 +20,8 @@ def train_fun():
     Field = field_ros.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_ros.RosTrainer_Temporal.RosTrainer
-    out_folder = "output_ros_random_pose_lstm_36_actions_world19"
-    in_folder = ""
+    out_folder = "output_ros_random_pose_lstm_36_actions_world19_plot_retrain"
+    in_folder = "output/output_ros_random_pose_lstm_36_actions_world19_plot"
     # network
     config = ConfigDQN(network=Network,
                        out_folder=out_folder,
@@ -39,7 +39,7 @@ def train_fun():
 
     # Agent
     agent = Agent(config, is_add_revisit_map=False)
-
+    agent.load_model(40)
     trainer = Trainer(config=config, agent=agent, field=field)
     trainer.train(is_sph_pos=False, is_randomize=True, is_global_known_map=False, is_egocetric=False,
                   randomize_control=True, seq_len=10)
