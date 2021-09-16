@@ -26,7 +26,7 @@ def train_fun():
     Action = action_space.ActionMoRo12
     Trainer = trainer_ros.RosTrainer_Temporal.RosTrainer
     out_folder = "predict_out_ros_static_env_pose_lstm"
-    input_dir = "/media/zeng/Workspace/results_paper/output_ros_final"
+    input_dir = "/media/zeng/Workspace/results_paper/out_ros_final/training"
     in_folder = os.path.join(input_dir, "out_ros_static_env_pose_lstm")
     # network
     config = ConfigDQN(network=Network,
@@ -46,7 +46,7 @@ def train_fun():
     # config.set_parameters({"learning_rate": 1e-5})
     config.set_parameters({"epsilon": 0.1})
     config.num_episodes_to_run = 20
-    config.is_train = True
+    config.is_train = False
     config.learn_every = 10
     # config.set_parameters({"epsilon_decay_rate": 0.985})
     # config.set_parameters({"epsilon_min": 0.01})
