@@ -14,7 +14,7 @@ from utilities.util import get_project_path, get_state_size, get_action_size
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
-headless = True
+headless = False
 if not headless:
     from direct.stdpy import threading
 
