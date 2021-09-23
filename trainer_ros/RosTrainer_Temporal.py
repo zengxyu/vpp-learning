@@ -112,9 +112,14 @@ class RosTrainer(object):
                                                                                             i_episode)
                     if np.sum(rewards) == 0:
                         self.field.reset_stuck_env()
-                    if (i_episode + 1) % 3 == 0:
+                    if (i_episode + 1) % 10 == 0:
                         self.agent.store_model()
 
                     e_end_time = time.time()
                     print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
+
+            if (i_episode + 1) % 10 == 0:
+                self.agent.scheduler.step()
+                print("============================learning rate:",
+                      self.agent.q_network_optimizer.state_dict()['param_groups'][0]['lr'])
         print('Complete')
