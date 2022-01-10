@@ -69,6 +69,9 @@ class AELearner:
         weight = torch.Tensor(np.array([1 / 840, 1 / 15, 1 / 1, 1 / 1250]))
         self.crit = nn.BCEWithLogitsLoss(pos_weight=weight)
 
+        if self.config.phase != "train":
+            self.load_model()
+
     def training(self):
         self.net.train()
 
@@ -115,8 +118,6 @@ class AELearner:
     def evaluation(self):
         logging.info(self.net)
 
-        self.load_model()
-
         self.net.eval()
 
         dataloader = make_data_loader_with_features(self.config)
@@ -131,8 +132,6 @@ class AELearner:
     def inference(self, voxelgrid):
         s_time = time.time()
 
-        self.load_model()
-
         self.net.eval()
 
         data_batch_dict = load_one_sample(voxelgrid, self.config)
@@ -143,7 +142,7 @@ class AELearner:
         index = coordinates.argsort()
         features = code.features.detach().numpy()[index]
         # self.visualize(data_batch_dict, sout)
-        print("inference takes {} s".format(time.time()-s_time))
+        print("inference takes {} s\n".format(time.time() - s_time))
         return features
 
     def visualize(self, data_dict, sout):
