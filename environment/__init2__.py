@@ -1,1 +1,2 @@
 from environment import field_ros
+from environment import field_ros_octree_vae

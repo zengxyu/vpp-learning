@@ -4,7 +4,7 @@ import os
 import trainer_ros
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
-from environment import field_ros
+from environment import field_ros, field_ros_octree_vae
 
 import argparse
 import logging
@@ -21,9 +21,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 def train_fun():
-    Network = network.network_dqn_11_temporal.DQN_Network11_Temporal_LSTM3
+    Network = network.network_dqn_11_temporal.DQNNetworkLinear
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
-    Field = field_ros.Field
+    Field = field_ros_octree_vae.Field
     Action = action_space.ActionMoRoMultiplier36
     Trainer = trainer_ros.RosTrainer_Temporal.RosTrainer
     out_folder = "out_ros_static_env_pose_lstm"

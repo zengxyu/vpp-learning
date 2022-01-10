@@ -10,12 +10,16 @@
 #error "Version mismatch between generated code and library headers.  You must use the same version of the Cap'n Proto compiler and library."
 #endif
 
+#include "pointcloud.capnp.h"
 #include "pose.capnp.h"
+#include "voxelgrid.capnp.h"
 
 namespace capnp {
 namespace schemas {
 
 CAPNP_DECLARE_SCHEMA(d3d920ef8fc94d08);
+CAPNP_DECLARE_SCHEMA(f8aa7bb7b3aafd0c);
+CAPNP_DECLARE_SCHEMA(d37a82c6120ef713);
 
 }  // namespace schemas
 }  // namespace capnp
@@ -28,9 +32,46 @@ struct Observation {
   class Reader;
   class Builder;
   class Pipeline;
+  struct Map;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(d3d920ef8fc94d08, 4, 6)
+    CAPNP_DECLARE_STRUCT_HEADER(d3d920ef8fc94d08, 5, 6)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
+struct Observation::Map {
+  Map() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+  enum Which: uint16_t {
+    COUNT_MAP,
+    POINTCLOUD,
+    VOXELGRID,
+  };
+  struct CountMap;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(f8aa7bb7b3aafd0c, 5, 6)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
+struct Observation::Map::CountMap {
+  CountMap() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(d37a82c6120ef713, 5, 6)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -42,6 +83,229 @@ struct Observation {
 class Observation::Reader {
 public:
   typedef Observation Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline typename Map::Reader getMap() const;
+
+  inline  ::uint32_t getFoundRois() const;
+
+  inline double getPlanningTime() const;
+
+  inline bool hasRobotPose() const;
+  inline  ::vpp_msg::Pose::Reader getRobotPose() const;
+
+  inline bool hasRobotJoints() const;
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getRobotJoints() const;
+
+  inline  ::uint32_t getTotalRoiCells() const;
+
+  inline double getEvalTotalTrajectoryDuration() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class Observation::Builder {
+public:
+  typedef Observation Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline typename Map::Builder getMap();
+  inline typename Map::Builder initMap();
+
+  inline  ::uint32_t getFoundRois();
+  inline void setFoundRois( ::uint32_t value);
+
+  inline double getPlanningTime();
+  inline void setPlanningTime(double value);
+
+  inline bool hasRobotPose();
+  inline  ::vpp_msg::Pose::Builder getRobotPose();
+  inline void setRobotPose( ::vpp_msg::Pose::Reader value);
+  inline  ::vpp_msg::Pose::Builder initRobotPose();
+  inline void adoptRobotPose(::capnp::Orphan< ::vpp_msg::Pose>&& value);
+  inline ::capnp::Orphan< ::vpp_msg::Pose> disownRobotPose();
+
+  inline bool hasRobotJoints();
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder getRobotJoints();
+  inline void setRobotJoints( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value);
+  inline void setRobotJoints(::kj::ArrayPtr<const double> value);
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initRobotJoints(unsigned int size);
+  inline void adoptRobotJoints(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
+  inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownRobotJoints();
+
+  inline  ::uint32_t getTotalRoiCells();
+  inline void setTotalRoiCells( ::uint32_t value);
+
+  inline double getEvalTotalTrajectoryDuration();
+  inline void setEvalTotalTrajectoryDuration(double value);
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class Observation::Pipeline {
+public:
+  typedef Observation Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+  inline typename Map::Pipeline getMap();
+  inline  ::vpp_msg::Pose::Pipeline getRobotPose();
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
+class Observation::Map::Reader {
+public:
+  typedef Map Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline Which which() const;
+  inline bool isCountMap() const;
+  inline typename CountMap::Reader getCountMap() const;
+
+  inline bool isPointcloud() const;
+  inline bool hasPointcloud() const;
+  inline  ::vpp_msg::Pointcloud::Reader getPointcloud() const;
+
+  inline bool isVoxelgrid() const;
+  inline bool hasVoxelgrid() const;
+  inline  ::vpp_msg::Voxelgrid::Reader getVoxelgrid() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class Observation::Map::Builder {
+public:
+  typedef Map Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline Which which();
+  inline bool isCountMap();
+  inline typename CountMap::Builder getCountMap();
+  inline typename CountMap::Builder initCountMap();
+
+  inline bool isPointcloud();
+  inline bool hasPointcloud();
+  inline  ::vpp_msg::Pointcloud::Builder getPointcloud();
+  inline void setPointcloud( ::vpp_msg::Pointcloud::Reader value);
+  inline  ::vpp_msg::Pointcloud::Builder initPointcloud();
+  inline void adoptPointcloud(::capnp::Orphan< ::vpp_msg::Pointcloud>&& value);
+  inline ::capnp::Orphan< ::vpp_msg::Pointcloud> disownPointcloud();
+
+  inline bool isVoxelgrid();
+  inline bool hasVoxelgrid();
+  inline  ::vpp_msg::Voxelgrid::Builder getVoxelgrid();
+  inline void setVoxelgrid( ::vpp_msg::Voxelgrid::Reader value);
+  inline  ::vpp_msg::Voxelgrid::Builder initVoxelgrid();
+  inline void adoptVoxelgrid(::capnp::Orphan< ::vpp_msg::Voxelgrid>&& value);
+  inline ::capnp::Orphan< ::vpp_msg::Voxelgrid> disownVoxelgrid();
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class Observation::Map::Pipeline {
+public:
+  typedef Map Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
+class Observation::Map::CountMap::Reader {
+public:
+  typedef CountMap Reads;
 
   Reader() = default;
   inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
@@ -74,18 +338,6 @@ public:
 
   inline  ::uint32_t getLayers() const;
 
-  inline  ::uint32_t getFoundRois() const;
-
-  inline double getPlanningTime() const;
-
-  inline bool hasRobotPose() const;
-  inline  ::vpp_msg::Pose::Reader getRobotPose() const;
-
-  inline bool hasRobotJoints() const;
-  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getRobotJoints() const;
-
-  inline  ::uint32_t getTotalRoiCells() const;
-
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -98,9 +350,9 @@ private:
   friend class ::capnp::Orphanage;
 };
 
-class Observation::Builder {
+class Observation::Map::CountMap::Builder {
 public:
-  typedef Observation Builds;
+  typedef CountMap Builds;
 
   Builder() = delete;  // Deleted to discourage incorrect usage.
                        // You can explicitly initialize to nullptr instead.
@@ -155,30 +407,6 @@ public:
   inline  ::uint32_t getLayers();
   inline void setLayers( ::uint32_t value);
 
-  inline  ::uint32_t getFoundRois();
-  inline void setFoundRois( ::uint32_t value);
-
-  inline double getPlanningTime();
-  inline void setPlanningTime(double value);
-
-  inline bool hasRobotPose();
-  inline  ::vpp_msg::Pose::Builder getRobotPose();
-  inline void setRobotPose( ::vpp_msg::Pose::Reader value);
-  inline  ::vpp_msg::Pose::Builder initRobotPose();
-  inline void adoptRobotPose(::capnp::Orphan< ::vpp_msg::Pose>&& value);
-  inline ::capnp::Orphan< ::vpp_msg::Pose> disownRobotPose();
-
-  inline bool hasRobotJoints();
-  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder getRobotJoints();
-  inline void setRobotJoints( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value);
-  inline void setRobotJoints(::kj::ArrayPtr<const double> value);
-  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initRobotJoints(unsigned int size);
-  inline void adoptRobotJoints(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
-  inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownRobotJoints();
-
-  inline  ::uint32_t getTotalRoiCells();
-  inline void setTotalRoiCells( ::uint32_t value);
-
 private:
   ::capnp::_::StructBuilder _builder;
   template <typename, ::capnp::Kind>
@@ -189,15 +417,14 @@ private:
 };
 
 #if !CAPNP_LITE
-class Observation::Pipeline {
+class Observation::Map::CountMap::Pipeline {
 public:
-  typedef Observation Pipelines;
+  typedef CountMap Pipelines;
 
   inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
   inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
       : _typeless(kj::mv(typeless)) {}
 
-  inline  ::vpp_msg::Pose::Pipeline getRobotPose();
 private:
   ::capnp::AnyPointer::Pipeline _typeless;
   friend class ::capnp::PipelineHook;
@@ -208,200 +435,28 @@ private:
 
 // =======================================================================================
 
-inline bool Observation::Reader::hasUnknownCount() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+inline typename Observation::Map::Reader Observation::Reader::getMap() const {
+  return typename Observation::Map::Reader(_reader);
 }
-inline bool Observation::Builder::hasUnknownCount() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+inline typename Observation::Map::Builder Observation::Builder::getMap() {
+  return typename Observation::Map::Builder(_builder);
 }
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader Observation::Reader::getUnknownCount() const {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
+#if !CAPNP_LITE
+inline typename Observation::Map::Pipeline Observation::Pipeline::getMap() {
+  return typename Observation::Map::Pipeline(_typeless.noop());
 }
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::getUnknownCount() {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
+#endif  // !CAPNP_LITE
+inline typename Observation::Map::Builder Observation::Builder::initMap() {
+  _builder.setDataField< ::uint32_t>(::capnp::bounded<0>() * ::capnp::ELEMENTS, 0);
+  _builder.setDataField< ::uint32_t>(::capnp::bounded<1>() * ::capnp::ELEMENTS, 0);
+  _builder.setDataField< ::uint32_t>(::capnp::bounded<2>() * ::capnp::ELEMENTS, 0);
+  _builder.setDataField< ::uint16_t>(::capnp::bounded<14>() * ::capnp::ELEMENTS, 0);
+  _builder.getPointerField(::capnp::bounded<0>() * ::capnp::POINTERS).clear();
+  _builder.getPointerField(::capnp::bounded<1>() * ::capnp::POINTERS).clear();
+  _builder.getPointerField(::capnp::bounded<2>() * ::capnp::POINTERS).clear();
+  _builder.getPointerField(::capnp::bounded<3>() * ::capnp::POINTERS).clear();
+  return typename Observation::Map::Builder(_builder);
 }
-inline void Observation::Builder::setUnknownCount( ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
-}
-inline void Observation::Builder::setUnknownCount(::kj::ArrayPtr<const  ::uint32_t> value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::initUnknownCount(unsigned int size) {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
-}
-inline void Observation::Builder::adoptUnknownCount(
-    ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>&& value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>> Observation::Builder::disownUnknownCount() {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-
-inline bool Observation::Reader::hasFreeCount() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
-}
-inline bool Observation::Builder::hasFreeCount() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader Observation::Reader::getFreeCount() const {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS));
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::getFreeCount() {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS));
-}
-inline void Observation::Builder::setFreeCount( ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
-}
-inline void Observation::Builder::setFreeCount(::kj::ArrayPtr<const  ::uint32_t> value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::initFreeCount(unsigned int size) {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS), size);
-}
-inline void Observation::Builder::adoptFreeCount(
-    ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>&& value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>> Observation::Builder::disownFreeCount() {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS));
-}
-
-inline bool Observation::Reader::hasOccupiedCount() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<2>() * ::capnp::POINTERS).isNull();
-}
-inline bool Observation::Builder::hasOccupiedCount() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<2>() * ::capnp::POINTERS).isNull();
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader Observation::Reader::getOccupiedCount() const {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
-      ::capnp::bounded<2>() * ::capnp::POINTERS));
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::getOccupiedCount() {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
-      ::capnp::bounded<2>() * ::capnp::POINTERS));
-}
-inline void Observation::Builder::setOccupiedCount( ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
-      ::capnp::bounded<2>() * ::capnp::POINTERS), value);
-}
-inline void Observation::Builder::setOccupiedCount(::kj::ArrayPtr<const  ::uint32_t> value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
-      ::capnp::bounded<2>() * ::capnp::POINTERS), value);
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::initOccupiedCount(unsigned int size) {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
-      ::capnp::bounded<2>() * ::capnp::POINTERS), size);
-}
-inline void Observation::Builder::adoptOccupiedCount(
-    ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>&& value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
-      ::capnp::bounded<2>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>> Observation::Builder::disownOccupiedCount() {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
-      ::capnp::bounded<2>() * ::capnp::POINTERS));
-}
-
-inline bool Observation::Reader::hasRoiCount() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<3>() * ::capnp::POINTERS).isNull();
-}
-inline bool Observation::Builder::hasRoiCount() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<3>() * ::capnp::POINTERS).isNull();
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader Observation::Reader::getRoiCount() const {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
-      ::capnp::bounded<3>() * ::capnp::POINTERS));
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::getRoiCount() {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
-      ::capnp::bounded<3>() * ::capnp::POINTERS));
-}
-inline void Observation::Builder::setRoiCount( ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
-      ::capnp::bounded<3>() * ::capnp::POINTERS), value);
-}
-inline void Observation::Builder::setRoiCount(::kj::ArrayPtr<const  ::uint32_t> value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
-      ::capnp::bounded<3>() * ::capnp::POINTERS), value);
-}
-inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Builder::initRoiCount(unsigned int size) {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
-      ::capnp::bounded<3>() * ::capnp::POINTERS), size);
-}
-inline void Observation::Builder::adoptRoiCount(
-    ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>&& value) {
-  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
-      ::capnp::bounded<3>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>> Observation::Builder::disownRoiCount() {
-  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
-      ::capnp::bounded<3>() * ::capnp::POINTERS));
-}
-
-inline  ::uint32_t Observation::Reader::getWidth() const {
-  return _reader.getDataField< ::uint32_t>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
-}
-
-inline  ::uint32_t Observation::Builder::getWidth() {
-  return _builder.getDataField< ::uint32_t>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
-}
-inline void Observation::Builder::setWidth( ::uint32_t value) {
-  _builder.setDataField< ::uint32_t>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
-}
-
-inline  ::uint32_t Observation::Reader::getHeight() const {
-  return _reader.getDataField< ::uint32_t>(
-      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
-}
-
-inline  ::uint32_t Observation::Builder::getHeight() {
-  return _builder.getDataField< ::uint32_t>(
-      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
-}
-inline void Observation::Builder::setHeight( ::uint32_t value) {
-  _builder.setDataField< ::uint32_t>(
-      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
-}
-
-inline  ::uint32_t Observation::Reader::getLayers() const {
-  return _reader.getDataField< ::uint32_t>(
-      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
-}
-
-inline  ::uint32_t Observation::Builder::getLayers() {
-  return _builder.getDataField< ::uint32_t>(
-      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
-}
-inline void Observation::Builder::setLayers( ::uint32_t value) {
-  _builder.setDataField< ::uint32_t>(
-      ::capnp::bounded<2>() * ::capnp::ELEMENTS, value);
-}
-
 inline  ::uint32_t Observation::Reader::getFoundRois() const {
   return _reader.getDataField< ::uint32_t>(
       ::capnp::bounded<3>() * ::capnp::ELEMENTS);
@@ -519,6 +574,359 @@ inline  ::uint32_t Observation::Builder::getTotalRoiCells() {
 inline void Observation::Builder::setTotalRoiCells( ::uint32_t value) {
   _builder.setDataField< ::uint32_t>(
       ::capnp::bounded<6>() * ::capnp::ELEMENTS, value);
+}
+
+inline double Observation::Reader::getEvalTotalTrajectoryDuration() const {
+  return _reader.getDataField<double>(
+      ::capnp::bounded<4>() * ::capnp::ELEMENTS);
+}
+
+inline double Observation::Builder::getEvalTotalTrajectoryDuration() {
+  return _builder.getDataField<double>(
+      ::capnp::bounded<4>() * ::capnp::ELEMENTS);
+}
+inline void Observation::Builder::setEvalTotalTrajectoryDuration(double value) {
+  _builder.setDataField<double>(
+      ::capnp::bounded<4>() * ::capnp::ELEMENTS, value);
+}
+
+inline  ::vpp_msg::Observation::Map::Which Observation::Map::Reader::which() const {
+  return _reader.getDataField<Which>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS);
+}
+inline  ::vpp_msg::Observation::Map::Which Observation::Map::Builder::which() {
+  return _builder.getDataField<Which>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS);
+}
+
+inline bool Observation::Map::Reader::isCountMap() const {
+  return which() == Observation::Map::COUNT_MAP;
+}
+inline bool Observation::Map::Builder::isCountMap() {
+  return which() == Observation::Map::COUNT_MAP;
+}
+inline typename Observation::Map::CountMap::Reader Observation::Map::Reader::getCountMap() const {
+  KJ_IREQUIRE((which() == Observation::Map::COUNT_MAP),
+              "Must check which() before get()ing a union member.");
+  return typename Observation::Map::CountMap::Reader(_reader);
+}
+inline typename Observation::Map::CountMap::Builder Observation::Map::Builder::getCountMap() {
+  KJ_IREQUIRE((which() == Observation::Map::COUNT_MAP),
+              "Must check which() before get()ing a union member.");
+  return typename Observation::Map::CountMap::Builder(_builder);
+}
+inline typename Observation::Map::CountMap::Builder Observation::Map::Builder::initCountMap() {
+  _builder.setDataField<Observation::Map::Which>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS, Observation::Map::COUNT_MAP);
+  _builder.setDataField< ::uint32_t>(::capnp::bounded<0>() * ::capnp::ELEMENTS, 0);
+  _builder.setDataField< ::uint32_t>(::capnp::bounded<1>() * ::capnp::ELEMENTS, 0);
+  _builder.setDataField< ::uint32_t>(::capnp::bounded<2>() * ::capnp::ELEMENTS, 0);
+  _builder.getPointerField(::capnp::bounded<0>() * ::capnp::POINTERS).clear();
+  _builder.getPointerField(::capnp::bounded<1>() * ::capnp::POINTERS).clear();
+  _builder.getPointerField(::capnp::bounded<2>() * ::capnp::POINTERS).clear();
+  _builder.getPointerField(::capnp::bounded<3>() * ::capnp::POINTERS).clear();
+  return typename Observation::Map::CountMap::Builder(_builder);
+}
+inline bool Observation::Map::Reader::isPointcloud() const {
+  return which() == Observation::Map::POINTCLOUD;
+}
+inline bool Observation::Map::Builder::isPointcloud() {
+  return which() == Observation::Map::POINTCLOUD;
+}
+inline bool Observation::Map::Reader::hasPointcloud() const {
+  if (which() != Observation::Map::POINTCLOUD) return false;
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Observation::Map::Builder::hasPointcloud() {
+  if (which() != Observation::Map::POINTCLOUD) return false;
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::vpp_msg::Pointcloud::Reader Observation::Map::Reader::getPointcloud() const {
+  KJ_IREQUIRE((which() == Observation::Map::POINTCLOUD),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Pointcloud>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::vpp_msg::Pointcloud::Builder Observation::Map::Builder::getPointcloud() {
+  KJ_IREQUIRE((which() == Observation::Map::POINTCLOUD),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Pointcloud>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Observation::Map::Builder::setPointcloud( ::vpp_msg::Pointcloud::Reader value) {
+  _builder.setDataField<Observation::Map::Which>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS, Observation::Map::POINTCLOUD);
+  ::capnp::_::PointerHelpers< ::vpp_msg::Pointcloud>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::vpp_msg::Pointcloud::Builder Observation::Map::Builder::initPointcloud() {
+  _builder.setDataField<Observation::Map::Which>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS, Observation::Map::POINTCLOUD);
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Pointcloud>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Observation::Map::Builder::adoptPointcloud(
+    ::capnp::Orphan< ::vpp_msg::Pointcloud>&& value) {
+  _builder.setDataField<Observation::Map::Which>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS, Observation::Map::POINTCLOUD);
+  ::capnp::_::PointerHelpers< ::vpp_msg::Pointcloud>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::vpp_msg::Pointcloud> Observation::Map::Builder::disownPointcloud() {
+  KJ_IREQUIRE((which() == Observation::Map::POINTCLOUD),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Pointcloud>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool Observation::Map::Reader::isVoxelgrid() const {
+  return which() == Observation::Map::VOXELGRID;
+}
+inline bool Observation::Map::Builder::isVoxelgrid() {
+  return which() == Observation::Map::VOXELGRID;
+}
+inline bool Observation::Map::Reader::hasVoxelgrid() const {
+  if (which() != Observation::Map::VOXELGRID) return false;
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Observation::Map::Builder::hasVoxelgrid() {
+  if (which() != Observation::Map::VOXELGRID) return false;
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::vpp_msg::Voxelgrid::Reader Observation::Map::Reader::getVoxelgrid() const {
+  KJ_IREQUIRE((which() == Observation::Map::VOXELGRID),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Voxelgrid>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::vpp_msg::Voxelgrid::Builder Observation::Map::Builder::getVoxelgrid() {
+  KJ_IREQUIRE((which() == Observation::Map::VOXELGRID),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Voxelgrid>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Observation::Map::Builder::setVoxelgrid( ::vpp_msg::Voxelgrid::Reader value) {
+  _builder.setDataField<Observation::Map::Which>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS, Observation::Map::VOXELGRID);
+  ::capnp::_::PointerHelpers< ::vpp_msg::Voxelgrid>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::vpp_msg::Voxelgrid::Builder Observation::Map::Builder::initVoxelgrid() {
+  _builder.setDataField<Observation::Map::Which>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS, Observation::Map::VOXELGRID);
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Voxelgrid>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Observation::Map::Builder::adoptVoxelgrid(
+    ::capnp::Orphan< ::vpp_msg::Voxelgrid>&& value) {
+  _builder.setDataField<Observation::Map::Which>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS, Observation::Map::VOXELGRID);
+  ::capnp::_::PointerHelpers< ::vpp_msg::Voxelgrid>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::vpp_msg::Voxelgrid> Observation::Map::Builder::disownVoxelgrid() {
+  KJ_IREQUIRE((which() == Observation::Map::VOXELGRID),
+              "Must check which() before get()ing a union member.");
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Voxelgrid>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool Observation::Map::CountMap::Reader::hasUnknownCount() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool Observation::Map::CountMap::Builder::hasUnknownCount() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader Observation::Map::CountMap::Reader::getUnknownCount() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Map::CountMap::Builder::getUnknownCount() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void Observation::Map::CountMap::Builder::setUnknownCount( ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline void Observation::Map::CountMap::Builder::setUnknownCount(::kj::ArrayPtr<const  ::uint32_t> value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Map::CountMap::Builder::initUnknownCount(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
+}
+inline void Observation::Map::CountMap::Builder::adoptUnknownCount(
+    ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>> Observation::Map::CountMap::Builder::disownUnknownCount() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool Observation::Map::CountMap::Reader::hasFreeCount() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline bool Observation::Map::CountMap::Builder::hasFreeCount() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader Observation::Map::CountMap::Reader::getFreeCount() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Map::CountMap::Builder::getFreeCount() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline void Observation::Map::CountMap::Builder::setFreeCount( ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline void Observation::Map::CountMap::Builder::setFreeCount(::kj::ArrayPtr<const  ::uint32_t> value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Map::CountMap::Builder::initFreeCount(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), size);
+}
+inline void Observation::Map::CountMap::Builder::adoptFreeCount(
+    ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>> Observation::Map::CountMap::Builder::disownFreeCount() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+
+inline bool Observation::Map::CountMap::Reader::hasOccupiedCount() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS).isNull();
+}
+inline bool Observation::Map::CountMap::Builder::hasOccupiedCount() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader Observation::Map::CountMap::Reader::getOccupiedCount() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Map::CountMap::Builder::getOccupiedCount() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS));
+}
+inline void Observation::Map::CountMap::Builder::setOccupiedCount( ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS), value);
+}
+inline void Observation::Map::CountMap::Builder::setOccupiedCount(::kj::ArrayPtr<const  ::uint32_t> value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Map::CountMap::Builder::initOccupiedCount(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS), size);
+}
+inline void Observation::Map::CountMap::Builder::adoptOccupiedCount(
+    ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>> Observation::Map::CountMap::Builder::disownOccupiedCount() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS));
+}
+
+inline bool Observation::Map::CountMap::Reader::hasRoiCount() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<3>() * ::capnp::POINTERS).isNull();
+}
+inline bool Observation::Map::CountMap::Builder::hasRoiCount() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<3>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader Observation::Map::CountMap::Reader::getRoiCount() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_reader.getPointerField(
+      ::capnp::bounded<3>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Map::CountMap::Builder::getRoiCount() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::get(_builder.getPointerField(
+      ::capnp::bounded<3>() * ::capnp::POINTERS));
+}
+inline void Observation::Map::CountMap::Builder::setRoiCount( ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<3>() * ::capnp::POINTERS), value);
+}
+inline void Observation::Map::CountMap::Builder::setRoiCount(::kj::ArrayPtr<const  ::uint32_t> value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::set(_builder.getPointerField(
+      ::capnp::bounded<3>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>::Builder Observation::Map::CountMap::Builder::initRoiCount(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::init(_builder.getPointerField(
+      ::capnp::bounded<3>() * ::capnp::POINTERS), size);
+}
+inline void Observation::Map::CountMap::Builder::adoptRoiCount(
+    ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<3>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>> Observation::Map::CountMap::Builder::disownRoiCount() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::uint32_t,  ::capnp::Kind::PRIMITIVE>>::disown(_builder.getPointerField(
+      ::capnp::bounded<3>() * ::capnp::POINTERS));
+}
+
+inline  ::uint32_t Observation::Map::CountMap::Reader::getWidth() const {
+  return _reader.getDataField< ::uint32_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint32_t Observation::Map::CountMap::Builder::getWidth() {
+  return _builder.getDataField< ::uint32_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
+}
+inline void Observation::Map::CountMap::Builder::setWidth( ::uint32_t value) {
+  _builder.setDataField< ::uint32_t>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
+}
+
+inline  ::uint32_t Observation::Map::CountMap::Reader::getHeight() const {
+  return _reader.getDataField< ::uint32_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint32_t Observation::Map::CountMap::Builder::getHeight() {
+  return _builder.getDataField< ::uint32_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS);
+}
+inline void Observation::Map::CountMap::Builder::setHeight( ::uint32_t value) {
+  _builder.setDataField< ::uint32_t>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value);
+}
+
+inline  ::uint32_t Observation::Map::CountMap::Reader::getLayers() const {
+  return _reader.getDataField< ::uint32_t>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint32_t Observation::Map::CountMap::Builder::getLayers() {
+  return _builder.getDataField< ::uint32_t>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
+}
+inline void Observation::Map::CountMap::Builder::setLayers( ::uint32_t value) {
+  _builder.setDataField< ::uint32_t>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS, value);
 }
 
 }  // namespace
