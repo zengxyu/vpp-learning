@@ -126,6 +126,7 @@ class AELearner:
             start_time = time.time()
             sinput, target_key = self.generate_input_and_target(data_dict)
             code, sout = self.net(sinput)
+            print("inference takes time:{}".format(time.time() - start_time))
             # batch_code_coord, batch_code_feats = code.decomposed_coordinates_and_features
             self.visualize(data_dict, sout)
 
@@ -138,9 +139,9 @@ class AELearner:
         sinput, target_key = self.generate_input_and_target(data_batch_dict)
         code, sout = self.net(sinput)
 
-        coordinates = code.coordinates.numpy()[:, 0]
+        coordinates = code.coordinates.cpu().detach().numpy()[:, 0]
         index = coordinates.argsort()
-        features = code.features.detach().numpy()[index]
+        features = code.features.cpu().detach().numpy()[index]
         # self.visualize(data_batch_dict, sout)
         print("inference takes {} s\n".format(time.time() - s_time))
         return features
