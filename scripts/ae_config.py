@@ -28,8 +28,8 @@ def get_parse_args():
     # "/home/zeng/catkin_ws/data/data_cvx/*.cvx"
     # "/home/zeng/catkin_ws/data/data_cvx_test2/*.cvx"
     config = parser.parse_args()
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    config.device = torch.device("cpu")
+    config.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # config.device = torch.device("cpu")
 
     # data dir
     config.paths_to_data = [config.dir_to_data + "/*.cvx"]
