@@ -22,7 +22,7 @@ def get_parse_args():
     parser.add_argument("--use_gpu", type=bool, default=False)
     parser.add_argument("--shuffle", type=bool, default=False)
     parser.add_argument("--repeat", type=bool, default=False)
-    parser.add_argument("--phase", type=str, default="inference", help="choose from train or eval or inference")
+    parser.add_argument("--phase", type=str, default="eval", help="choose from train or eval or inference")
     parser.add_argument("--dir_to_data", type=str, default="/home/zeng/catkin_ws/data/data_cvx_test2",
                         help="path to the data directory")
     # "/home/zeng/catkin_ws/data/data_cvx/*.cvx"

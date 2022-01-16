@@ -26,9 +26,9 @@ import logging
 import numpy as np
 import time
 # Must be imported before large libs
-from scripts.autoencoder.dataset.ae_dataset_with_features import make_data_loader_with_features, load_one_sample
-from scripts.autoencoder.network.mink_unet34 import MinkUNet34
-from scripts.autoencoder.visualize import visualize_prediction, visualize_input, visualize_truth
+from dataset.ae_dataset_with_features import make_data_loader_with_features, load_one_sample
+from network.mink_unet34 import MinkUNet34
+from visualize import visualize_prediction, visualize_input, visualize_truth
 
 try:
     import open3d as o3d

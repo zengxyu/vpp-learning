@@ -10,7 +10,7 @@ import torch.utils.data
 import MinkowskiEngine as ME
 import capnp
 
-from scripts.autoencoder.dataset.data_reader import InfSampler, normalize
+from autoencoder.dataset.data_reader import InfSampler, normalize
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../..', "capnp"))
 import pointcloud_capnp

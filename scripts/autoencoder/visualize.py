@@ -1,6 +1,6 @@
 import numpy as np
 
-from scripts.autoencoder.dataset.data_reader import PointCloud
+from autoencoder.dataset.data_reader import PointCloud
 
 try:
     import open3d as o3d
