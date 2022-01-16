@@ -58,8 +58,8 @@ def visualize_input(data_dict, batch_ind, resolution, offset):
 
 
 def visualize_prediction(point, feats, resolution, offset):
-    point = point.detach().numpy()
-    feats = feats.detach().numpy()
+    point = point.cpu().detach().numpy()
+    feats = feats.cpu().detach().numpy()
     pcd = PointCloud(point, np.array([SCANNET_COLOR_MAP[l.argmax()] for l in feats]))
     pcd.translate([offset * resolution, 0, 0])
     return pcd
