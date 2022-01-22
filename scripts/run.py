@@ -26,5 +26,6 @@ if __name__ == "__main__":
         learner.evaluation()
     else:
         client = EnvironmentClient(handle_simulation=False)
-        voxelgrid, robotPose, robotJoints, reward = client.sendReset(map_type='voxelgrid')
-        learner.inference(voxelgrid)
+        for i in range(10):
+            voxelgrid, robotPose, robotJoints, reward = client.sendReset(map_type='voxelgrid')
+            learner.inference(voxelgrid)
