@@ -1,0 +1,101 @@
+# state
+
+# action
+action:
+  { type: discrete, action_size: 10 }
+# {type: continuous, low: 0, high: 1}
+# reward
+reward_threshold: 10
+# network
+
+# environment
+
+# EPS_EXPLORATION_STRATEGIES recorded here can be chosen,
+# Copy following parameters to agent_hyperparameters.eps_exploration_strategy
+# Unchanged, just an example about what parameters should be there for each strategy
+# EPS_EXPLORATION_STRATEGY_ENUM:
+#  INVERSE_STRATEGY: { "epsilon": 1.0, 'epsilon_decay_denominator': 1.0 },
+#  EXPONENT_STRATEGY: { "epsilon": 0.5, "epsilon_decay_rate": 0.997, "epsilon_min": 0.1 },
+#  CYCLICAL_STRATEGY: { "exploration_cycle_episodes_length": 100 }
+
+# agent
+agent_hyperparameters: {
+  "Actor": {
+    "learning_rate": 0.0003,
+    "tau": 0.005,
+    "update_every_n_steps": 10,
+    "gradient_clipping_norm": 5,
+    "initialiser": "Xavier"
+  },
+
+  "Critic": {
+    "learning_rate": 0.0003,
+    "tau": 0.005,
+    "update_every_n_steps": 10,
+    "gradient_clipping_norm": 5,
+    "initialiser": "Xavier"
+  },
+  learning_rate: 0.001,
+  batch_size: 64,
+  buffer_size: 40000,
+  history_length: 1,
+  eps_exploration_strategy: EXPONENT_STRATEGY,
+  eps_exploration_strategy_params: { epsilon: 0.9,
+                                     epsilon_decay_rate: 0.997,
+                                     epsilon_min: 0.05 },
+  epsilon_decay_rate_denominator: 1,
+  discount_rate: 0.98,
+  tau: 0.01,
+  update_every_n_steps: 100,
+  gradient_clipping_norm: 0.7,
+  learning_iterations: 1,
+  n_atoms: 10,
+  replay_start_size: 128
+}
+
+
+
+
+# train
+use_GPU: False
+is_train: True
+debug_mode: False
+num_episodes_to_run: 10000000
+learn_every_n: 1
+save_model_every_n: 50
+tb_save_l_r_every_n_episode: 1
+tb_smooth_l_r_every_n_episode: 50
+
+bl_console_logging_level: WARNING
+bl_file_logging_level: WARNING
+
+# choose from [NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL]
+logging_level: WARNING
+# out_parent_folder
+out_parent_folder: "output"
+
+# out
+out_folder: "out_folder_v01"
+
+out_model: "model"
+out_exp: "experience"
+out_tb: "tb_summary"
+out_logger: "logger"
+# path to save generated scene
+out_scene: "scene"
+# path to a* planned path
+out_path: "path"
+# path to observation map
+out_obs: "observation_map"
+out_elastic_band: "elastic_band"
+
+# in
+in_folder: ""
+
+in_model: "model"
+in_exp: "experience"
+in_tb: "tb_summary"
+in_logger: "logger"
+in_scene: "scene"
+in_path: "path"
+in_obs: "observation_map"

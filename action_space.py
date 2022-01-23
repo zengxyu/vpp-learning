@@ -4,6 +4,8 @@ from scipy.spatial.transform import Rotation
 
 
 class ActionMoRo12(object):
+    def __init__(self, n):
+        self.n = n
 
     def get_relative_move_rot(self, axes, action, move_step, rot_step):
         relative_move = np.array([0, 0, 0])

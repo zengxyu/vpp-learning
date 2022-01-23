@@ -1,0 +1,48 @@
+# reward
+reward_threshold: 10
+
+# train
+# gpu >=0 : use gpu;
+# gpu <0 : use cpu
+gpu: -1
+is_train: True
+debug_mode: False
+num_episodes_to_run: 10000000
+learn_every_n: 1
+save_model_every_n: 50
+tb_save_l_r_every_n_episode: 1
+tb_smooth_l_r_every_n_episode: 50
+
+bl_console_logging_level: WARNING
+bl_file_logging_level: WARNING
+
+# choose from [NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL]
+logging_level: WARNING
+# out_parent_folder
+out_parent_folder: "output"
+
+# out
+out_folder: "out_folder_v01"
+
+out_model: "model"
+out_exp: "experience"
+out_tb: "tb_summary"
+out_logger: "logger"
+# path to save generated scene
+out_scene: "scene"
+# path to a* planned path
+out_path: "path"
+# path to observation map
+out_obs: "observation_map"
+out_elastic_band: "elastic_band"
+
+# in
+in_folder: ""
+
+in_model: "model"
+in_exp: "experience"
+in_tb: "tb_summary"
+in_logger: "logger"
+in_scene: "scene"
+in_path: "path"
+in_obs: "observation_map"

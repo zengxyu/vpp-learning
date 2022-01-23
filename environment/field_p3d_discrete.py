@@ -16,7 +16,8 @@ from action_space import ActionMoRo12
 from scipy.ndimage.filters import gaussian_filter, sobel
 import math as m
 
-from utilities.util import get_state_size, get_action_size
+from configs.config import read_yaml
+from utilities.util import get_state_size, get_action_size, get_project_path
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
@@ -57,17 +58,22 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, config, Action, shape, sensor_range, hfov, vfov, max_steps, init_file=None, headless=False,
-                 scale=0.05):
+    def __init__(self, config, action_space):
         self.config = config
+        env_config = read_yaml(config_dir=os.path.join(get_project_path(), "configs"), config_name="env.yaml")
+
+        self.sensor_range = env_config["sensor_range"]
+        self.hfov = env_config["hfov"]
+        self.vfov = env_config["vfov"]
+        self.shape = (env_config["shape"], env_config["shape"], env_config["shape"])
+        self.max_steps = env_config["max_steps"]
+        self.headless = env_config["headless"]
+        init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
+        self.read_env_from_file(init_file_path, env_config["scale"])
+
         self.found_targets = 0
         self.free_cells = 0
-        self.sensor_range = sensor_range
-        self.action_instance = Action()
-        self.hfov = hfov
-        self.vfov = vfov
-        self.shape = shape
-        self.action_space = gym.spaces.Discrete(self.get_action_size())
+        self.action_space = action_space
         self.observation_space = gym.spaces.Tuple(
             (gym.spaces.Box(low=0, high=255, shape=(15, 36, 18), dtype=np.float),
              gym.spaces.Box(low=0, high=255, shape=(7,), dtype=np.float)))
@@ -77,8 +83,6 @@ class Field:
         self.augment_env_every = 30
         self.trim_data = None
         self.trim_data_shape = None
-        self.max_steps = max_steps
-        self.headless = headless
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         self.coords = None
@@ -106,18 +110,6 @@ class Field:
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
-        if init_file:
-            self.read_env_from_file(init_file, scale)
-        config.environment = {
-            "is_vpp": True,
-            "reward_threshold": 0,
-            "state_size": get_state_size(self),
-            "action_size": get_action_size(self),
-            "action_shape": get_action_size(self),
-        }
-
-    def get_action_size(self):
-        return self.action_instance.get_action_size()
 
     def trim_zeros(self, arr):
         slices = tuple(slice(idx.min(), idx.max() + 1) for idx in np.nonzero(arr))
@@ -174,7 +166,7 @@ class Field:
         self.shape = self.global_map.shape
         self.known_map = np.zeros(self.shape)
         if not self.headless:
-            from field_p3d_gui import FieldGUI
+            from environment.field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, scale)
 
     def compute_fov(self):
@@ -455,8 +447,8 @@ class Field:
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
-                                                                                  self.ROT_STEP)
+        relative_move, relative_rot = self.action_space.get_relative_move_rot2(axes, action, self.MOVE_STEP,
+                                                                               self.ROT_STEP)
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
@@ -481,34 +473,22 @@ class Field:
                                                                    np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        return ({}, map, np.concatenate(
-            (self.robot_pos,
-             self.robot_rot.as_quat()))), new_targets_found, new_unknown_cells, known_cells, revisit_penalty, (
-                   known_target_rate, unknown_rate), done, {}
+        # todo REWARD 需要重新搞
+        reward = new_targets_found
+        print("new_targets_found:{}".format(new_targets_found))
+        print("new_free_cells:{}".format(new_free_cells))
+        print("new_unknown_cells:{}".format(new_unknown_cells))
+        print("known_cells:{}".format(known_cells))
+        # # TODO 应该计算cover的比例
+        # print(self.robot_pos)
+        return map, reward, done, {}
 
-    def reset(self, is_randomize, randomize_control, randomize_from_48_envs, is_save_env, last_targets_found):
-        print("is_randomize:{}".format(is_randomize))
-        print("randomize_control:{}".format(randomize_control))
-        print("randomize_from_48_envs:{}".format(randomize_from_48_envs))
-        print("is_save_env:{}".format(is_save_env))
-        print("last_targets_found:{}".format(last_targets_found))
-
-        "randomize_control: 如果这张地图学完了，就换下一张，没学完，就始终使用一张图"
-        self.is_randomize = is_randomize
-        self.randomize_control = randomize_control
-        self.is_save_env = is_save_env
-        self.randomize_from_48_envs = randomize_from_48_envs
-        self.max_targets_found = last_targets_found
-        if self.reset_count == 0:
-            self.avg_targets_found = 0
-        else:
-            self.avg_targets_found = (
-                                             self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
+    def reset(self):
         self.reset_count += 1
 
         self.known_map = np.zeros(self.shape)
         self.robot_pos = np.array([0.0, 0.0, 0.0])
-        print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
+        # print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
         self.step_count = 0
@@ -522,28 +502,6 @@ class Field:
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
             # self.gui.reset()
-        if self.is_randomize:
-            if self.randomize_from_48_envs:
-                env_index = random.randint(0, 47)
-                global_parent_folder = "/Users/weixianshi/PycharmProjects/vpp-learning/output/out_36_envs"
-                global_map_path = os.path.join(global_parent_folder, "global_map_{}.obj".format(env_index))
-                global_map_obj = open(global_map_path, 'rb')
-                self.global_map = pickle.load(global_map_obj)
-                print("global map is loaded from path:{}".format(global_map_path))
-            if self.randomize_control:
-                threshold = 1.2 * self.avg_targets_found
-                if last_targets_found >= threshold:
-                    print("last_targets_found :{} >= {}; RANDOMIZE THE ENV".format(last_targets_found, threshold))
-                    self.global_map = self.augment_env()
-                else:
-                    print("last_targets_found :{} < {}, NOT RANDOMIZE THE ENV".format(last_targets_found, threshold))
-            else:
-                self.global_map = self.augment_env()
-        # 保存随机环境
-        if self.is_save_env:
-            pickle.dump(self.global_map, open(
-                os.path.join(self.config.folder['out_folder'], "global_map_{}.obj".format(self.reset_count)), "wb"))
-            print("save global map to local")
 
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
@@ -553,5 +511,4 @@ class Field:
                                                                    np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        return {}, map, np.concatenate((self.robot_pos, self.robot_rot.as_quat())), (
-            known_target_rate, unknown_rate)
+        return map, {}

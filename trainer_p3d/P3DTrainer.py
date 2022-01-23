@@ -1,125 +1,103 @@
 import logging
 import os
+import time
 
 import numpy as np
-import time
-from scipy.spatial.transform.rotation import Rotation
 
-from utilities.basic_logger import BasicLogger
-from utilities.summary_writer import SummaryWriterLogger
+from configs.config import read_yaml
+from utilities.Info import EpisodeInfo, StepInfo
+from utilities.util import get_project_path
 
-headless = True
+env_config = read_yaml(config_dir=os.path.join(get_project_path(), "configs"), config_name="env.yaml")
+headless = env_config["headless"]
 if not headless:
     from direct.stdpy import threading
 
 
 class P3DTrainer(object):
-    def __init__(self, config, agent, field):
-        self.config = config
-        self.summary_writer = SummaryWriterLogger(config)
-
-        self.logger = BasicLogger.setup_console_logging(config)
+    def __init__(self, env, agent, action_space, writer, parser_config, training_config):
+        self.training_config = training_config
+        self.env = env
         self.agent = agent
-        self.field = field
+        self.action_space = action_space
+        self.writer = writer
+        self.render = parser_config.render
+        self.train_i_episode = 0
+        self.train_i_step = 0
+        self.test_i_episode = 0
+        self.test_i_step = 0
+        self.n_smooth = 200
+        self.global_i_step = 0
+        self.start_time = time.time()
+        self.train_episode_info = EpisodeInfo()
+        self.test_episode_info = EpisodeInfo()
+        # self.config = config
+        # self.summary_writer = SummaryWriterLogger(config)
+        # self.logger = BasicLogger.setup_console_logging(config)
+        # discrete
+        if not parser_config.train:
+            agent.turn_off_exploration = True
+            agent.load_model(parser_config.in_model_index)
 
-    def train(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize,
-              is_reward_plus_unknown_cells, randomize_control, is_spacial, seq_len):
+    def run(self):
         if headless:
-            self.main_loop(is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                           randomize_control, is_spacial)
+            for i in range(self.training_config["num_episodes_to_run"]):
+                print("\nEpisode:{}".format(i))
+                self.training()
+                if (i + 1) % 10 == 0:
+                    self.evaluating()
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
-            main_thread = threading.Thread(target=self.main_loop)
+            main_thread = threading.Thread(target=self.evaluating)
             main_thread.start()
-            self.field.gui.run()
+            self.env.gui.run()
 
-    def main_loop(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, is_reward_plus_unknown_cells,
-                  randomize_control, is_spacial):
-        time_step = 0
-        initial_direction = np.array([[1], [0], [0]])
-        mean_loss_last_n_ep, mean_reward_last_n_ep = 0, 0
-        last_targets_found = 0
+    def training(self):
+        phase = "Train"
+        self.train_i_episode += 1
+        state, _ = self.env.reset()
 
-        for i_episode in range(self.config.num_episodes_to_run):
-            print("\nepisode {}".format(i_episode))
-            e_start_time = time.time()
-            done = False
-            losses = []
-            rewards = []
-            actions = []
-            found_targets = []
+        done = False
+        rewards = []
+        while not done:
+            action = self.agent.act(state)
+            state, reward, done, step_info = self.env.step(action)
+            self.agent.observe(obs=state, reward=reward, done=done, reset=False)
+            self.train_i_step += 1
+            self.global_i_step += 1
+            rewards.append(reward)
 
-            self.agent.reset()
-            _, observed_map, robot_pose = self.field.reset(is_sph_pos=is_sph_pos,
-                                                           is_global_known_map=is_global_known_map,
-                                                           is_egocetric=is_egocetric,
-                                                           is_randomize=is_randomize,
-                                                           randomize_control=randomize_control,
-                                                           is_spacial=is_spacial,
-                                                           last_targets_found=last_targets_found)
-            print("robot pose:{}".format(robot_pose))
-            print("observation size:{}; robot pose size:{}".format(observed_map.shape, robot_pose.shape))
+        reward_mean = np.mean(rewards)
+        print("reward_mean : {}".format(reward_mean))
+        self.train_episode_info.add({"rewards_mean": reward_mean})
+        add_scalar(self.writer, phase, self.train_episode_info.statistic(), self.train_i_episode)
+        print('Complete training episode {}'.format(self.train_i_episode))
+
+    def evaluating(self):
+        phase = "ZEvaluation"
+        self.test_i_episode += 1
+        state, _ = self.env.reset()
+
+        done = False
+        rewards = []
+        with self.agent.eval_mode():
             while not done:
-                loss = 0
-
-                # robot direction
-                robot_direction = Rotation.from_quat(robot_pose[3:]).as_matrix() @ initial_direction
-                robot_pose_input = np.concatenate([robot_pose[:3], robot_direction.squeeze()], axis=0)
-
-                action = self.agent.pick_action([observed_map, robot_pose_input])
-
-                (_, observed_map_next,
-                 robot_pose_next), found_target_num, unknown_cells_num, known_cells_num, revisit_penalty, done, _ = self.field.step(
-                    action)
-                reward = found_target_num
-
-                # if robot_pose is the same with the robot_pose_next, then reward--
-                robot_direction_next = Rotation.from_quat(robot_pose_next[3:]).as_matrix() @ initial_direction
-
-                # diff direction
-                robot_pose_input_next = np.concatenate([robot_pose_next[:3], robot_direction_next.squeeze()], axis=0)
-
-                self.agent.step(state=[observed_map, robot_pose_input], action=action, reward=reward,
-                                next_state=[observed_map_next, robot_pose_input_next], done=done)
-
-                # to the next state
-                observed_map = observed_map_next.copy()
-                robot_pose = robot_pose_next.copy()
-                # trainer_p3d
-                if time_step % self.config.learn_every == 0:
-                    loss = self.agent.learn()
-
-                actions.append(action)
+                action = self.agent.act(state)
+                state, reward, done, step_info = self.env.step(action)
+                self.agent.observe(obs=state, reward=reward, done=done, reset=False)
+                self.train_i_step += 1
+                self.global_i_step += 1
                 rewards.append(reward)
-                found_targets.append(found_target_num)
-                losses.append(loss)
-                time_step += 1
-                # print(
-                #     "{}-th episode : {}-th step takes {} secs; action:{}; found target:{}; sum found targets:{}; reward:{}; sum reward:{}".format(
-                #         i_episode,
-                #         step_count,
-                #         time.time() - time3,
-                #         action, found_target, np.sum(found_targets) + found_target, reward,
-                #         np.sum(rewards) + reward))
-                # record
-                if not headless:
-                    threading.Thread.considerYield()
 
-                if done:
-                    last_targets_found = np.sum(found_targets)
+        reward_mean = np.mean(rewards)
+        print("reward_mean : {}".format(reward_mean))
+        self.test_episode_info.add({"rewards_mean": reward_mean})
+        add_scalar(self.writer, phase, self.test_episode_info.statistic(), self.test_i_episode)
 
-                    print("\nepisode {} over".format(i_episode))
-                    print("robot pose: {}".format(robot_pose[:3]))
-                    print("actions:{}".format(np.array(actions)))
-                    print("rewards:{}".format(np.array(rewards)))
-                    mean_loss_last_n_ep, mean_reward_last_n_ep = self.summary_writer.update(np.mean(losses),
-                                                                                            np.sum(rewards),
-                                                                                            i_episode)
+        print('Complete evaluation episode {}'.format(self.test_i_episode))
 
-                    if (i_episode + 1) % self.config.save_model_every == 0:
-                        self.agent.store_model()
 
-                    e_end_time = time.time()
-                    print("episode {} spent {} secs".format(i_episode, e_end_time - e_start_time))
-        print('Complete')
+def add_scalar(writer, phase, episode_info, i_episode):
+    for key, item in episode_info.items():
+        writer.add_scalar(str(phase) + "/" + str(key), item, i_episode)
