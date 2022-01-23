@@ -4,23 +4,19 @@ import sys
 import os
 
 import action_space
-import agents
 import environment
-import network
 import trainer_p3d
-
-from config.config_dqn import ConfigDQN
 from utilities.util import get_project_path
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 headless = True
 if not headless:
-    from direct.stdpy import threading
+    pass
 
 
 def train_fun():
-    Network = network.network_dqn_11.DQN_Network11
+    Network = rl_agents.network_dqn_11.DQN_Network11
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
     Action = action_space.ActionMoRo12
@@ -36,7 +32,7 @@ def train_fun():
                        file_logging_level=logging.WARNING,
                        )
 
-    init_file_path = os.path.join(project_path, 'VG07_6.binvox')
+
     # field
     field = Field(config=config, Action=Action, shape=(256, 256, 256), sensor_range=50, hfov=90.0, vfov=60.0,
                   scale=0.05,
@@ -50,9 +46,9 @@ def train_fun():
     agent = Agent(config)
     # agent.load_model(151)
     trainer = Trainer(config=config, agent=agent, field=field)
-    trainer.train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
-                  is_reward_plus_unknown_cells=False,
-                  randomize_control=False, is_spacial=False, seq_len=0)
+    trainer.is_train(is_sph_pos=False, is_randomize=False, is_global_known_map=False, is_egocetric=False,
+                     is_reward_plus_unknown_cells=False,
+                     randomize_control=False, is_spacial=False, seq_len=0)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
