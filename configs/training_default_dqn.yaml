@@ -1,5 +1,3 @@
-# reward
-reward_threshold: 10
 
 # train
 # gpu >=0 : use gpu;
@@ -15,6 +13,7 @@ tb_smooth_l_r_every_n_episode: 50
 
 bl_console_logging_level: WARNING
 bl_file_logging_level: WARNING
+smooth_n: 100
 
 # choose from [NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL]
 logging_level: WARNING

@@ -29,8 +29,8 @@ class P3DTrainer(object):
         self.n_smooth = 200
         self.global_i_step = 0
         self.start_time = time.time()
-        self.train_collector = EpisodeInfo()
-        self.test_collector = EpisodeInfo()
+        self.train_collector = EpisodeInfo(training_config["smooth_n"])
+        self.test_collector = EpisodeInfo(training_config["smooth_n"])
         # self.config = config
         # self.summary_writer = SummaryWriterLogger(config)
         # self.logger = BasicLogger.setup_console_logging(config)
@@ -71,7 +71,7 @@ class P3DTrainer(object):
 
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.train_collector)
-        add_scalar(self.writer, phase, self.train_collector.statistic(), self.train_i_episode)
+        add_scalar(self.writer, phase, self.train_collector.get_smooth_statistics(), self.train_i_episode)
         print('Complete training episode {}'.format(self.train_i_episode))
 
     def evaluating(self):
@@ -93,7 +93,7 @@ class P3DTrainer(object):
 
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.test_collector)
-        add_scalar(self.writer, phase, self.test_collector.statistic(), self.test_i_episode)
+        add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)
 
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 

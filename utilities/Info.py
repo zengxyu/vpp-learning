@@ -29,9 +29,9 @@ class StepInfo:
 
 
 class EpisodeInfo:
-    def __init__(self):
+    def __init__(self, smooth_n):
         self.episode_infos = {}
-        self.smooth_n = 200
+        self.smooth_n = smooth_n
 
     def add(self, info):
         for key in info.keys():
@@ -40,7 +40,7 @@ class EpisodeInfo:
             else:
                 self.episode_infos[key].append(info[key])
 
-    def statistic(self):
+    def get_smooth_statistics(self):
         """
 
         :return:
