@@ -20,7 +20,7 @@ agent = build_ddqn_agent(config, network, action_space)
 writer = SummaryWriter()
 
 # load yaml config
-env = Field(config=config, action_space=action_space)
+env = Field(config=config, action_space=action_space, writer=writer)
 
 learner = P3DTrainer(env=env, agent=agent, action_space=action_space, writer=writer, parser_config=parser_config,
                      training_config=config)
