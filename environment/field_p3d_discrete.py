@@ -278,6 +278,7 @@ class Field:
 
         map = make_up_map(map)
 
+        map = map.astype(np.uint8)
         reward = new_found_targets + 0.01 * new_free_cells
 
         # step
@@ -311,5 +312,6 @@ class Field:
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
         map = make_up_map(map)
+        map = map.astype(np.uint8)
 
         return map, {}
