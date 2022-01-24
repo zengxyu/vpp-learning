@@ -4,6 +4,7 @@ import os.path
 
 import torch
 import sys
+
 sys.path.append(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.path.dirname(__file__), "autoencoder"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "autoencoder", "dataset"))
@@ -26,6 +27,8 @@ if __name__ == "__main__":
         learner.evaluation()
     else:
         client = EnvironmentClient(handle_simulation=False)
-        for i in range(10):
-            voxelgrid, robotPose, robotJoints, reward = client.sendReset(map_type='voxelgrid')
+        voxelgrid, robotPose, robotJoints, reward = client.sendReset(map_type='voxelgrid')
+        learner.inference(voxelgrid)
+        for i in range(1000):
+            voxelgrid, robotPose, robotJoints, reward = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0])
             learner.inference(voxelgrid)
