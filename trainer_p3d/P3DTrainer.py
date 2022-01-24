@@ -29,8 +29,8 @@ class P3DTrainer(object):
         self.n_smooth = 200
         self.global_i_step = 0
         self.start_time = time.time()
-        self.train_episode_info = EpisodeInfo()
-        self.test_episode_info = EpisodeInfo()
+        self.train_collector = EpisodeInfo()
+        self.test_collector = EpisodeInfo()
         # self.config = config
         # self.summary_writer = SummaryWriterLogger(config)
         # self.logger = BasicLogger.setup_console_logging(config)
@@ -60,19 +60,18 @@ class P3DTrainer(object):
         state, _ = self.env.reset()
 
         done = False
-        rewards = []
+        infos = []
         while not done:
             action = self.agent.act(state)
-            state, reward, done, step_info = self.env.step(action)
+            state, reward, done, info = self.env.step(action)
             self.agent.observe(obs=state, reward=reward, done=done, reset=False)
             self.train_i_step += 1
             self.global_i_step += 1
-            rewards.append(reward)
+            infos.append(info)
 
-        reward_mean = np.sum(rewards)
-        print("reward_sum : {}".format(reward_mean))
-        self.train_episode_info.add({"reward_sum": reward_mean})
-        add_scalar(self.writer, phase, self.train_episode_info.statistic(), self.train_i_episode)
+        add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
+                                    episode_info_collector=self.train_collector)
+        add_scalar(self.writer, phase, self.train_collector.statistic(), self.train_i_episode)
         print('Complete training episode {}'.format(self.train_i_episode))
 
     def evaluating(self):
@@ -81,20 +80,20 @@ class P3DTrainer(object):
         state, _ = self.env.reset()
 
         done = False
-        rewards = []
+        infos = []
+
         with self.agent.eval_mode():
             while not done:
                 action = self.agent.act(state)
-                state, reward, done, step_info = self.env.step(action)
+                state, reward, done, info = self.env.step(action)
                 self.agent.observe(obs=state, reward=reward, done=done, reset=False)
                 self.train_i_step += 1
                 self.global_i_step += 1
-                rewards.append(reward)
+                infos.append(info)
 
-        reward_mean = np.sum(rewards)
-        print("reward_sum : {}".format(reward_mean))
-        self.test_episode_info.add({"reward_sum": reward_mean})
-        add_scalar(self.writer, phase, self.test_episode_info.statistic(), self.test_i_episode)
+        add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
+                                    episode_info_collector=self.test_collector)
+        add_scalar(self.writer, phase, self.test_collector.statistic(), self.test_i_episode)
 
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
@@ -102,3 +101,22 @@ class P3DTrainer(object):
 def add_scalar(writer, phase, episode_info, i_episode):
     for key, item in episode_info.items():
         writer.add_scalar(str(phase) + "/" + str(key), item, i_episode)
+
+
+def add_statistics_to_collector(infos, agent_statistics, episode_info_collector):
+    # calculate the statistic info for each episode, then added to episode_info_collector
+    new_found_targets_sum = []
+    new_free_cells_sum = []
+    rewards_sum = []
+
+    for info in infos:
+        new_found_targets_sum += info["new_found_targets"]
+        new_free_cells_sum += info["new_free_cells"]
+        rewards_sum += info["reward"]
+
+    episode_info_collector.add({"rewards_sum": rewards_sum})
+    episode_info_collector.add({"new_found_targets_sum": new_found_targets_sum})
+    episode_info_collector.add({"new_free_cells_sum": new_free_cells_sum})
+
+    episode_info_collector.add({"average_q": agent_statistics[0][1]})
+    episode_info_collector.add({"loss": agent_statistics[1][1]})
