@@ -22,11 +22,11 @@ def process_args():
 
 def load_dqn_args():
     parser_config = process_args()
-    config = Config().load_configs(yaml_path="configs/training_default_ac.yaml", parser_config=parser_config)
+    config = Config().load_configs(yaml_path="configs/training_default_dqn.yaml", parser_config=parser_config)
     return parser_config, config
 
 
 def load_ac_args():
     parser_config = process_args()
-    config = Config().load_configs(yaml_path="configs/training_default_dqn.yaml", parser_config=parser_config)
+    config = Config().load_configs(yaml_path="configs/training_default_ac.yaml", parser_config=parser_config)
     return parser_config, config
