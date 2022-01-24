@@ -58,8 +58,9 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, config, action_space):
+    def __init__(self, config, action_space, writer):
         self.config = config
+        self.writer = writer
         env_config = read_yaml(config_dir=os.path.join(get_project_path(), "configs"), config_name="env.yaml")
 
         self.sensor_range = env_config["sensor_range"]
@@ -75,8 +76,8 @@ class Field:
         # how often to augment the environment
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = 10.0
-        self.ROT_STEP = 15.0
+        self.MOVE_STEP = env_config["move_step"]
+        self.ROT_STEP = env_config["rot_step"]
 
         self.reset_count = 0
         self.target_count = 0
