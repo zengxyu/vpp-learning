@@ -66,13 +66,13 @@ class SpatialAttentionModel(nn.Module):
 
         self.frame_con1 = torch.nn.Conv2d(15, 24, kernel_size=4, stride=2, padding=1)
 
-        self.mlp_ray1 = build_mlp(input_dim=3888, mlp_dims=[1024, 512], activate_last_layer=True)
+        self.mlp_ray1 = build_mlp(input_dim=384, mlp_dims=[256, 196], activate_last_layer=True)
 
-        self.mlp_ray2 = build_mlp(input_dim=512, mlp_dims=[256, 128], activate_last_layer=False)
+        self.mlp_ray2 = build_mlp(input_dim=196, mlp_dims=[144, 128], activate_last_layer=False)
 
-        self.attention = build_mlp(input_dim=128, mlp_dims=[1], activate_last_layer=False)
+        self.attention = build_mlp(input_dim=196, mlp_dims=[98, 32, 1], activate_last_layer=False)
 
-        self.mlp_values = build_mlp(input_dim=128, mlp_dims=[], activate_last_layer=False)
+        self.mlp_values = build_mlp(input_dim=128, mlp_dims=[n_actions], activate_last_layer=False)
 
     def forward(self, state):
         state = state.float()
@@ -81,17 +81,17 @@ class SpatialAttentionModel(nn.Module):
         parts_size = 8
         parts = state.reshape((-1, 15, 9, 9))
         out_frame = F.relu(self.frame_con1(parts))
-        out_frame = out_frame.reshape(out_frame.size()[0], -1)
+        out_frame = out_frame.reshape(batch_size * parts_size, -1)
 
         # ray_num_per_part = 15x9x9
         mlp_output1 = self.mlp_ray1(out_frame)
         # features 用来和attention的score相乘, ray_part_size 是分成多少块
         features = self.mlp_ray2(mlp_output1).view(
-            batch_size, self.ray_part_size, -1
+            batch_size, parts_size, -1
         )
 
-        attention_scores = self.mlp_ray_attention(mlp_output1)
-        attention_scores = attention_scores.view(batch_size, self.ray_part_size, 1)
+        attention_scores = self.attention(mlp_output1)
+        attention_scores = attention_scores.view(batch_size, parts_size, 1)
         attention_scores = attention_scores.squeeze(dim=2)
         attention_weights = F.softmax(attention_scores, dim=1).unsqueeze(2)
         weighted_feature = torch.sum(torch.mul(attention_weights, features), dim=1)

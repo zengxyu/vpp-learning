@@ -13,10 +13,9 @@ import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
 from action_space import ActionMoRo12
-from scipy.ndimage.filters import gaussian_filter, sobel
-import math as m
 
 from configs.config import read_yaml
+from environment.utilities.map_helper import make_up_map
 from utilities.util import get_state_size, get_action_size, get_project_path
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
@@ -58,9 +57,8 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, config, action_space, writer):
+    def __init__(self, config, action_space):
         self.config = config
-        self.writer = writer
         env_config = read_yaml(config_dir=os.path.join(get_project_path(), "configs"), config_name="env.yaml")
 
         self.sensor_range = env_config["sensor_range"]
@@ -154,21 +152,6 @@ class Field:
                                                                 rot_vecs, 1.0, dist)
         return unknown_map, known_free_map, known_target_map
 
-    def make_up_map(self, one_map):
-        # 5 * 90 * 45
-        one_map = np.reshape(one_map, (5, 2, 18, 1, 18))
-        one_map = np.transpose(one_map, (0, 1, 3, 2, 4))
-        # 5 * 4 * 2 * 15 * 15
-        one_map = np.reshape(one_map, (-1, 18, 18))
-        return one_map
-
-    def sum_block(self, one_map):
-        one_map = np.reshape(one_map, (5, 36, 10, 18, 10))
-        one_map = np.transpose(one_map, (0, 1, 3, 2, 4))
-        one_map = np.reshape(one_map, (5, 36, 18, 100))
-        one_map = np.sum(one_map, axis=-1)
-        return one_map
-
     def line_plane_intersection(self, p0, nv, l0, lv):
         """ return intersection of a line with a plane
 
@@ -246,52 +229,9 @@ class Field:
     def rotate_robot(self, rot):
         self.robot_rot = rot * self.robot_rot
 
-    # 裁剪n
-    def nan_to_num(self, n):
-        NEAR_0 = 1e-15
-        return np.clip(n, NEAR_0, 1 - NEAR_0)
-
     def concat(self, unknown_map, known_free_map, known_target_map):
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
         return map
-
-    def transform_map(self, unknown_map, known_free_map, known_target_map):
-        unknown_map = np.array(unknown_map)
-        known_free_map = np.array(known_free_map)
-        known_target_map = np.array(known_target_map)
-        sum_map = unknown_map + known_free_map + known_target_map
-        sum_map = np.sum(sum_map) + 1e-15
-        unknown_map_prob = unknown_map / sum_map
-        known_free_map_prob = known_free_map / sum_map
-        known_target_map_prob = known_target_map / sum_map
-
-        unknown_map_prob_f = sobel(gaussian_filter(unknown_map_prob, sigma=7))
-        known_free_map_prob_f = sobel(gaussian_filter(known_free_map_prob, sigma=7))
-        known_target_map_prob_f = sobel(gaussian_filter(known_target_map_prob, sigma=7))
-        map = np.concatenate(
-            [unknown_map_prob, known_free_map_prob, known_target_map_prob, unknown_map_prob_f, known_free_map_prob_f,
-             known_target_map_prob_f], axis=0)
-        return map
-
-    def cart2sph(self, x, y, z):
-        XsqPlusYsq = x ** 2 + y ** 2
-        r = m.sqrt(XsqPlusYsq + z ** 2)  # r
-        elev = m.atan2(z, m.sqrt(XsqPlusYsq))  # theta
-        az = m.atan2(y, x)  # phi
-        return az, elev, r
-
-    def robot_pose_cart_2_polor(self, pos):
-        return self.cart2sph(pos[0], pos[1], pos[2])
-
-    # def compute_global_map(self):
-    #     res = np.zeros(shape=(3, 32, 32, 32))
-    #     for i in range(0, 256, 8):
-    #         for j in range(0, 256, 8):
-    #             for k in range(0, 256, 8):
-    #                 res[0, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 0)
-    #                 res[1, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 1)
-    #                 res[2, i // 8, j // 8, k // 8] = np.sum(self.known_map[i:i + 8, j:j + 8, k:k + 8] == 2)
-    #     return res
 
     def generate_spherical_coordinate_map(self, cam_pos):
         rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
@@ -313,27 +253,6 @@ class Field:
 
         res = np.concatenate((res[0], res[1]), axis=0)
         return res
-
-    def count_neighbor_rate(self, unknown_map, known_free_map, known_target_map, neighbor_layer=2):
-        unknown_map_nb = unknown_map[:neighbor_layer, :, :].copy()
-        known_free_map_nb = known_free_map[:neighbor_layer, :, :].copy()
-        known_target_map_nb = known_target_map[:neighbor_layer, :, :].copy()
-        # make the item < 0 to be 0
-        unknown_map_nb[unknown_map_nb < 0] = 0
-        known_free_map_nb[known_free_map_nb < 0] = 0
-        known_target_map_nb[known_target_map_nb < 0] = 0
-
-        unknown_num = np.sum(unknown_map_nb)
-        known_free_num = np.sum(known_free_map_nb)
-        known_target_num = np.sum(known_target_map_nb)
-
-        known_num = known_free_num + known_target_num
-        total_num = known_num + unknown_num
-
-        known_target_rate = known_target_num / (known_num + 1)
-        unknown_rate = unknown_num / total_num
-
-        return known_target_rate, unknown_rate
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
@@ -357,15 +276,18 @@ class Field:
 
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        # todo REWARD 需要重新搞
+        map = make_up_map(map)
+
         reward = new_found_targets + 0.01 * new_free_cells
+
+        # step
         # print("new_found_targets:{}".format(new_found_targets))
         # print("new_free_cells:{}".format(new_free_cells))
-        return map, reward, done, {}
+        info = {"new_found_targets": new_found_targets, "new_free_cells": new_free_cells, "reward": reward}
+        return map, reward, done, info
 
     def reset(self):
         self.reset_count += 1
-
         self.known_map = np.zeros(self.shape)
         self.robot_pos = np.array([0.0, 0.0, 0.0])
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
@@ -387,5 +309,7 @@ class Field:
         # known_target_rate, unknown_rate = self.count_neighbor_rate(np.array(unknown_map), np.array(known_free_map),
         #                                                            np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
+
+        map = make_up_map(map)
 
         return map, {}
