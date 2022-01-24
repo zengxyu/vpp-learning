@@ -114,6 +114,7 @@ def add_statistics_to_collector(infos, agent_statistics, episode_info_collector)
         new_free_cells_sum += info["new_free_cells"]
         rewards_sum += info["reward"]
 
+    print("rewards_sum : ", rewards_sum)
     episode_info_collector.add({"rewards_sum": rewards_sum})
     episode_info_collector.add({"new_found_targets_sum": new_found_targets_sum})
     episode_info_collector.add({"new_free_cells_sum": new_free_cells_sum})
