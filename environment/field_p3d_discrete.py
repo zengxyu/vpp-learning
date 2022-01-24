@@ -68,106 +68,51 @@ class Field:
         self.shape = (env_config["shape"], env_config["shape"], env_config["shape"])
         self.max_steps = env_config["max_steps"]
         self.headless = env_config["headless"]
-        init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
-        self.read_env_from_file(init_file_path, env_config["scale"])
 
-        self.found_targets = 0
-        self.free_cells = 0
         self.action_space = action_space
-        self.observation_space = gym.spaces.Tuple(
-            (gym.spaces.Box(low=0, high=255, shape=(15, 36, 18), dtype=np.float),
-             gym.spaces.Box(low=0, high=255, shape=(7,), dtype=np.float)))
         self.global_map = np.zeros(self.shape)
         self.known_map = np.zeros(self.shape)
         # how often to augment the environment
-        self.augment_env_every = 30
-        self.trim_data = None
-        self.trim_data_shape = None
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.coords = None
         self.MOVE_STEP = 10.0
         self.ROT_STEP = 15.0
 
-        self.is_sph_pos = False
-        self.is_global_known_map = False
-        self.is_randomize = False
-        self.randomize_control = False
-        self.is_egocetric = False
-        self.is_spacial = False
-        self.is_save_env = False
-        self.randomize_from_48_envs = False
-        self.max_targets_found = 0
-        self.avg_targets_found = 0
         self.reset_count = 0
-        self.upper_scale = 1
-        self.ratio = 0.1
+        self.target_count = 0
+        self.free_count = 0
+        self.found_targets = 0
+        self.free_cells = 0
 
-        self.visit_map = np.zeros(shape=(256, 256, 256))
         self.allowed_range = np.array([128, 128, 128])
         self.allowed_lower_bound = np.array([128, 128, 128]) - self.allowed_range
         self.allowed_upper_bound = np.array([128, 128, 128]) + self.allowed_range - 1
+
+        init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
+        self.read_env_from_file(init_file_path, env_config["scale"])
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
-
-    def trim_zeros(self, arr):
-        slices = tuple(slice(idx.min(), idx.max() + 1) for idx in np.nonzero(arr))
-        return arr[slices]
-
-    def paste_slices(self, tup):
-        pos, w, max_w = tup
-        wall_min = max(pos, 0)
-        wall_max = min(pos + w, max_w)
-        block_min = -min(pos, 0)
-        block_max = max_w - max(pos + w, max_w)
-        block_max = block_max if block_max != 0 else None
-        return slice(wall_min, wall_max), slice(block_min, block_max)
-
-    def paste(self, wall, block, loc):
-        if block.shape[0] + loc[0] >= wall.shape[0] or block.shape[1] + loc[1] >= wall.shape[1] or block.shape[2] + loc[
-            2] >= wall.shape[2]:
-            return None
-        loc_zip = zip(loc, block.shape, wall.shape)
-        wall_slices, block_slices = zip(*map(self.paste_slices, loc_zip))
-        wall[wall_slices] = block[block_slices]
-        return wall
-
-    def augment_env(self):
-        result = None
-        if self.trim_data is not None and self.trim_data_shape is not None:
-            wall = np.zeros(self.shape, dtype=np.int32)
-            # make sure the the plant fully fitting within the wall
-            loc_max_x, loc_max_y, loc_max_z = self.shape[0] - self.trim_data_shape[0], \
-                                              self.shape[1] - self.trim_data_shape[1], \
-                                              self.shape[2] - self.trim_data_shape[2]
-            # randomly initialize the position
-            loc_x = random.randint(0, loc_max_x - 1)
-            loc_y = random.randint(0, loc_max_y - 1)
-            loc_z = random.randint(0, loc_max_z - 1)
-            result = self.paste(wall, self.trim_data, (loc_x, loc_y, loc_z))
-            result = result.astype(int)
-        return result
 
     def read_env_from_file(self, filename, scale):
         with open(filename, 'rb') as f:
             model = binvox_rw.read_as_3d_array(f)
         self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
-        self.trim_data = self.trim_zeros(self.global_map)
-        self.trim_data_shape = np.shape(self.trim_data)
-        print("trim data shape:{}".format(self.trim_data_shape))
-        self.target_count = np.count_nonzero(self.global_map)
-        print("Total target count : {} ".format(self.target_count))
-        print("#targets/#free_cells = {}".format(self.target_count / (np.product(self.shape))))
-        self.found_targets = 0
-        self.free_cells = 0
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-
         self.shape = self.global_map.shape
         self.known_map = np.zeros(self.shape)
+
         if not self.headless:
             from environment.field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, scale)
+
+        self.found_targets = 0
+        self.free_cells = 0
+
+        self.target_count = np.sum(self.global_map == 2)
+        self.free_count = np.sum(self.global_map == 1)
+        print("#targets/#total = {}".format(self.target_count / (np.product(self.shape))))
+        print("#free/#total = {}".format(self.free_count / (np.product(self.shape))))
 
     def compute_fov(self):
         axes = self.robot_rot.as_matrix().transpose()
@@ -192,18 +137,6 @@ class Field:
         rots = vec_apply(np.outer(rots_x, rots_y), vectors=axes[0])
         rot_vecs = generate_vec3d_vectorized(rots)
         return rot_vecs
-
-    def generate_unknown_map_old(self, cam_pos):
-        rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
-
-        unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs, 1.0,
-                                                      250.0)
-        known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
-                                                            1.0, 250.0)
-        known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
-                                                                rot_vecs, 1.0, 250.0)
-
-        return unknown_map, known_free_map, known_target_map
 
     def generate_unknown_map(self, cam_pos, dist=250.0):
         rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
@@ -273,7 +206,7 @@ class Field:
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
-        self.known_map, found_targets, free_cells, total, coords, values = field_env_3d_helper.update_grid_inds_in_view(
+        self.known_map, found_targets, free_cells, coords, values = field_env_3d_helper.update_grid_inds_in_view(
             self.known_map,
             self.global_map,
             Vec3D(*tuple(
@@ -293,61 +226,13 @@ class Field:
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
 
+        # target_count = np.sum(self.known_map == 2)
+        # free_count = np.sum(self.known_map == 1)
+        # print("\n#targets/#total = {}".format(target_count / (np.product(self.shape))))
+        # print("#free/#total = {}".format(free_count / (np.product(self.shape))))
+
         # print("Updating field took {} s".format(time.perf_counter() - time_start))
-        unknown_cells = found_targets + free_cells
-        known_cells = total - unknown_cells
-        return found_targets, free_cells, unknown_cells, known_cells
-
-    def update_grid_inds_in_view_old(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
-        time_start = time.perf_counter()
-        bb_min, bb_max = self.get_bb_points([cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up])
-        bb_min, bb_max = np.clip(np.rint(bb_min), [0, 0, 0], self.shape).astype(int), np.clip(np.rint(bb_max),
-                                                                                              [0, 0, 0],
-                                                                                              self.shape).astype(int)
-        v1 = ep_right_up - ep_right_down
-        v2 = ep_left_down - ep_right_down
-        plane_normal = np.cross(v1, v2)
-        found_targets = 0
-        if not self.headless:
-            coords = PTA_int()
-            values = PTA_int()
-        for z in range(bb_min[2], bb_max[2]):
-            for y in range(bb_min[1], bb_max[1]):
-                for x in range(bb_min[0], bb_max[0]):
-                    point = np.array([x, y, z])
-                    if self.known_map[x, y, z] != FieldValues.UNKNOWN:  # no update necessary if point already seen
-                        continue
-                    p_proj, rel_dist = self.line_plane_intersection(ep_right_down, plane_normal, cam_pos,
-                                                                    (point - cam_pos))
-                    if p_proj is None or rel_dist < 1.0:  # if point lies behind projection, skip
-                        continue
-                    if self.point_in_rectangle(p_proj, ep_right_down, v1, v2):
-                        self.known_map[x, y, z] = self.global_map[x, y, z]
-                        # for now, occupied cells are targets, change later
-                        if self.known_map[x, y, z] == FieldValues.OCCUPIED:
-                            found_targets += 1
-                        if not self.headless:
-                            coords.push_back(int(x))
-                            coords.push_back(int(y))
-                            coords.push_back(int(z))
-                            values.push_back(int(self.known_map[x, y, z] + 3))
-                            # self.gui.messenger.send('update_cell', [(x, y, z)], 'default')
-                            # self.gui.gui_done.wait()
-                            # self.gui.gui_done.clear()
-                            # self.gui.updateSeenCell((x, y, z))
-
-        if not self.headless:
-            self.gui.messenger.send('update_fov_and_cells',
-                                    [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, coords, values],
-                                    'default')
-            # self.gui.messenger.send('update_fov', [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up], 'default')
-            self.gui.gui_done.wait()
-            self.gui.gui_done.clear()
-            # self.gui.updateFov(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
-
-        print("Updating field took {} s".format(time.perf_counter() - time_start))
-
-        return found_targets
+        return found_targets, free_cells
 
     def move_robot(self, direction):
         self.robot_pos += direction
@@ -452,35 +337,25 @@ class Field:
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
-        new_targets_found, new_free_cells, new_unknown_cells, known_cells = self.update_grid_inds_in_view(cam_pos,
-                                                                                                          ep_left_down,
-                                                                                                          ep_left_up,
-                                                                                                          ep_right_down,
-                                                                                                          ep_right_up)
-        # revisit_penalty 是一个处罚 如果这个位置已经被拜访多次，就惩罚多少
-        revisit_penalty = -self.visit_map[int(cam_pos[0]), int(cam_pos[1]), int(cam_pos[2])]
-        self.visit_map[int(cam_pos[0]), int(cam_pos[1]), int(cam_pos[2])] += 1
-        # revisit_map = np.resize(self.visit_map, (16, 16, 16))
+        new_found_targets, new_free_cells = self.update_grid_inds_in_view(cam_pos,
+                                                                          ep_left_down,
+                                                                          ep_left_up,
+                                                                          ep_right_down,
+                                                                          ep_right_up)
+        self.found_targets += new_found_targets
         self.free_cells += new_free_cells
-        self.found_targets += new_targets_found
 
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
         # 5 * 36 * 18
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
 
-        known_target_rate, unknown_rate = self.count_neighbor_rate(np.array(unknown_map), np.array(known_free_map),
-                                                                   np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
         # todo REWARD 需要重新搞
-        reward = new_targets_found
-        print("new_targets_found:{}".format(new_targets_found))
-        print("new_free_cells:{}".format(new_free_cells))
-        print("new_unknown_cells:{}".format(new_unknown_cells))
-        print("known_cells:{}".format(known_cells))
-        # # TODO 应该计算cover的比例
-        # print(self.robot_pos)
+        reward = new_found_targets + 0.01 * new_free_cells
+        # print("new_found_targets:{}".format(new_found_targets))
+        # print("new_free_cells:{}".format(new_free_cells))
         return map, reward, done, {}
 
     def reset(self):
@@ -488,14 +363,11 @@ class Field:
 
         self.known_map = np.zeros(self.shape)
         self.robot_pos = np.array([0.0, 0.0, 0.0])
-        # print("\n\n\nreset robot pose as:{}".format(self.robot_pos))
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
         self.step_count = 0
         self.found_targets = 0
         self.free_cells = 0
-        self.visit_map = np.zeros(shape=(256, 256, 256))
-        # revisit_map = np.resize(self.visit_map, (16, 16, 16))
 
         if not self.headless:
             self.gui.messenger.send('reset', [], 'default')
@@ -507,8 +379,8 @@ class Field:
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
-        known_target_rate, unknown_rate = self.count_neighbor_rate(np.array(unknown_map), np.array(known_free_map),
-                                                                   np.array(known_target_map))
+        # known_target_rate, unknown_rate = self.count_neighbor_rate(np.array(unknown_map), np.array(known_free_map),
+        #                                                            np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
         return map, {}

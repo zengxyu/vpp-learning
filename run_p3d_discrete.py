@@ -25,10 +25,3 @@ env = Field(config=config, action_space=action_space)
 learner = P3DTrainer(env=env, agent=agent, action_space=action_space, writer=writer, parser_config=parser_config,
                      training_config=config)
 learner.run()
-# if __name__ == '__main__':
-#
-#     for i in range(config["num_episodes_to_run"]):
-#         logging.info("episode:{}".format(i))
-#         learner.run()
-        # if (i + 1) % 10 == 0:
-        #     learner.evaluation()
