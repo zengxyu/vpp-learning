@@ -45,6 +45,7 @@ class P3DTrainer(object):
                 print("\nEpisode:{}".format(i))
                 self.training()
                 if (i + 1) % 10 == 0:
+                    print("\nTest Episode:{}".format(i))
                     self.evaluating()
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
@@ -68,9 +69,9 @@ class P3DTrainer(object):
             self.global_i_step += 1
             rewards.append(reward)
 
-        reward_mean = np.mean(rewards)
-        print("reward_mean : {}".format(reward_mean))
-        self.train_episode_info.add({"rewards_mean": reward_mean})
+        reward_mean = np.sum(rewards)
+        print("reward_sum : {}".format(reward_mean))
+        self.train_episode_info.add({"reward_sum": reward_mean})
         add_scalar(self.writer, phase, self.train_episode_info.statistic(), self.train_i_episode)
         print('Complete training episode {}'.format(self.train_i_episode))
 
@@ -90,9 +91,9 @@ class P3DTrainer(object):
                 self.global_i_step += 1
                 rewards.append(reward)
 
-        reward_mean = np.mean(rewards)
-        print("reward_mean : {}".format(reward_mean))
-        self.test_episode_info.add({"rewards_mean": reward_mean})
+        reward_mean = np.sum(rewards)
+        print("reward_sum : {}".format(reward_mean))
+        self.test_episode_info.add({"reward_sum": reward_mean})
         add_scalar(self.writer, phase, self.test_episode_info.statistic(), self.test_i_episode)
 
         print('Complete evaluation episode {}'.format(self.test_i_episode))
