@@ -112,8 +112,12 @@ class Field:
 
         self.target_count = np.sum(self.global_map == 2)
         self.free_count = np.sum(self.global_map == 1)
+        print("#targets = {}".format(self.target_count))
+        print("#free = {}".format(self.free_count))
+
         print("#targets/#total = {}".format(self.target_count / (np.product(self.shape))))
         print("#free/#total = {}".format(self.free_count / (np.product(self.shape))))
+        print("total reward = {}".format(self.target_count + 0.01 * self.free_count))
 
     def compute_fov(self):
         axes = self.robot_rot.as_matrix().transpose()
