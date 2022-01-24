@@ -105,9 +105,9 @@ def add_scalar(writer, phase, episode_info, i_episode):
 
 def add_statistics_to_collector(infos, agent_statistics, episode_info_collector):
     # calculate the statistic info for each episode, then added to episode_info_collector
-    new_found_targets_sum = []
-    new_free_cells_sum = []
-    rewards_sum = []
+    new_found_targets_sum = 0
+    new_free_cells_sum = 0
+    rewards_sum = 0
 
     for info in infos:
         new_found_targets_sum += info["new_found_targets"]

@@ -11,18 +11,18 @@ from trainer_p3d.P3DTrainer import P3DTrainer
 from utilities.basic_logger import setup_logger
 
 setup_logger()
-parser_config, config = load_dqn_args()
+parser_config, training_config = load_dqn_args()
 
 action_space = ActionMoRo12(n=12)
 # network = DQN_Network11(action_space.n)
 network = SpatialAttentionModel(n_actions=action_space.n)
-agent = build_ddqn_agent(config, network, action_space)
+agent = build_ddqn_agent(training_config, network, action_space)
 
 writer = SummaryWriter()
 
 # load yaml config
-env = Field(config=config, action_space=action_space)
+env = Field(config=training_config, action_space=action_space)
 
 learner = P3DTrainer(env=env, agent=agent, action_space=action_space, writer=writer, parser_config=parser_config,
-                     training_config=config)
+                     training_config=training_config)
 learner.run()
