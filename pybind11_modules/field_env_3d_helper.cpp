@@ -311,21 +311,83 @@ std::tuple<int, int, int, int, int> count_known_target_layer5(const py::array_t<
     }
     return std::make_tuple(known_target_vec[0], known_target_vec[1], known_target_vec[2], known_target_vec[3], known_target_vec[4]);
 }
-/*py::array_t<int> generate_camera_image(const py::array_t<int> &map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up, int xres=640, int yres=480)
+
+
+std::tuple<int, int> count_unknown_layer2(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
 {
-    Vec3D left_right = ep_right_up - ep_left_up;
-    Vec3D up_down = ep_left_down - ep_left_up;
-    for (int x = 0; x < xres; x++)
+    std::vector<int> unknown_vec;
+
+    for (size_t i = 0; i < 2; i++)
     {
-        double xfac = (double)x / (double)xres;
-        for (int y = 0; y < yres; y++)
+        int unknown = 0;
+        for (double frac=i*(len/2.0); frac < (i+1)*(len/2.0); frac += step)
         {
-            double yfac = (double)y / (double)yres;
-            Vec3D cur_target = ep_left_up + xfac * left_right + yfac * up_down;
-            Vec3D unit_dir = (cur_target - cam_pos).normalized();
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int)cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int)cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int)cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 0)
+                unknown++;
         }
+        unknown_vec.push_back(unknown);
     }
-}*/
+    return std::make_tuple(unknown_vec[0], unknown_vec[1]);
+}
+
+std::tuple<int, int> count_known_free_layer2(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
+{
+    std::vector<int> known_free_vec;
+
+    for (size_t i = 0; i < 2; i++)
+    {
+        int known_free = 0;
+        for (double frac=i*(len/2.0); frac < (i+1)*(len/2.0); frac += step)
+        {
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int)cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int)cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int)cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 1)
+                known_free++;
+        }
+        known_free_vec.push_back(known_free);
+    }
+    return std::make_tuple(known_free_vec[0], known_free_vec[1]);
+}
+
+std::tuple<int, int> count_known_target_layer2(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step, const double &len)
+{
+    std::vector<int> known_target_vec;
+
+    for (size_t i = 0; i < 2; i++)
+    {
+        int known_target = 0;
+        for (double frac=i*(len/2.0); frac < (i+1)*(len/2.0); frac += step)
+        {
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int)cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int)cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int)cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 2)
+                known_target++;
+        }
+        known_target_vec.push_back(known_target);
+    }
+    return std::make_tuple(known_target_vec[0], known_target_vec[1]);
+}
+
 
 std::tuple<py::array_t<int>, int,int, std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
 {
@@ -389,6 +451,8 @@ PYBIND11_MODULE(field_env_3d_helper, m) {
     m.def("count_known_free_layer5", &count_known_free_layer5, "Count unknown cells on ray in 5 layers");
     m.def("count_known_target_layer5", &count_known_target_layer5, "Count unknown cells on ray in 5 layers");
 
-
+    m.def("count_unknown_layer2", &count_unknown_layer2, "Count unknown cells on ray in 2 layers");
+    m.def("count_known_free_layer2", &count_known_free_layer2, "Count unknown cells on ray in 2 layers");
+    m.def("count_known_target_layer2", &count_known_target_layer2, "Count unknown cells on ray in 2 layers");
     m.def("test", &test, "Print test");
 }

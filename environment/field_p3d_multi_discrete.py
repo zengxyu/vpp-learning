@@ -10,7 +10,7 @@ import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
-from action_space import ActionMoRo12
+from action_space import ActionMoRo10
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
@@ -319,8 +319,8 @@ class Field(gym.Env):
     def step(self, action):
 
         axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
-                                                                                  self.ROT_STEP)
+        relative_move, relative_rot = self.action_instance.get_relative_move_rot(axes, action, self.MOVE_STEP,
+                                                                                 self.ROT_STEP)
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()

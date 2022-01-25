@@ -19,7 +19,7 @@ def train_fun():
     Network = rl_agents.network_dqn_11.DQN_Network11
     Agent = agents.DQN_agents.DDQN_PER.DDQN_PER
     Field = environment.field_p3d_discrete.Field
-    Action = action_space.ActionMoRo12
+    Action = action_space.ActionMoRo10
     Trainer = trainer_p3d.P3DTrainer.P3DTrainer
     out_folder = "out_p3d_original"
     in_folder = ""
