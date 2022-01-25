@@ -97,3 +97,37 @@ class SpatialAttentionModel(nn.Module):
         weighted_feature = torch.sum(torch.mul(attention_weights, features), dim=1)
         action_values = self.mlp_values(weighted_feature)
         return pfrl.action_value.DiscreteActionValue(action_values)
+
+
+class SpatialAttentionModel2(nn.Module):
+    def __init__(self, n_actions: int):
+        super().__init__()
+        self.n_actions = n_actions
+
+        self.mlp_ray1 = build_mlp(input_dim=3, mlp_dims=[16, 64, 48], activate_last_layer=True)
+
+        self.mlp_ray2 = build_mlp(input_dim=48, mlp_dims=[32, 16], activate_last_layer=False)
+
+        self.attention = build_mlp(input_dim=48, mlp_dims=[32, 12, 1], activate_last_layer=False)
+
+        self.mlp_values = build_mlp(input_dim=16, mlp_dims=[n_actions], activate_last_layer=False)
+
+    def forward(self, state):
+        state = state.float()
+
+        batch_size = state.shape[0]
+        parts_size = 8
+
+        mlp_output1 = self.mlp_ray1(state)
+        # features 用来和attention的score相乘, ray_part_size 是分成多少块
+        features = self.mlp_ray2(mlp_output1).view(
+            batch_size, parts_size, -1
+        )
+
+        attention_scores = self.attention(mlp_output1)
+        attention_scores = attention_scores.view(batch_size, parts_size, 1)
+        attention_scores = attention_scores.squeeze(dim=2)
+        attention_weights = F.softmax(attention_scores, dim=1).unsqueeze(2)
+        weighted_feature = torch.sum(torch.mul(attention_weights, features), dim=1)
+        action_values = self.mlp_values(weighted_feature)
+        return pfrl.action_value.DiscreteActionValue(action_values)

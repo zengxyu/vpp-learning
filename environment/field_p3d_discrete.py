@@ -12,7 +12,7 @@ import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
-from action_space import ActionMoRo12
+from action_space import ActionMoRo10
 
 from configs.config import read_yaml
 from environment.utilities.map_helper import make_up_map
@@ -38,6 +38,13 @@ count_known_free_layer5_vectorized = np.vectorize(field_env_3d_helper.count_know
                                                   otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
 count_known_target_layer5_vectorized = np.vectorize(field_env_3d_helper.count_known_target_layer5,
                                                     otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
+
+count_unknown_layer2_vectorized = np.vectorize(field_env_3d_helper.count_unknown_layer2,
+                                               otypes=[int, int], excluded=[0, 1, 3, 4])
+count_known_free_layer2_vectorized = np.vectorize(field_env_3d_helper.count_known_free_layer2,
+                                                  otypes=[int, int], excluded=[0, 1, 3, 4])
+count_known_target_layer2_vectorized = np.vectorize(field_env_3d_helper.count_known_target_layer2,
+                                                    otypes=[int, int], excluded=[0, 1, 3, 4])
 
 
 class FieldValues(IntEnum):
@@ -141,7 +148,7 @@ class Field:
         rot_vecs = generate_vec3d_vectorized(rots)
         return rot_vecs
 
-    def generate_unknown_map(self, cam_pos, dist=250.0):
+    def generate_unknown_map_layer5(self, cam_pos, dist=250.0):
         rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
 
         unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
@@ -149,6 +156,17 @@ class Field:
         known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
                                                             rot_vecs, 1.0, dist)
         known_target_map = count_known_target_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                                rot_vecs, 1.0, dist)
+        return unknown_map, known_free_map, known_target_map
+
+    def generate_unknown_map_layer2(self, cam_pos, dist=250.0):
+        rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
+
+        unknown_map = count_unknown_layer2_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+                                                      1.0, dist)
+        known_free_map = count_known_free_layer2_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                            rot_vecs, 1.0, dist)
+        known_target_map = count_known_target_layer2_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
                                                                 rot_vecs, 1.0, dist)
         return unknown_map, known_free_map, known_target_map
 
@@ -256,8 +274,8 @@ class Field:
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = self.action_space.get_relative_move_rot2(axes, action, self.MOVE_STEP,
-                                                                               self.ROT_STEP)
+        relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
+                                                                              self.ROT_STEP)
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
@@ -272,8 +290,9 @@ class Field:
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
         # 5 * 36 * 18
-        unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
+        unknown_map, known_free_map, known_target_map = self.generate_unknown_map_layer2(cam_pos)
 
+        # 15 * 36 * 18
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
         map = make_up_map(map)
@@ -306,7 +325,7 @@ class Field:
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
-        unknown_map, known_free_map, known_target_map = self.generate_unknown_map(cam_pos)
+        unknown_map, known_free_map, known_target_map = self.generate_unknown_map_layer2(cam_pos)
         # known_target_rate, unknown_rate = self.count_neighbor_rate(np.array(unknown_map), np.array(known_free_map),
         #                                                            np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)

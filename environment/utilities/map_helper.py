@@ -77,13 +77,21 @@ def robot_pose_cart_2_polor(pos):
     return cart2sph(pos[0], pos[1], pos[2])
 
 
-def make_up_map(one_map):
+def make_up_map(map):
     # 5 * 90 * 45
-    one_map = np.reshape(one_map, (15, 4, 9, 2, 9))
-    one_map = np.transpose(one_map, (1, 3, 0, 2, 4))
+    map = np.reshape(map, (3, 2, 2, 18, 2, 9))
+    # 3 x 2 x 2 x 5 x 18 x 9
+    map = np.transpose(map, (1, 2, 4, 0, 3, 5))
+
     # 5 * 4 * 2 * 15 * 15
-    one_map = np.reshape(one_map, (8, 15, 9, 9))
-    return one_map
+    map = np.reshape(map, (8, 3, -1))
+
+    map = np.sum(map, axis=2)
+
+    denominator = np.sum(map, axis=1)[:, np.newaxis]
+    map = map / denominator
+
+    return map
 
 
 def sum_block(one_map):

@@ -5,7 +5,7 @@ from enum import IntEnum
 from scipy.spatial.transform import Rotation
 import time
 
-from action_space import ActionMoRo12
+from action_space import ActionMoRo10
 from scripts.vpp_env_client import EnvironmentClient
 from utilities.util import get_state_size, get_action_size
 
@@ -87,8 +87,8 @@ class Field:
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = self.action_instance.get_relative_move_rot2(axes, action, self.MOVE_STEP,
-                                                                                  self.ROT_STEP)
+        relative_move, relative_rot = self.action_instance.get_relative_move_rot(axes, action, self.MOVE_STEP,
+                                                                                 self.ROT_STEP)
         relative_pose = np.append(relative_move, relative_rot.as_quat()).tolist()
         unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
             relative_pose)
