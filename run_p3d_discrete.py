@@ -1,11 +1,8 @@
-import logging
-
 from torch.utils.tensorboard import SummaryWriter
 from action_space import ActionMoRo10
 from environment.field_p3d_discrete import Field
 from load_args import load_dqn_args
 from rl_agents.network.network_attention import SpatialAttentionModel, SpatialAttentionModel2
-from rl_agents.network.network_dqn_11 import DQN_Network11
 from rl_agents.pfrl_agents.agent_builder import build_ddqn_agent
 from trainer_p3d.P3DTrainer import P3DTrainer
 from utilities.basic_logger import setup_logger
