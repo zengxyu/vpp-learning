@@ -72,6 +72,8 @@ class P3DTrainer(object):
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.train_collector)
         add_scalar(self.writer, phase, self.train_collector.get_smooth_statistics(), self.train_i_episode)
+        if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
+            self.agent.save("{}/model_epi_{}".format(self.training_config["out_model"], self.train_i_episode))
         print('Complete training episode {}'.format(self.train_i_episode))
 
     def evaluating(self):
