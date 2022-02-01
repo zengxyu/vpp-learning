@@ -3,7 +3,6 @@
 # gpu >=0 : use gpu;
 # gpu <0 : use cpu
 gpu: -1
-is_train: True
 debug_mode: False
 num_episodes_to_run: 10000000
 save_model_every_n: 1000
