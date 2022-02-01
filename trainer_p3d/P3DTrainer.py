@@ -1,4 +1,5 @@
 import os
+import pickle
 import time
 
 from config import read_yaml
@@ -69,6 +70,7 @@ class P3DTrainer(object):
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.train_collector)
         add_scalar(self.writer, phase, self.train_collector.get_smooth_statistics(), self.train_i_episode)
+        save_episodes_info(phase, self.train_collector, self.training_config, self.train_i_episode)
         if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
             self.agent.save("{}/model_epi_{}".format(self.training_config["out_model"], self.train_i_episode))
         print('Complete training episode {}'.format(self.train_i_episode))
@@ -93,7 +95,7 @@ class P3DTrainer(object):
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.test_collector)
         add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)
-
+        save_episodes_info(phase, self.test_collector, self.training_config, self.train_i_episode)
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
 
@@ -120,3 +122,11 @@ def add_statistics_to_collector(infos, agent_statistics, episode_info_collector)
 
     episode_info_collector.add({"average_q": agent_statistics[0][1]})
     episode_info_collector.add({"loss": agent_statistics[1][1]})
+
+
+def save_episodes_info(phase, episode_info_collector, train_config, i_episode):
+    save_path = os.path.join(train_config["out_result"], phase + "_log.pkl")
+    save_n = train_config["save_result_n"]
+    if i_episode % save_n == 0:
+        file = open(save_path, 'wb')
+        pickle.dump(episode_info_collector.episode_infos, file)

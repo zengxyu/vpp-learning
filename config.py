@@ -85,10 +85,12 @@ class Config(object):
         # out_folder given by parser_args
         yaml_config["out_folder"] = os.path.join(yaml_config["out_parent_folder"], parser_config.out_folder)
         yaml_config["out_model"] = os.path.join(yaml_config["out_folder"], yaml_config["out_model"])
-        yaml_config["out_log"] = os.path.join(yaml_config["out_folder"], yaml_config["out_log"])
+        yaml_config["out_board"] = os.path.join(yaml_config["out_folder"], yaml_config["out_board"])
+        yaml_config["out_result"] = os.path.join(yaml_config["out_folder"], yaml_config["out_result"])
 
         create_folders(
-            [yaml_config["out_folder"], yaml_config["out_model"], yaml_config["out_log"]])
+            [yaml_config["out_folder"], yaml_config["out_model"], yaml_config["out_board"],
+             yaml_config["out_result"]])
 
         if parser_config.in_folder is not None and parser_config.in_folder != "":
             yaml_config["in_folder"] = os.path.join(yaml_config["out_parent_folder"], parser_config.in_folder)

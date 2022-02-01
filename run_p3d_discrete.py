@@ -17,7 +17,7 @@ network = SpatialAttentionModel(n_actions=action_space.n)
 # network = NetworkRNN(n_actions=action_space.n)
 agent = build_ddqn_agent(training_config, network, action_space)
 
-writer = SummaryWriter(log_dir=training_config["out_log"])
+writer = SummaryWriter(log_dir=training_config["out_board"])
 
 # load yaml config
 env = Field(config=training_config, action_space=action_space)

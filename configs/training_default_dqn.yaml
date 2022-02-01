@@ -1,4 +1,3 @@
-
 # train
 # gpu >=0 : use gpu;
 # gpu <0 : use cpu
@@ -6,6 +5,7 @@ gpu: -1
 debug_mode: False
 num_episodes_to_run: 10000000
 save_model_every_n: 1000
+save_result_n: 1000
 
 bl_console_logging_level: WARNING
 bl_file_logging_level: WARNING
@@ -20,9 +20,9 @@ out_parent_folder: "output"
 out_folder: ""
 
 out_model: "model"
-out_log: "log"
+out_board: "board_log"
+out_result: "result_log"
 
 # in
 in_folder: ""
-
 in_model: "model"
