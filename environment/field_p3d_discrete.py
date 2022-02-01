@@ -290,7 +290,7 @@ class Field:
         # 15 * 36 * 18
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        map = make_up_8x15x9x9_map(map)
+        # map = make_up_8x15x9x9_map(map)
 
         map = map.astype(np.uint8)
         reward = new_found_targets + 0.01 * new_free_cells
@@ -326,7 +326,7 @@ class Field:
         #                                                            np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        map = make_up_8x15x9x9_map(map)
+        # map = make_up_8x15x9x9_map(map)
         map = map.astype(np.uint8)
 
         return map, {}
