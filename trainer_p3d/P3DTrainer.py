@@ -68,7 +68,7 @@ class P3DTrainer(object):
             infos.append(info)
 
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
-                                    episode_info_collector=self.train_collector)
+                                    episode_info_collector=self.train_collector, env=self.env)
         add_scalar(self.writer, phase, self.train_collector.get_smooth_statistics(), self.train_i_episode)
         save_episodes_info(phase, self.train_collector, self.training_config, self.train_i_episode)
         if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
@@ -93,7 +93,7 @@ class P3DTrainer(object):
                 infos.append(info)
 
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
-                                    episode_info_collector=self.test_collector)
+                                    episode_info_collector=self.test_collector, env=self.env)
         add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)
         save_episodes_info(phase, self.test_collector, self.training_config, self.train_i_episode)
         print('Complete evaluation episode {}'.format(self.test_i_episode))
@@ -104,7 +104,7 @@ def add_scalar(writer, phase, episode_info, i_episode):
         writer.add_scalar(str(phase) + "/" + str(key), item, i_episode)
 
 
-def add_statistics_to_collector(infos, agent_statistics, episode_info_collector):
+def add_statistics_to_collector(infos, agent_statistics, episode_info_collector, env):
     # calculate the statistic info for each episode, then added to episode_info_collector
     new_found_targets_sum = 0
     new_free_cells_sum = 0
@@ -119,7 +119,8 @@ def add_statistics_to_collector(infos, agent_statistics, episode_info_collector)
     episode_info_collector.add({"rewards_sum": rewards_sum})
     episode_info_collector.add({"new_found_targets_sum": new_found_targets_sum})
     episode_info_collector.add({"new_free_cells_sum": new_free_cells_sum})
-
+    episode_info_collector.add({"new_found_targets_rate": new_found_targets_sum / env.target_count})
+    episode_info_collector.add({"new_free_cells_rate": new_free_cells_sum / env.free_count})
     episode_info_collector.add({"average_q": agent_statistics[0][1]})
     episode_info_collector.add({"loss": agent_statistics[1][1]})
 
