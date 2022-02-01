@@ -104,7 +104,7 @@ class SpatialAttentionModel2(nn.Module):
         super().__init__()
         self.n_actions = n_actions
 
-        self.mlp_ray1 = build_mlp(input_dim=3, mlp_dims=[16, 64, 48], activate_last_layer=True)
+        self.mlp_ray1 = build_mlp(input_dim=3, mlp_dims=[128, 80, 48], activate_last_layer=True)
 
         self.mlp_ray2 = build_mlp(input_dim=48, mlp_dims=[32, 16], activate_last_layer=False)
 

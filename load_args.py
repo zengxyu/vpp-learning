@@ -1,6 +1,6 @@
 import argparse
 
-from configs.config import Config
+from config import Config
 
 
 def process_args():
