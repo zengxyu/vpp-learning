@@ -14,7 +14,7 @@ import os
 import torch
 from pfrl import optimizers
 
-from configs.config import read_yaml
+from config import read_yaml
 from utilities.util import get_project_path
 
 

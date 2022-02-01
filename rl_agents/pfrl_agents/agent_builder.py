@@ -1,9 +1,9 @@
 import os
 from typing import Dict
-from pfrl.agents import DQN, DoubleDQN
+from pfrl.agents import DoubleDQN
 from torch.nn import Module
 
-from configs.config import read_yaml
+from config import read_yaml
 from rl_agents.pfrl_agents.explorer_builder import get_explorer_by_name
 from rl_agents.pfrl_agents.optimizer_builder import get_optimizer_by_name
 from rl_agents.pfrl_agents.replay_buffer_builder import get_replay_buffer_by_name
@@ -30,6 +30,10 @@ def build_ddqn_agent(config: Dict, network: Module, action_space):
         target_update_interval=dqn_config["target_update_interval"],
         update_interval=dqn_config["update_interval"],
         target_update_method=dqn_config["target_update_method"],
-        gpu=config["gpu"]
+        gpu=config["gpu"],
+        recurrent=dqn_config["recurrent"]
+
     )
     return agent
+
+

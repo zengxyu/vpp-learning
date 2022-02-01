@@ -13,7 +13,7 @@ import os.path
 
 from pfrl import replay_buffers
 
-from configs.config import read_yaml
+from config import read_yaml
 from utilities.util import get_project_path
 
 
@@ -33,5 +33,7 @@ def get_replay_buffer_by_name(name):
             betasteps=config[name]["betasteps"],
             normalize_by_max=config[name]["normalize_by_max"],
         )
+    elif name == "EpisodicReplayBuffer":
+        return replay_buffers.EpisodicReplayBuffer(config[name]["capacity"])
     else:
         raise NotImplementedError("Cannot find replay buffer by name : {}".format(name))

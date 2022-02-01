@@ -10,12 +10,11 @@
 ===========================================
 """
 import os
-from typing import Dict
 
 import numpy as np
 from pfrl import explorers
 
-from configs.config import read_yaml
+from config import read_yaml
 from utilities.util import get_project_path
 
 

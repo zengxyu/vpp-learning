@@ -1,5 +1,8 @@
 import logging
 import os.path
+import shutil
+import sys
+
 import yaml
 
 from utilities.util import get_project_path
@@ -30,6 +33,23 @@ def read_yaml(config_dir, config_name):
     with open(yaml_path, 'r') as f:
         yaml_config = yaml.load(f, Loader=yaml.SafeLoader)
     return yaml_config
+
+
+def copy_configs_to_folder(to_folder):
+    configs_from_dir = os.path.join(get_project_path(), "configs")
+    to_folder = os.path.join(to_folder, "configs")
+    if not os.path.exists(to_folder):
+        shutil.copytree(configs_from_dir, to_folder)
+    else:
+        logging.info("File exists:", to_folder)
+        key = input("Output directory already exists! Overwrite the folder? (y/n).")
+        if key == 'y':
+            shutil.rmtree(to_folder)
+            shutil.copytree(configs_from_dir, to_folder)
+        else:
+            logging.info("Please respecify the folder.")
+
+            sys.exit(1)
 
 
 class Config(object):
@@ -65,25 +85,20 @@ class Config(object):
         # out_folder given by parser_args
         yaml_config["out_folder"] = os.path.join(yaml_config["out_parent_folder"], parser_config.out_folder)
         yaml_config["out_model"] = os.path.join(yaml_config["out_folder"], yaml_config["out_model"])
-        yaml_config["out_exp"] = os.path.join(yaml_config["out_folder"], yaml_config["out_exp"])
-        yaml_config["out_tb"] = os.path.join(yaml_config["out_folder"], yaml_config["out_tb"])
-        yaml_config["out_logger"] = os.path.join(yaml_config["out_folder"], yaml_config["out_logger"])
+        yaml_config["out_log"] = os.path.join(yaml_config["out_folder"], yaml_config["out_log"])
 
         create_folders(
-            [yaml_config["out_folder"], yaml_config["out_model"], yaml_config["out_exp"], yaml_config["out_tb"],
-             yaml_config["out_logger"]])
+            [yaml_config["out_folder"], yaml_config["out_model"], yaml_config["out_log"]])
 
         if parser_config.in_folder is not None and parser_config.in_folder != "":
             yaml_config["in_folder"] = os.path.join(yaml_config["out_parent_folder"], parser_config.in_folder)
-
             yaml_config["in_model"] = os.path.join(yaml_config["in_folder"], yaml_config["in_model"])
-            yaml_config["in_exp"] = os.path.join(yaml_config["in_folder"], yaml_config["in_exp"])
-            yaml_config["in_tb"] = os.path.join(yaml_config["in_folder"], yaml_config["in_tb"])
-            yaml_config["in_logger"] = os.path.join(yaml_config["in_folder"], yaml_config["in_logger"])
 
             check_folders_exist(
-                [yaml_config["in_folder"], yaml_config["in_model"], yaml_config["in_exp"], yaml_config["in_tb"],
-                 yaml_config["in_logger"]])
+                [yaml_config["in_folder"], yaml_config["in_model"]])
+
+        if parser_config.train:
+            copy_configs_to_folder(yaml_config["out_folder"])
 
 
 if __name__ == '__main__':

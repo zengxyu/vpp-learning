@@ -1,9 +1,6 @@
 #!/usr/bin/environment python
 import os.path
-import pickle
-import random
 
-import gym
 import numpy as np
 from enum import IntEnum
 from scipy.spatial.transform import Rotation
@@ -12,11 +9,9 @@ import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
-from action_space import ActionMoRo10
-
-from configs.config import read_yaml
-from environment.utilities.map_helper import make_up_map
-from utilities.util import get_state_size, get_action_size, get_project_path
+from config import read_yaml
+from environment.utilities.map_helper import make_up_map, make_up_8x15x9x9_map
+from utilities.util import get_project_path
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
@@ -290,15 +285,16 @@ class Field:
         self.step_count += 1
         done = (self.found_targets == self.target_count) or (self.step_count >= self.max_steps)
         # 5 * 36 * 18
-        unknown_map, known_free_map, known_target_map = self.generate_unknown_map_layer2(cam_pos)
+        unknown_map, known_free_map, known_target_map = self.generate_unknown_map_layer5(cam_pos)
 
         # 15 * 36 * 18
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        map = make_up_map(map)
+        map = make_up_8x15x9x9_map(map)
 
         map = map.astype(np.uint8)
         reward = new_found_targets + 0.01 * new_free_cells
+        # reward = 200 * new_found_targets + new_free_cells
 
         # step
         # print("new_found_targets:{}".format(new_found_targets))
@@ -325,12 +321,12 @@ class Field:
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
-        unknown_map, known_free_map, known_target_map = self.generate_unknown_map_layer2(cam_pos)
+        unknown_map, known_free_map, known_target_map = self.generate_unknown_map_layer5(cam_pos)
         # known_target_rate, unknown_rate = self.count_neighbor_rate(np.array(unknown_map), np.array(known_free_map),
         #                                                            np.array(known_target_map))
         map = self.concat(unknown_map, known_free_map, known_target_map)
 
-        map = make_up_map(map)
+        map = make_up_8x15x9x9_map(map)
         map = map.astype(np.uint8)
 
         return map, {}

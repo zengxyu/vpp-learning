@@ -21,24 +21,9 @@ out_parent_folder: "output"
 out_folder: ""
 
 out_model: "model"
-out_exp: "experience"
-out_tb: "tb_summary"
-out_logger: "logger"
-# path to save generated scene
-out_scene: "scene"
-# path to a* planned path
-out_path: "path"
-# path to observation map
-out_obs: "observation_map"
-out_elastic_band: "elastic_band"
+out_log: "log"
 
 # in
 in_folder: ""
 
 in_model: "model"
-in_exp: "experience"
-in_tb: "tb_summary"
-in_logger: "logger"
-in_scene: "scene"
-in_path: "path"
-in_obs: "observation_map"

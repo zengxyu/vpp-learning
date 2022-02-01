@@ -78,6 +78,7 @@ def robot_pose_cart_2_polor(pos):
 
 
 def make_up_map(map):
+    # 15 * 36 * 18
     # 5 * 90 * 45
     map = np.reshape(map, (3, 2, 2, 18, 2, 9))
     # 3 x 2 x 2 x 5 x 18 x 9
@@ -92,6 +93,15 @@ def make_up_map(map):
     map = map / denominator
 
     return map
+
+
+def make_up_8x15x9x9_map(one_map):
+    # 5 * 90 * 45
+    one_map = np.reshape(one_map, (15, 4, 9, 2, 9))
+    one_map = np.transpose(one_map, (1, 3, 0, 2, 4))
+    # 5 * 4 * 2 * 15 * 15
+    one_map = np.reshape(one_map, (8, 15, 9, 9))
+    return one_map
 
 
 def sum_block(one_map):

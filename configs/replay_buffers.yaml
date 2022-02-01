@@ -10,3 +10,6 @@ PrioritizedReplayBuffer:
   # Anneal beta from beta0 to 1 throughout training
   betasteps : 200000
   normalize_by_max : memory
+
+EpisodicReplayBuffer:
+  capacity: 40000
