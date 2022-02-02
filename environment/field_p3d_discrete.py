@@ -11,6 +11,7 @@ from field_env_3d_helper import Vec3D
 
 from config import read_yaml
 from environment.utilities.map_helper import make_up_map, make_up_8x15x9x9_map
+from environment.utilities.random_field_helper import random_translate_environment
 from utilities.util import get_project_path
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
@@ -78,6 +79,7 @@ class Field:
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         self.MOVE_STEP = env_config["move_step"]
         self.ROT_STEP = env_config["rot_step"]
+        self.randomize = env_config["randomize"]
 
         self.reset_count = 0
         self.target_count = 0
@@ -99,19 +101,24 @@ class Field:
         with open(filename, 'rb') as f:
             model = binvox_rw.read_as_3d_array(f)
         self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
-        self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-        self.shape = self.global_map.shape
-        self.known_map = np.zeros(self.shape)
+
+        if self.randomize:
+            self.global_map = random_translate_environment(self.global_map, self.shape)
 
         if not self.headless:
             from environment.field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, scale)
+
+        self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
+        self.shape = self.global_map.shape
+        self.known_map = np.zeros(self.shape)
 
         self.found_targets = 0
         self.free_cells = 0
 
         self.target_count = np.sum(self.global_map == 2)
         self.free_count = np.sum(self.global_map == 1)
+
         print("#targets = {}".format(self.target_count))
         print("#free = {}".format(self.free_count))
 
