@@ -9,9 +9,9 @@ import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
-from config import read_yaml
+from config import read_yaml, get_configs_dir
 from environment.utilities.map_helper import make_up_map, make_up_8x15x9x9_map
-from environment.utilities.random_field_helper import random_translate_environment
+from environment.utilities.random_field_helper import random_translate_environment, expand_and_randomize_environment
 from utilities.util import get_project_path
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
@@ -62,14 +62,15 @@ class GuiFieldValues(IntEnum):
 class Field:
     def __init__(self, config, action_space):
         self.config = config
-        env_config = read_yaml(config_dir=os.path.join(get_project_path(), "configs"), config_name="env.yaml")
-
+        env_config = read_yaml(config_dir=get_configs_dir(), config_name="env.yaml")
+        self.env_config = env_config
         self.sensor_range = env_config["sensor_range"]
         self.hfov = env_config["hfov"]
         self.vfov = env_config["vfov"]
-        self.shape = (env_config["shape"], env_config["shape"], env_config["shape"])
+        self.shape = (256, env_config["shape_y"], env_config["shape_z"])
         self.max_steps = env_config["max_steps"]
         self.headless = env_config["headless"]
+        self.expand = env_config["expand"]
 
         self.action_space = action_space
         self.global_map = np.zeros(self.shape)
@@ -91,26 +92,25 @@ class Field:
         self.allowed_lower_bound = np.array([128, 128, 128]) - self.allowed_range
         self.allowed_upper_bound = np.array([128, 128, 128]) + self.allowed_range - 1
 
-        init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
-        self.read_env_from_file(init_file_path, env_config["scale"])
+        self.init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
+        self.read_env_from_file(self.init_file_path)
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
-
-    def read_env_from_file(self, filename, scale):
-        with open(filename, 'rb') as f:
-            model = binvox_rw.read_as_3d_array(f)
-        self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
-
-        if self.randomize:
-            self.global_map = random_translate_environment(self.global_map, self.shape)
-
         if not self.headless:
             from environment.field_p3d_gui import FieldGUI
-            self.gui = FieldGUI(self, scale)
+            self.gui = FieldGUI(self, env_config["scale"])
+
+    def read_env_from_file(self, filename):
+        with open(filename, 'rb') as f:
+            model = binvox_rw.read_as_3d_array(f)
+
+        self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
+
+        self.global_map = expand_and_randomize_environment(self.global_map, (256, 256, 256))
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-        self.shape = self.global_map.shape
+        # self.shape = self.global_map.shape
         self.known_map = np.zeros(self.shape)
 
         self.found_targets = 0
@@ -311,6 +311,9 @@ class Field:
 
     def reset(self):
         self.reset_count += 1
+        if self.randomize:
+            self.init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
+            self.read_env_from_file(self.init_file_path)
         self.known_map = np.zeros(self.shape)
         self.robot_pos = np.array([0.0, 0.0, 0.0])
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])

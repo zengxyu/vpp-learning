@@ -14,12 +14,12 @@ import os
 import numpy as np
 from pfrl import explorers
 
-from config import read_yaml
+from config import read_yaml, get_configs_dir
 from utilities.util import get_project_path
 
 
 def get_explorer_by_name(name, n_actions=None):
-    config = read_yaml(config_dir=os.path.join(get_project_path(), "configs"), config_name="explorers.yaml")
+    config = read_yaml(config_dir=get_configs_dir(), config_name="explorers.yaml")
     if name == "Greedy":
         return explorers.Greedy()
     elif name == "LinearDecayEpsilonGreedy":

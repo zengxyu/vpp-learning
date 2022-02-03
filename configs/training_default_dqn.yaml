@@ -17,12 +17,16 @@ logging_level: WARNING
 out_parent_folder: "output"
 
 # out
-out_folder: ""
+out_folder: None
 
 out_model: "model"
 out_board: "board_log"
 out_result: "result_log"
 
 # in
-in_folder: ""
+in_folder: None
 in_model: "model"
+in_model_index: None
+
+train: None
+# parameters (out_folder, in_folder, in_model_index, train) are given by  argparse
