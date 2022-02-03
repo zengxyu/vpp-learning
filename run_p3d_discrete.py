@@ -1,7 +1,7 @@
 from torch.utils.tensorboard import SummaryWriter
 from action_space import ActionMoRo10
+from config import load_dqn_args
 from environment.field_p3d_discrete import Field
-from load_args import load_dqn_args
 from rl_agents.network.network_attention import SpatialAttentionModel, SpatialAttentionModel2
 from rl_agents.network.network_dqn_11 import DQN_Network11
 from rl_agents.network.network_rnn import NetworkRNN

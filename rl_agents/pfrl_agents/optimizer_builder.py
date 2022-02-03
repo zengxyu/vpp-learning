@@ -14,12 +14,12 @@ import os
 import torch
 from pfrl import optimizers
 
-from config import read_yaml
+from config import read_yaml, get_configs_dir
 from utilities.util import get_project_path
 
 
 def get_optimizer_by_name(name, network):
-    config = read_yaml(config_dir=os.path.join(get_project_path(), "configs"), config_name="optimizers.yaml")
+    config = read_yaml(config_dir=get_configs_dir(), config_name="optimizers.yaml")
     if name == "RMSpropEpsInsideSqrt":
         return optimizers.RMSpropEpsInsideSqrt(
             network.parameters(),
