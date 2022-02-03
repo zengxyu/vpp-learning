@@ -70,7 +70,6 @@ class Field:
         self.shape = (256, env_config["shape_y"], env_config["shape_z"])
         self.max_steps = env_config["max_steps"]
         self.headless = env_config["headless"]
-        self.expand = env_config["expand"]
 
         self.action_space = action_space
         self.global_map = np.zeros(self.shape)
