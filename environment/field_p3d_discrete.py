@@ -67,12 +67,12 @@ class Field:
         self.sensor_range = env_config["sensor_range"]
         self.hfov = env_config["hfov"]
         self.vfov = env_config["vfov"]
-        self.shape = (256, env_config["shape_y"], env_config["shape_z"])
+        self.shape = (512, env_config["shape_y"], env_config["shape_z"])
         self.max_steps = env_config["max_steps"]
         self.headless = env_config["headless"]
 
         self.action_space = action_space
-        self.global_map = np.zeros(self.shape)
+        self.global_map = np.zeros(self.shape).astype(int)
         self.known_map = np.zeros(self.shape)
         # how often to augment the environment
         self.robot_pos = [0.0, 0.0, 0.0]
@@ -108,15 +108,17 @@ class Field:
     def read_env_from_file(self, filename):
         with open(filename, 'rb') as f:
             model = binvox_rw.read_as_3d_array(f)
-
         self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
+        # rs = read_model.shape
+        # self.global_map[0:rs[0], 0:rs[1], 0:rs[2]] = read_model
+        # self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
 
-        self.global_map = expand_and_randomize_environment(self.global_map, (256, 256, 256))
+        # self.global_map = expand_and_randomize_environment(self.global_map, self.shape)
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-        self.shape = self.global_map.shape
+        # self.shape = self.global_map.shape
 
-        self.known_map = np.zeros(self.shape)
+        self.known_map = np.zeros(self.shape, dtype=int)
 
         self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
