@@ -69,34 +69,37 @@ class Field:
         self.vfov = env_config["vfov"]
         self.shape = (env_config["shape_z"], env_config["shape_x"], env_config["shape_y"])
         self.max_steps = env_config["max_steps"]
-        self.headless = env_config["headless"]
-
-        self.action_space = action_space
-        self.global_map = np.zeros(self.shape).astype(int)
-        self.known_map = np.zeros(self.shape).astype(int)
-        # how often to augment the environment
-        self.robot_pos = [0.0, 0.0, 0.0]
-        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         self.MOVE_STEP = env_config["move_step"]
         self.ROT_STEP = env_config["rot_step"]
+
+        self.headless = env_config["headless"]
         self.randomize = env_config["randomize"]
 
+        self.action_space = action_space
         self.reset_count = 0
+
+        # following variables need to be reset
+        self.global_map = np.zeros(self.shape).astype(int)
+        self.known_map = np.zeros(self.shape).astype(int)
+        self.robot_pos = [0.0, 0.0, 0.0]
+        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
+
         self.target_count = 0
         self.free_count = 0
         self.found_targets = 0
         self.free_cells = 0
+        self.step_count = 0
 
-        self.allowed_range = np.array([128, 128, 128])
-        self.allowed_lower_bound = np.array([128, 128, 128]) - self.allowed_range
-        self.allowed_upper_bound = np.array([128, 128, 128]) + self.allowed_range - 1
+        self.allowed_range = None
+        self.allowed_lower_bound = None
+        self.allowed_upper_bound = None
 
-        self.visit_resolution = 8
+        self.visit_resolution = 16
         self.visit_shape = None
         self.visit_map = None
 
         self.init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
-        self.read_env_from_file(self.init_file_path)
+        self.initialize(self.init_file_path)
 
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
@@ -105,27 +108,36 @@ class Field:
             from environment.field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, env_config["scale"])
 
-    def read_env_from_file(self, filename):
+    def initialize(self, filename):
         self.global_map = np.zeros(self.shape).astype(int)
         self.known_map = np.zeros(self.shape).astype(int)
 
+        self.robot_pos = np.array([0.0, 0.0, 0.0])
+        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
+
+        self.step_count = 0
+        self.found_targets = 0
+        self.free_cells = 0
+
+        # read from local file
         with open(filename, 'rb') as f:
             model = binvox_rw.read_as_3d_array(f)
         read_model = np.transpose(model.data, (2, 0, 1)).astype(int)
         rs = read_model.shape
         self.global_map[0:rs[0], 0:rs[1], 0:rs[2]] = read_model
-        # self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
-        # self.global_map = expand_and_randomize_environment(self.global_map, self.shape)
+
+        # randomize the environment if needed
+        if self.randomize:
+            self.global_map = expand_and_randomize_environment(self.global_map, self.shape)
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
         self.shape = self.global_map.shape
 
+        self.calculate_allow_range(self.shape)
+
         self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
-
-        self.found_targets = 0
-        self.free_cells = 0
 
         self.target_count = np.sum(self.global_map == 2)
         self.free_count = np.sum(self.global_map == 1)
@@ -136,6 +148,12 @@ class Field:
         print("#targets/#total = {}".format(self.target_count / (np.product(self.shape))))
         print("#free/#total = {}".format(self.free_count / (np.product(self.shape))))
         print("total reward = {}".format(self.target_count + 0.01 * self.free_count))
+
+    def calculate_allow_range(self, shape):
+        half_shape_z, half_shape_x, half_shape_y = int(shape[0] / 2), int(shape[1] / 2), int(shape[2] / 2)
+        self.allowed_range = np.array([half_shape_z, half_shape_x, half_shape_y])
+        self.allowed_lower_bound = np.array([half_shape_z, half_shape_x, half_shape_y]) - self.allowed_range
+        self.allowed_upper_bound = np.array([half_shape_z, half_shape_x, half_shape_y]) + self.allowed_range - 1
 
     def compute_fov(self):
         axes = self.robot_rot.as_matrix().transpose()
@@ -286,6 +304,8 @@ class Field:
         return res
 
     def step(self, action):
+        print("step count:", self.step_count)
+        action = 0
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
@@ -313,8 +333,9 @@ class Field:
         # map = make_up_8x15x9x9_map(map)
 
         map = map.astype(np.uint8)
-        reward = 5000 * visit_gain + new_found_targets + 0.01 * new_free_cells
+        # reward = 100 * visit_gain + new_found_targets + 0.01 * new_free_cells
         # reward = 200 * new_found_targets + new_free_cells
+        reward = 100 * visit_gain
 
         # step
         # print("new_found_targets:{}".format(new_found_targets))
@@ -341,23 +362,16 @@ class Field:
 
         neighbor_visit_map = self.visit_map[start_x: end_x, start_y: end_y, start_z: end_z]
         visit_gain = np.sum(1 - neighbor_visit_map)
-
-        self.visit_map[location[0], location[1], location[2]] = 1
+        self.visit_map[start_x: end_x, start_y: end_y, start_z: end_z] = np.ones_like(neighbor_visit_map).astype(
+            np.uint8)
+        # self.visit_map[location[0], location[1], location[2]] = 1
         coverage_rate = np.sum(self.visit_map) / np.product(self.visit_shape)
 
         return visit_gain, coverage_rate
 
     def reset(self):
         self.reset_count += 1
-        if self.randomize:
-            self.read_env_from_file(self.init_file_path)
-
-        self.robot_pos = np.array([0.0, 0.0, 0.0])
-        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-
-        self.step_count = 0
-        self.found_targets = 0
-        self.free_cells = 0
+        self.initialize(self.init_file_path)
 
         if not self.headless:
             self.gui.messenger.send('reset', [], 'default')
