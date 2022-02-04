@@ -364,7 +364,6 @@ class Field:
             np.uint8)
         # self.visit_map[location[0], location[1], location[2]] = 1
         coverage_rate = np.sum(self.visit_map) / np.product(self.visit_shape)
-
         return visit_gain, coverage_rate
 
     def reset(self):
