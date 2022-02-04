@@ -67,13 +67,13 @@ class Field:
         self.sensor_range = env_config["sensor_range"]
         self.hfov = env_config["hfov"]
         self.vfov = env_config["vfov"]
-        self.shape = (512, env_config["shape_y"], env_config["shape_z"])
+        self.shape = (env_config["shape_z"], env_config["shape_x"], env_config["shape_y"])
         self.max_steps = env_config["max_steps"]
         self.headless = env_config["headless"]
 
         self.action_space = action_space
         self.global_map = np.zeros(self.shape).astype(int)
-        self.known_map = np.zeros(self.shape)
+        self.known_map = np.zeros(self.shape).astype(int)
         # how often to augment the environment
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
@@ -106,19 +106,19 @@ class Field:
             self.gui = FieldGUI(self, env_config["scale"])
 
     def read_env_from_file(self, filename):
+        self.global_map = np.zeros(self.shape).astype(int)
+        self.known_map = np.zeros(self.shape).astype(int)
+
         with open(filename, 'rb') as f:
             model = binvox_rw.read_as_3d_array(f)
-        self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
-        # rs = read_model.shape
-        # self.global_map[0:rs[0], 0:rs[1], 0:rs[2]] = read_model
+        read_model = np.transpose(model.data, (2, 0, 1)).astype(int)
+        rs = read_model.shape
+        self.global_map[0:rs[0], 0:rs[1], 0:rs[2]] = read_model
         # self.global_map = np.transpose(model.data, (2, 0, 1)).astype(int)
-
         # self.global_map = expand_and_randomize_environment(self.global_map, self.shape)
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-        # self.shape = self.global_map.shape
-
-        self.known_map = np.zeros(self.shape, dtype=int)
+        self.shape = self.global_map.shape
 
         self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
@@ -350,9 +350,8 @@ class Field:
     def reset(self):
         self.reset_count += 1
         if self.randomize:
-            self.init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
             self.read_env_from_file(self.init_file_path)
-        self.known_map = np.zeros(self.shape)
+
         self.robot_pos = np.array([0.0, 0.0, 0.0])
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
