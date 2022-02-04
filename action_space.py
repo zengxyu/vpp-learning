@@ -4,8 +4,8 @@ from scipy.spatial.transform import Rotation
 
 
 class ActionMoRo10(object):
-    def __init__(self, n):
-        self.n = n
+    def __init__(self):
+        self.n = 10
 
     def get_relative_move_rot(self, axes, action, move_step, rot_step):
         relative_move = np.array([0, 0, 0])
@@ -35,54 +35,16 @@ class ActionMoRo10(object):
         return relative_move, relative_rot
 
 
-class ActionMoRo15(object):
-
-    def get_relative_move_rot2(self, axes, action, move_step, rot_step):
-        relative_move = np.array([0, 0, 0])
-        relative_rot = Rotation.from_quat(np.array([0, 0, 0, 1.0]))
-        if action == ActionMoRo15IntEnum.MOVE_FORWARD:
-            relative_move = axes[0] * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_BACKWARD:
-            relative_move = -axes[0] * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_LEFT:
-            relative_move = axes[1] * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_RIGHT:
-            relative_move = -axes[1] * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_UP:
-            relative_move = axes[2] * move_step
-        elif action == ActionMoRo15IntEnum.MOVE_DOWN:
-            relative_move = -axes[2] * move_step
-        elif action == ActionMoRo15IntEnum.ROTATE_ROLL_P:
-            relative_rot = Rotation.from_rotvec(np.radians(rot_step) * axes[0])
-        elif action == ActionMoRo15IntEnum.ROTATE_ROLL_N:
-            relative_rot = Rotation.from_rotvec(np.radians(-rot_step) * axes[0])
-        elif action == ActionMoRo15IntEnum.ROTATE_PITCH_P:
-            relative_rot = Rotation.from_rotvec(np.radians(rot_step) * axes[1])
-        elif action == ActionMoRo15IntEnum.ROTATE_PITCH_N:
-            relative_rot = Rotation.from_rotvec(np.radians(-rot_step) * axes[1])
-        elif action == ActionMoRo15IntEnum.ROTATE_YAW_P:
-            relative_rot = Rotation.from_rotvec(np.radians(rot_step) * axes[2])
-        elif action == ActionMoRo15IntEnum.ROTATE_YAW_N:
-            relative_rot = Rotation.from_rotvec(np.radians(-rot_step) * axes[2])
-        elif action == ActionMoRo15IntEnum.SMALL_STEP:
-            pass
-        else:
-            raise NotImplementedError
-        return relative_move, relative_rot
-
-    def get_action_size(self):
-        return 12
-
-
-class ActionMoRoMultiplier36(object):
+class ActionMoRoMultiplier30(object):
 
     def __init__(self):
+        self.n = 30
         self.action_space = []
         for action in ActionMoRo10IntEnum:
             for mtplier in MultiplierIntEnum:
                 self.action_space.append([action, mtplier])
 
-    def get_relative_move_rot2(self, axes, action_ind, move_step, rot_step):
+    def get_relative_move_rot(self, axes, action_ind, move_step, rot_step):
         relative_move = np.array([0, 0, 0])
         relative_rot = Rotation.from_quat(np.array([0, 0, 0, 1.0]))
         action, multiplier = self.action_space[action_ind]
@@ -99,10 +61,6 @@ class ActionMoRoMultiplier36(object):
             relative_move = axes[2] * move_step * multiplier
         elif action == ActionMoRo10IntEnum.MOVE_DOWN:
             relative_move = -axes[2] * move_step * multiplier
-        elif action == ActionMoRo10IntEnum.ROTATE_ROLL_P:
-            relative_rot = Rotation.from_rotvec(np.radians(rot_step * multiplier) * axes[0])
-        elif action == ActionMoRo10IntEnum.ROTATE_ROLL_N:
-            relative_rot = Rotation.from_rotvec(np.radians(-rot_step * multiplier) * axes[0])
         elif action == ActionMoRo10IntEnum.ROTATE_PITCH_P:
             relative_rot = Rotation.from_rotvec(np.radians(rot_step * multiplier) * axes[1])
         elif action == ActionMoRo10IntEnum.ROTATE_PITCH_N:
@@ -114,9 +72,6 @@ class ActionMoRoMultiplier36(object):
         else:
             raise NotImplementedError
         return relative_move, relative_rot
-
-    def get_action_size(self):
-        return len(ActionMoRo10IntEnum) * len(MultiplierIntEnum)
 
 
 class ActionMoRoMul108(object):
