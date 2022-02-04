@@ -91,8 +91,13 @@ class Field:
         self.allowed_lower_bound = np.array([128, 128, 128]) - self.allowed_range
         self.allowed_upper_bound = np.array([128, 128, 128]) + self.allowed_range - 1
 
+        self.visit_resolution = 8
+        self.visit_shape = None
+        self.visit_map = None
+
         self.init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
         self.read_env_from_file(self.init_file_path)
+
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
@@ -109,8 +114,13 @@ class Field:
         self.global_map = expand_and_randomize_environment(self.global_map, (256, 256, 256))
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-        # self.shape = self.global_map.shape
+        self.shape = self.global_map.shape
+
         self.known_map = np.zeros(self.shape)
+
+        self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
+                            int(self.shape[2] // self.visit_resolution))
+        self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
 
         self.found_targets = 0
         self.free_cells = 0
@@ -285,6 +295,8 @@ class Field:
                                                                           ep_left_up,
                                                                           ep_right_down,
                                                                           ep_right_up)
+        visit_gain, coverage_rate = self.update_visit_map()
+
         self.found_targets += new_found_targets
         self.free_cells += new_free_cells
 
@@ -299,14 +311,39 @@ class Field:
         # map = make_up_8x15x9x9_map(map)
 
         map = map.astype(np.uint8)
-        reward = new_found_targets + 0.01 * new_free_cells
+        reward = 5000 * visit_gain + new_found_targets + 0.01 * new_free_cells
         # reward = 200 * new_found_targets + new_free_cells
 
         # step
         # print("new_found_targets:{}".format(new_found_targets))
         # print("new_free_cells:{}".format(new_free_cells))
-        info = {"new_found_targets": new_found_targets, "new_free_cells": new_free_cells, "reward": reward}
+        info = {"visit_gain": visit_gain, "new_found_targets": new_found_targets, "new_free_cells": new_free_cells,
+                "reward": reward, "coverage_rate": coverage_rate}
+        print(info)
         return map, reward, done, info
+
+    def update_visit_map(self):
+        # to encourage exploration, 计算整个图新找到的target的数量， 动作变成36, 鼓励去没去过的地方
+        # 去大的没有去过的格子
+        # need LSTM
+        location = np.array([self.robot_pos[0] // self.visit_resolution, self.robot_pos[1] // self.visit_resolution,
+                             self.robot_pos[2] // self.visit_resolution]).astype(np.int)
+        # neighbor box
+        nd = 1
+        start_x = max(0, location[0] - nd)
+        end_x = min(self.visit_shape[0], location[0] + nd + 1)
+        start_y = max(0, location[1] - nd)
+        end_y = min(self.visit_shape[1], location[1] + nd + 1)
+        start_z = max(0, location[2] - nd)
+        end_z = min(self.visit_shape[2], location[2] + nd + 1)
+
+        neighbor_visit_map = self.visit_map[start_x: end_x, start_y: end_y, start_z: end_z]
+        visit_gain = np.sum(1 - neighbor_visit_map)
+
+        self.visit_map[location[0], location[1], location[2]] = 1
+        coverage_rate = np.sum(self.visit_map) / np.product(self.visit_shape)
+
+        return visit_gain, coverage_rate
 
     def reset(self):
         self.reset_count += 1

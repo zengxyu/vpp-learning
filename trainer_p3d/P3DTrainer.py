@@ -2,6 +2,7 @@ import os
 import pickle
 import sys
 import time
+from typing import Dict, List
 
 from config import read_yaml, env_config
 from utilities.Info import EpisodeInfo
@@ -107,13 +108,15 @@ def add_scalar(writer, phase, episode_info, i_episode):
         writer.add_scalar(str(phase) + "/" + str(key), item, i_episode)
 
 
-def add_statistics_to_collector(infos, agent_statistics, episode_info_collector, env):
+def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_info_collector: EpisodeInfo, env):
     # calculate the statistic info for each episode, then added to episode_info_collector
     new_found_targets_sum = 0
     new_free_cells_sum = 0
     rewards_sum = 0
+    visit_gain_sum = 0
 
     for info in infos:
+        visit_gain_sum += info["visit_gain"]
         new_found_targets_sum += info["new_found_targets"]
         new_free_cells_sum += info["new_free_cells"]
         rewards_sum += info["reward"]
@@ -121,15 +124,21 @@ def add_statistics_to_collector(infos, agent_statistics, episode_info_collector,
     print("rewards_sum : ", rewards_sum)
     print("new_found_targets_sum : ", new_found_targets_sum)
     print("new_free_cells_sum : ", new_free_cells_sum)
+    print("visit_gain_sum : ", visit_gain_sum)
 
     print("new_found_targets_rate : ", new_found_targets_sum / env.target_count)
     print("new_free_cells_rate : ", new_free_cells_sum / env.free_count)
+    print("coverage rate : ", infos[-1]["coverage_rate"])
 
     episode_info_collector.add({"rewards_sum": rewards_sum})
     episode_info_collector.add({"new_found_targets_sum": new_found_targets_sum})
     episode_info_collector.add({"new_free_cells_sum": new_free_cells_sum})
+    episode_info_collector.add({"visit_gain_sum": visit_gain_sum})
+
     episode_info_collector.add({"new_found_targets_rate": new_found_targets_sum / env.target_count})
     episode_info_collector.add({"new_free_cells_rate": new_free_cells_sum / env.free_count})
+    episode_info_collector.add({"coverage_rate": infos[-1]["coverage_rate"]})
+
     episode_info_collector.add({"average_q": agent_statistics[0][1]})
     episode_info_collector.add({"loss": agent_statistics[1][1]})
 
