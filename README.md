@@ -1,3 +1,10 @@
 # VPP learning
 
 Contains environments used for viewpoint planning learning
+
+# Train
+``` python3 run_p3d_discrete.py --out_folder=test_folder --train```
+
+# Test, you need to specify your in_folder, out_folder, 
+# in_model_index(you can look for the model index in your in_folder/model directory)
+```python3 run_p3d_discrete.py --in_folder=in_folder --out_folder=out_folder --in_model_index=2000```
