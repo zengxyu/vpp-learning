@@ -319,7 +319,7 @@ class Field:
         # print("new_free_cells:{}".format(new_free_cells))
         info = {"visit_gain": visit_gain, "new_found_targets": new_found_targets, "new_free_cells": new_free_cells,
                 "reward": reward, "coverage_rate": coverage_rate}
-        print(info)
+        # print(info)
         return map, reward, done, info
 
     def update_visit_map(self):
