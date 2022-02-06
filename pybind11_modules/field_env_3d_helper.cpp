@@ -360,6 +360,7 @@ count_known_target_layer2(const py::array_t<int> &known_map, const Vec3D &start,
 }
 
 double compute_hypot(double x, double y, double z) {
+    //TODO Tobias check
     return sqrt(x * x + y * y + z * z);
 }
 
