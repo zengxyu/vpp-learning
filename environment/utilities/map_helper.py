@@ -110,3 +110,23 @@ def sum_block(one_map):
     one_map = np.reshape(one_map, (5, 36, 18, 100))
     one_map = np.sum(one_map, axis=-1)
     return one_map
+
+    # def generate_spherical_coordinate_map(self, cam_pos):
+    #     rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
+    #     spherical_coordinate_map = field_env_3d_helper.generate_spherical_coordinate_map(self.known_map,
+    #                                                                                      generate_vec3d_from_arr(
+    #                                                                                          cam_pos), rot_vecs, 250.0,
+    #                                                                                      250)
+    #     spherical_coordinate_map = np.transpose(spherical_coordinate_map, (2, 0, 1))
+    #     return spherical_coordinate_map
+# def compute_global_known_map(self, cam_pos, neighbor_dist):
+    #     generate_spherical_coordinate_map = self.generate_spherical_coordinate_map(cam_pos)
+    #     step_size = 10
+    #     res = np.zeros(shape=(2, int(neighbor_dist / step_size), 36, 18))
+    #
+    #     for i in range(0, neighbor_dist, step_size):
+    #         res[0, i // step_size, :, :] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 1)
+    #         res[1, i // step_size, :, :] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 2)
+    #
+    #     res = np.concatenate((res[0], res[1]), axis=0)
+    #     return res

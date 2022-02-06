@@ -41,63 +41,44 @@ def read_yaml(config_dir, config_name):
     return yaml_config
 
 
-def copy_configs_to_folder(configs_from_dir, to_folder):
+def copy_configs_to_folder(from_folder, to_folder):
+    from_folder = os.path.join(from_folder, "configs")
     to_folder = os.path.join(to_folder, "configs")
     if not os.path.exists(to_folder):
-        shutil.copytree(configs_from_dir, to_folder)
+        shutil.copytree(from_folder, to_folder)
     else:
         logging.info("File exists:", to_folder)
         key = input(
-            "Output directory already exists! From {} to {}. Overwrite the folder? (y/n).".format(configs_from_dir,
+            "Output directory already exists! From {} to {}. Overwrite the folder? (y/n).".format(from_folder,
                                                                                                   to_folder))
         if key == 'y':
             shutil.rmtree(to_folder)
-            shutil.copytree(configs_from_dir, to_folder)
+            shutil.copytree(from_folder, to_folder)
         else:
             logging.info("Please respecify the folder.")
 
             sys.exit(1)
 
 
-def setup_folder(yaml_config, parser_config):
+def setup_folder(parser_args):
     """
-    config all output folders and input folders
-    :param parser_config:
-    :param yaml_config:
+    config all output folders and input folders, setup model folder, board folder, result_folder
+    :param parser_args:
     :return:
     """
-    yaml_config["out_parent_folder"] = os.path.join(get_project_path(), yaml_config["out_parent_folder"])
-
     # out_folder given by parser_args
-    yaml_config["out_folder"] = os.path.join(yaml_config["out_parent_folder"], parser_config.out_folder)
-    yaml_config["out_model"] = os.path.join(yaml_config["out_folder"], yaml_config["out_model"])
-    yaml_config["out_board"] = os.path.join(yaml_config["out_folder"], yaml_config["out_board"])
-    yaml_config["out_result"] = os.path.join(yaml_config["out_folder"], yaml_config["out_result"])
+    parser_args.out_model = os.path.join(parser_args.out_folder, "model")
+    parser_args.out_board = os.path.join(parser_args.out_folder, "board_log")
+    parser_args.out_board = os.path.join(parser_args.out_folder, "result_log")
 
     create_folders(
-        [yaml_config["out_folder"], yaml_config["out_model"], yaml_config["out_board"],
-         yaml_config["out_result"]])
+        [parser_args.out_folder, parser_args.out_model, parser_args.out_board, parser_args.out_board])
 
-    if parser_config.in_folder is not None and parser_config.in_folder != "":
-        yaml_config["in_folder"] = os.path.join(yaml_config["out_parent_folder"], parser_config.in_folder)
-        yaml_config["in_model"] = os.path.join(yaml_config["in_folder"], yaml_config["in_model"])
+    if not parser_args.train:
+        if parser_args.in_folder is not None and parser_args.in_folder != "":
+            parser_args.in_model = os.path.join(parser_args.in_folder, "model")
 
-        check_folders_exist(
-            [yaml_config["in_folder"], yaml_config["in_model"]])
-
-    if parser_config.train:
-        copy_configs_to_folder(parser_config.configs_dir, yaml_config["out_folder"])
-
-
-def load_training_configs(parser_config):
-    yaml_training_config = read_yaml(parser_config.configs_dir, "training_default_dqn.yaml")
-
-    # setup folder
-    setup_folder(yaml_training_config, parser_config)
-
-    print("Yaml training config:", yaml_training_config)
-
-    return yaml_training_config
+            check_folders_exist([parser_args.in_folder, parser_args.in_model])
 
 
 def process_args():
@@ -106,39 +87,35 @@ def process_args():
     parser.add_argument("--in_folder", type=str, default=None)
     parser.add_argument("--in_model_index", type=int)
     parser.add_argument("--train", action="store_true", default=False)
-    parser.add_argument("--configs_dir", default="")
 
-    parser_config = parser.parse_args()
-    if parser_config.train:
-        assert parser_config.out_folder
+    parser_args = parser.parse_args()
+
+    # set out_folder path and in_folder_path
+    if parser_args.train:
+        assert parser_args.out_folder
+        parser_args.out_folder = os.path.join(get_project_path(), "output", parser_args.out_folder)
     else:
-        assert parser_config.in_folder and parser_config.in_model_index
+        assert parser_args.in_folder and parser_args.in_model_index
+        parser_args.out_folder = os.path.join(get_project_path(), "output", parser_args.out_folder)
+        parser_args.in_folder = os.path.join(get_project_path(), "output", parser_args.in_folder)
 
     # config dir
-    if parser_config.train:
-        parser_config.configs_dir = os.path.join(get_project_path(), "configs")
+    if parser_args.train:
+        # copy configs dir from /project_path/configs to /project_path/output/out_folder/configs
+        copy_configs_to_folder(get_project_path(), parser_args.out_folder)
     else:
-        parser_config.configs_dir = os.path.join("output", parser_config.in_folder, "configs")
+        # copy configs dir from /project_path/output/in_folder/configs to /project_path/output/out_folder/configs
+        copy_configs_to_folder(parser_args.in_folder, parser_args.out_folder)
 
-    return parser_config
+    setup_folder(parser_args)
 
+    # load some yaml files
+    parser_args.env_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "env.yaml")
+    parser_args.agents_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "agents.yaml")
+    parser_args.training_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "training.yaml")
 
-def get_configs_dir():
-    return parser_config.configs_dir
-
-
-def load_dqn_args():
-    return parser_config, training_configs
-
-
-def load_ac_args():
-    return parser_config, training_configs
-
-
-parser_config = process_args()
-
-training_configs = load_training_configs(parser_config)
-
-env_config = read_yaml(get_configs_dir(), "env.yaml")
-
-print(training_configs)
+    print("\nYaml env_config config:", parser_args.env_config)
+    print("\nYaml agents_config config:", parser_args.agents_config)
+    print("\nYaml training config:", parser_args.training_config)
+    print("\n==============================================================================================\n")
+    return parser_args

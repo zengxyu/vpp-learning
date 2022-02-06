@@ -9,8 +9,11 @@ dqn:
   optimizer: Adam
   # valid only in pfrl
   explorer: LinearDecayEpsilonGreedy
+  #  EpisodicReplayBuffer, ReplayBuffer, PrioritizedReplayBuffer
   replay_buffer: EpisodicReplayBuffer
-  recurrent: False
+  # sequence length
+  episodic_update_len: 10
+  recurrent: True
 
 ddpg:
   critic:

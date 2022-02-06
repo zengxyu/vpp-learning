@@ -70,14 +70,23 @@ def random_translate_environment(global_map, global_shape, old_pos, thresh=300):
         new_global_map[loc_z:loc_z + trim_data_z, loc_x:loc_x + trim_data_x, loc_y:loc_y + trim_data_y] = trim_data
         # result = paste(wall, trim_data, (loc_x, loc_y, loc_z))
 
-    return new_global_map, (loc_z, loc_x, loc_y)
+    return new_global_map, (loc_z, loc_x, loc_y), (loc_z + trim_data_z, loc_x + trim_data_x, loc_y + trim_data_y)
 
 
-def expand_and_randomize_environment(global_map, global_shape):
-    trans_map1, pos1 = random_translate_environment(global_map, global_shape, (0, 0, 0))
-    trans_map2, pos2 = random_translate_environment(global_map, global_shape, pos1)
-    global_map = np.logical_or(trans_map1, trans_map2).astype(int)
-    return global_map
+def get_random_multi_tree_environment(global_map, global_shape, num):
+    """
+    get random multiple tree environment
+    """
+    start_pos = (0., 0., 0.)
+    bound_boxes = []
+    new_global_map = np.zeros_like(global_map).astype(int)
+
+    for i in range(num):
+        trans_map, start_pos, end_pos = random_translate_environment(global_map, global_shape, start_pos)
+        bound_boxes.append([start_pos, end_pos])
+        new_global_map = np.logical_or(new_global_map, trans_map).astype(int)
+
+    return new_global_map, np.array(bound_boxes)
 
 
 if __name__ == '__main__':
