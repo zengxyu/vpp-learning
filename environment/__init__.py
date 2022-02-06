@@ -1,1 +1,0 @@
-from environment import field_p3d_discrete
