@@ -39,9 +39,6 @@ class NetworkVisitTemporal(Recurrent, torch.nn.Module):
 
     def forward(self, state, cur):
         obs = state.data
-        print("obs shape:", obs.shape)
-        if cur is not None:
-            print("cur shape:", cur[0].shape)
         state = state.float()
         out = self.recurrent_sequential(state, cur)
 
