@@ -1,24 +1,22 @@
 import os
 import pickle
-import sys
 import time
 from typing import Dict, List
 
-from config import read_yaml, env_config
-from utilities.Info import EpisodeInfo
+from torch.utils.tensorboard import SummaryWriter
 
-headless = env_config["headless"]
-if not headless:
-    from direct.stdpy import threading
+from utilities.Info import EpisodeInfo
 
 
 class P3DTrainer(object):
-    def __init__(self, env, agent, action_space, writer, parser_config, training_config):
-        self.training_config = training_config
+    def __init__(self, env, agent, action_space, parser_args):
+        self.parser_args = parser_args
+        self.training_config = parser_args.training_config
+        self.writer = SummaryWriter(log_dir=parser_args.out_board)
         self.env = env
         self.agent = agent
         self.action_space = action_space
-        self.writer = writer
+
         self.train_i_episode = 0
         self.train_i_step = 0
         self.test_i_episode = 0
@@ -26,16 +24,15 @@ class P3DTrainer(object):
         self.n_smooth = 200
         self.global_i_step = 0
         self.start_time = time.time()
-        self.train_collector = EpisodeInfo(training_config["smooth_n"])
-        self.test_collector = EpisodeInfo(training_config["smooth_n"])
-        # self.config = config
-        # self.summary_writer = SummaryWriterLogger(config)
-        # self.logger = BasicLogger.setup_console_logging(config)
+        self.train_collector = EpisodeInfo(self.training_config["smooth_n"])
+        self.test_collector = EpisodeInfo(self.training_config["smooth_n"])
         # discrete
-        if not parser_config.train:
-            self.agent.load("{}/model_epi_{}".format(self.training_config["in_model"], parser_config.in_model_index))
+        if not parser_args.train:
+            self.agent.load("{}/model_epi_{}".format(self.training_config["in_model"], parser_args.in_model_index))
 
     def run(self):
+        headless = self.parser_args.env_config["headless"]
+
         if headless:
             for i in range(self.training_config["num_episodes_to_run"]):
                 print("\nEpisode:{}".format(i))
@@ -46,6 +43,7 @@ class P3DTrainer(object):
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
+            from direct.stdpy import threading
             main_thread = threading.Thread(target=self.evaluate_10_times)
             main_thread.start()
             self.env.gui.run()

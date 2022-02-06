@@ -193,16 +193,3 @@ class ActionRo6IntEnum(IntEnum):
     ROTATE_PITCH_N = 3
     ROTATE_YAW_P = 4
     ROTATE_YAW_N = 5
-
-
-# class Action2:
-#     def __init__(self, a, b):
-#         self.a = a
-#         self.step = b
-#
-#     def build_actions():
-#         action_space = []
-#         for action in Action:
-
-if __name__ == '__main__':
-    ac = ActionMoRoMultiplier36()

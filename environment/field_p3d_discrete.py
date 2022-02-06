@@ -1,5 +1,6 @@
 #!/usr/bin/environment python
 import os.path
+import sys
 
 import numpy as np
 from enum import IntEnum
@@ -9,9 +10,9 @@ import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 
-from config import read_yaml, get_configs_dir
+from environment.utilities.check_occupied_helper import has_obstacle, in_bound_boxes
 from environment.utilities.map_helper import make_up_map, make_up_8x15x9x9_map
-from environment.utilities.random_field_helper import random_translate_environment, expand_and_randomize_environment
+from environment.utilities.random_field_helper import random_translate_environment, get_random_multi_tree_environment
 from utilities.util import get_project_path
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
@@ -60,20 +61,20 @@ class GuiFieldValues(IntEnum):
 
 
 class Field:
-    def __init__(self, config, action_space):
-        self.config = config
-        env_config = read_yaml(config_dir=get_configs_dir(), config_name="env.yaml")
-        self.env_config = env_config
-        self.sensor_range = env_config["sensor_range"]
-        self.hfov = env_config["hfov"]
-        self.vfov = env_config["vfov"]
-        self.shape = (env_config["shape_z"], env_config["shape_x"], env_config["shape_y"])
-        self.max_steps = env_config["max_steps"]
-        self.MOVE_STEP = env_config["move_step"]
-        self.ROT_STEP = env_config["rot_step"]
+    def __init__(self, parser_args, action_space):
+        self.env_config = parser_args.env_config
+        self.training_config = parser_args.training_config
+        self.sensor_range = self.env_config["sensor_range"]
+        self.hfov = self.env_config["hfov"]
+        self.vfov = self.env_config["vfov"]
+        self.shape = (self.env_config["shape_z"], self.env_config["shape_x"], self.env_config["shape_y"])
+        self.max_steps = self.env_config["max_steps"]
+        self.MOVE_STEP = self.env_config["move_step"]
+        self.ROT_STEP = self.env_config["rot_step"]
 
-        self.headless = env_config["headless"]
-        self.randomize = env_config["randomize"]
+        self.headless = self.env_config["headless"]
+        self.randomize = self.env_config["randomize"]
+        self.num_plants = self.env_config["num_plants"]
 
         self.action_space = action_space
         self.reset_count = 0
@@ -97,6 +98,8 @@ class Field:
         self.visit_resolution = 16
         self.visit_shape = None
         self.visit_map = None
+        self.map = None
+        self.bounding_boxes = None
 
         self.init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
         self.initialize(self.init_file_path)
@@ -106,7 +109,7 @@ class Field:
         print("rot step:", self.ROT_STEP)
         if not self.headless:
             from environment.field_p3d_gui import FieldGUI
-            self.gui = FieldGUI(self, env_config["scale"])
+            self.gui = FieldGUI(self, self.env_config["scale"])
 
     def initialize(self, filename):
         self.global_map = np.zeros(self.shape).astype(int)
@@ -128,7 +131,8 @@ class Field:
 
         # randomize the environment if needed
         if self.randomize:
-            self.global_map = expand_and_randomize_environment(self.global_map, self.shape)
+            self.global_map, self.bounding_boxes = get_random_multi_tree_environment(self.global_map, self.shape,
+                                                                                     self.num_plants)
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
         self.shape = self.global_map.shape
@@ -243,6 +247,9 @@ class Field:
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
+        print("self.known_map size:{}".format(self.known_map.shape))
+        print("self.global_map size:{}".format(self.global_map.shape))
+
         self.known_map, found_targets, free_cells, coords, values = field_env_3d_helper.update_grid_inds_in_view(
             self.known_map,
             self.global_map,
@@ -272,7 +279,17 @@ class Field:
         return found_targets, free_cells
 
     def move_robot(self, direction):
-        self.robot_pos += direction
+        robot_pos = self.robot_pos + direction
+        robot_pos = np.clip(robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
+        if not in_bound_boxes(self.bounding_boxes, robot_pos):
+            self.robot_pos = robot_pos
+
+    def cartesian_move_robot(self, direction):
+        cartesian_result = []
+        if not has_obstacle(self.global_map, self.robot_pos, direction, cartesian_result):
+            self.robot_pos += direction
+        else:
+            self.robot_pos += cartesian_result[0]
         self.robot_pos = np.clip(self.robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
 
     def rotate_robot(self, rot):
@@ -282,31 +299,14 @@ class Field:
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
         return map
 
-    def generate_spherical_coordinate_map(self, cam_pos):
-        rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
-        spherical_coordinate_map = field_env_3d_helper.generate_spherical_coordinate_map(self.known_map,
-                                                                                         generate_vec3d_from_arr(
-                                                                                             cam_pos), rot_vecs, 250.0,
-                                                                                         250)
-        spherical_coordinate_map = np.transpose(spherical_coordinate_map, (2, 0, 1))
-        return spherical_coordinate_map
-
-    def compute_global_known_map(self, cam_pos, neighbor_dist):
-        generate_spherical_coordinate_map = self.generate_spherical_coordinate_map(cam_pos)
-        step_size = 10
-        res = np.zeros(shape=(2, int(neighbor_dist / step_size), 36, 18))
-
-        for i in range(0, neighbor_dist, step_size):
-            res[0, i // step_size, :, :] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 1)
-            res[1, i // step_size, :, :] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 2)
-
-        res = np.concatenate((res[0], res[1]), axis=0)
-        return res
-
     def step(self, action):
+        # actions = [0, 2, 4]
+        # action = actions[self.step_count % 3]
+        # print(self.step_count)
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
+
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
@@ -326,22 +326,39 @@ class Field:
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map_layer5(cam_pos)
 
         # 15 * 36 * 18
-        map = self.concat(unknown_map, known_free_map, known_target_map)
+        self.map = self.concat(unknown_map, known_free_map, known_target_map)
 
         # map = make_up_8x15x9x9_map(map)
 
-        map = map.astype(np.uint8)
-        # reward = 100 * visit_gain + new_found_targets + 0.01 * new_free_cells
-        # reward = 200 * new_found_targets + new_free_cells
-        reward = 100 * visit_gain
+        self.map = self.map.astype(np.uint8)
 
+        reward = self.get_reward(visit_gain, new_found_targets, new_free_cells)
         # step
-        # print("new_found_targets:{}".format(new_found_targets))
-        # print("new_free_cells:{}".format(new_free_cells))
         info = {"visit_gain": visit_gain, "new_found_targets": new_found_targets, "new_free_cells": new_free_cells,
                 "reward": reward, "coverage_rate": coverage_rate}
-        # print(info)
-        return map, reward, done, info
+
+        inputs = self.get_inputs()
+
+        return inputs, reward, done, info
+
+    def get_inputs(self):
+        # create input
+        inputs = []
+        if self.training_config["input"]["observation_map"]:
+            inputs.append(self.map)
+
+        if self.training_config["input"]["visit_map"]:
+            visit_map = self.visit_map[np.newaxis, :, :, :]
+            inputs.append(visit_map)
+
+        return inputs
+
+    def get_reward(self, visit_gain, new_found_targets, new_free_cells):
+        weight = self.training_config["rewards"]
+        reward = weight["visit_gain_weight"] * visit_gain + \
+                 weight["new_found_targets_weight"] * new_found_targets + \
+                 weight["new_free_cells_weight"] * new_free_cells
+        return reward
 
     def update_visit_map(self):
         # to encourage exploration, 计算整个图新找到的target的数量， 动作变成36, 鼓励去没去过的地方
@@ -382,9 +399,9 @@ class Field:
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map_layer5(cam_pos)
         # known_target_rate, unknown_rate = self.count_neighbor_rate(np.array(unknown_map), np.array(known_free_map),
         #                                                            np.array(known_target_map))
-        map = self.concat(unknown_map, known_free_map, known_target_map)
+        self.map = self.concat(unknown_map, known_free_map, known_target_map)
 
         # map = make_up_8x15x9x9_map(map)
-        map = map.astype(np.uint8)
-
-        return map, {}
+        self.map = self.map.astype(np.uint8)
+        # self.visit_map[np.newaxis, :, :, :]
+        return self.get_inputs(), {}

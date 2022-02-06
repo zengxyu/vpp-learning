@@ -13,12 +13,11 @@ import os.path
 
 from pfrl import replay_buffers
 
-from config import read_yaml, get_configs_dir
-from utilities.util import get_project_path
+from config import read_yaml
 
 
-def get_replay_buffer_by_name(name):
-    config = read_yaml(config_dir=get_configs_dir(), config_name="replay_buffers.yaml")
+def get_replay_buffer_by_name(parser_args, name):
+    config = read_yaml(config_dir=os.path.join(parser_args.out_folder, "configs"), config_name="replay_buffers.yaml")
     if name == "ReplayBuffer":
         return replay_buffers.ReplayBuffer(
             capacity=config.getint(name, "capacity"),

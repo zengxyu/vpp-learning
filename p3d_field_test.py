@@ -1,5 +1,4 @@
-from environment.field_p3d_discrete_known_map import Field
-from action_space import ActionMoRo10 as Action
+from rl_agents.action_space.action_space import ActionMoRo10 as Action
 import field_env_3d_helper
 import numpy as np
 
