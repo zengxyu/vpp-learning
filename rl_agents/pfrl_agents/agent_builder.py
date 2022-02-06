@@ -28,6 +28,7 @@ def build_ddqn_agent(parser_args, network: Module, action_space):
         target_update_method=dqn_config["target_update_method"],
         gpu=training_config["gpu"],
         episodic_update_len=dqn_config["episodic_update_len"],
+        minibatch_size=dqn_config["batch_size"],
         recurrent=dqn_config["recurrent"]
 
     )

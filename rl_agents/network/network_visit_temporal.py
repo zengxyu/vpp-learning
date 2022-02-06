@@ -33,6 +33,7 @@ class NetworkVisitTemporal(Recurrent, torch.nn.Module):
                                                                 nn.ReLU(),
                                                                 nn.Linear(64, action_size),
                                                                 DiscreteActionValueHead())
+
         self.hn_neighbor_state_dim = 512
         self.lstm_neighbor1 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
         self.lstm_neighbor2 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
