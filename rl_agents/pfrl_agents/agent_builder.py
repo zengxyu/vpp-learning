@@ -1,5 +1,3 @@
-import os
-from typing import Dict
 from pfrl.agents import DoubleDQN
 from torch.nn import Module
 
@@ -18,7 +16,6 @@ def build_ddqn_agent(parser_args, network: Module, action_space):
 
     replay_buffer = get_replay_buffer_by_name(parser_args, dqn_config["replay_buffer"])
 
-    # Hyperparameters in http://arxiv.org/abs/1802.09477
     agent = DoubleDQN(
         network,
         optimizer,

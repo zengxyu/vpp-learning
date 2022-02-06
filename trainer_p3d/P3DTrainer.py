@@ -6,6 +6,7 @@ from typing import Dict, List
 from torch.utils.tensorboard import SummaryWriter
 
 from utilities.Info import EpisodeInfo
+from direct.stdpy import threading
 
 
 class P3DTrainer(object):
@@ -43,7 +44,6 @@ class P3DTrainer(object):
         else:
             # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
             # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
-            from direct.stdpy import threading
             main_thread = threading.Thread(target=self.evaluate_10_times)
             main_thread.start()
             self.env.gui.run()
@@ -67,10 +67,10 @@ class P3DTrainer(object):
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.train_collector, env=self.env)
         add_scalar(self.writer, phase, self.train_collector.get_smooth_statistics(), self.train_i_episode)
-        save_episodes_info(phase, self.train_collector, self.training_config, self.train_i_episode)
+        save_episodes_info(phase, self.train_collector, self.train_i_episode, self.parser_args)
 
         if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
-            self.agent.save("{}/model_epi_{}".format(self.training_config["out_model"], self.train_i_episode))
+            self.agent.save("{}/model_epi_{}".format(self.parser_args.out_model, self.train_i_episode))
 
         print('Complete training episode {}'.format(self.train_i_episode))
 
@@ -93,7 +93,7 @@ class P3DTrainer(object):
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.test_collector, env=self.env)
         add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)
-        save_episodes_info(phase, self.test_collector, self.training_config, self.train_i_episode)
+        save_episodes_info(phase, self.test_collector, self.test_i_episode, self.parser_args)
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
     def evaluate_10_times(self):
@@ -141,9 +141,9 @@ def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_inf
     episode_info_collector.add({"loss": agent_statistics[1][1]})
 
 
-def save_episodes_info(phase, episode_info_collector, train_config, i_episode):
-    save_path = os.path.join(train_config["out_result"], phase + "_log.pkl")
-    save_n = train_config["save_result_n"]
+def save_episodes_info(phase, episode_info_collector, i_episode, parser_args):
+    save_path = os.path.join(parser_args.out_folder, phase + "_log.pkl")
+    save_n = parser_args.training_config["save_result_n"]
     if i_episode % save_n == 0:
         file = open(save_path, 'wb')
         pickle.dump(episode_info_collector.episode_infos, file)

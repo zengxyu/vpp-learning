@@ -9,6 +9,7 @@
         
 ===========================================
 """
+import logging
 import random
 
 import numpy as np
@@ -51,6 +52,8 @@ def random_translate_environment(global_map, global_shape, old_pos, thresh=300):
 
     loc_z, loc_x, loc_y = None, None, None
 
+    count = 0
+
     if trim_data is not None:
         # make sure the the plant fully fitting within the wall
         max_z = global_shape_z - trim_data_z
@@ -66,6 +69,10 @@ def random_translate_environment(global_map, global_shape, old_pos, thresh=300):
             loc_z = random.randint(0, max_z - 1)
             loc_x = random.randint(0, max_x - 1)
             loc_y = random.randint(0, max_y - 1)
+            count += 1
+            if count >= 1000:
+                logging.info("Loop too many times when generate the plants")
+                break
 
         new_global_map[loc_z:loc_z + trim_data_z, loc_x:loc_x + trim_data_x, loc_y:loc_y + trim_data_y] = trim_data
         # result = paste(wall, trim_data, (loc_x, loc_y, loc_z))
@@ -73,7 +80,7 @@ def random_translate_environment(global_map, global_shape, old_pos, thresh=300):
     return new_global_map, (loc_z, loc_x, loc_y), (loc_z + trim_data_z, loc_x + trim_data_x, loc_y + trim_data_y)
 
 
-def get_random_multi_tree_environment(global_map, global_shape, num):
+def get_random_multi_tree_environment(global_map, global_shape, num, thresh):
     """
     get random multiple tree environment
     """
@@ -82,7 +89,7 @@ def get_random_multi_tree_environment(global_map, global_shape, num):
     new_global_map = np.zeros_like(global_map).astype(int)
 
     for i in range(num):
-        trans_map, start_pos, end_pos = random_translate_environment(global_map, global_shape, start_pos)
+        trans_map, start_pos, end_pos = random_translate_environment(global_map, global_shape, start_pos, thresh)
         bound_boxes.append([start_pos, end_pos])
         new_global_map = np.logical_or(new_global_map, trans_map).astype(int)
 

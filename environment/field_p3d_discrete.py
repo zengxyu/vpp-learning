@@ -75,6 +75,7 @@ class Field:
         self.headless = self.env_config["headless"]
         self.randomize = self.env_config["randomize"]
         self.num_plants = self.env_config["num_plants"]
+        self.thresh = self.env_config["thresh"]
 
         self.action_space = action_space
         self.reset_count = 0
@@ -132,7 +133,7 @@ class Field:
         # randomize the environment if needed
         if self.randomize:
             self.global_map, self.bounding_boxes = get_random_multi_tree_environment(self.global_map, self.shape,
-                                                                                     self.num_plants)
+                                                                                     self.num_plants, self.thresh)
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
         self.shape = self.global_map.shape
@@ -247,8 +248,8 @@ class Field:
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
-        print("self.known_map size:{}".format(self.known_map.shape))
-        print("self.global_map size:{}".format(self.global_map.shape))
+        # print("self.known_map size:{}".format(self.known_map.shape))
+        # print("self.global_map size:{}".format(self.global_map.shape))
 
         self.known_map, found_targets, free_cells, coords, values = field_env_3d_helper.update_grid_inds_in_view(
             self.known_map,
@@ -348,10 +349,9 @@ class Field:
             inputs.append(self.map)
 
         if self.training_config["input"]["visit_map"]:
-            visit_map = self.visit_map[np.newaxis, :, :, :]
-            inputs.append(visit_map)
+            inputs.append(self.visit_map)
 
-        return inputs
+        return np.array(inputs)
 
     def get_reward(self, visit_gain, new_found_targets, new_free_cells):
         weight = self.training_config["rewards"]

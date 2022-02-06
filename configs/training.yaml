@@ -4,7 +4,7 @@
 gpu: -1
 debug_mode: False
 num_episodes_to_run: 10000000
-save_model_every_n: 1000
+save_model_every_n: 1
 save_result_n: 1000
 
 bl_console_logging_level: WARNING
@@ -30,6 +30,7 @@ input:
 
 network:
   DQNNetwork: 0
+  NetworkVisit: 0
   NetworkVisitTemporal: 1
   SpatialAttentionModel: 0
 
