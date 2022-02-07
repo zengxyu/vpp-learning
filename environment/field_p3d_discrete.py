@@ -133,9 +133,9 @@ class Field:
         self.global_map = labels.reshape(self.shape)
 
         # # randomize the environment if needed
-        # if self.randomize:
-        #     self.global_map, self.bounding_boxes = get_random_multi_tree_environment(self.global_map, self.shape,
-        #                                                                              self.num_plants, self.thresh)
+        if self.randomize:
+            self.global_map, self.bounding_boxes = get_random_multi_tree_environment(self.global_map, self.shape,
+                                                                                     self.num_plants, self.thresh)
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
         self.shape = self.global_map.shape
@@ -284,8 +284,9 @@ class Field:
     def move_robot(self, direction):
         robot_pos = self.robot_pos + direction
         robot_pos = np.clip(robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
-        if not in_bound_boxes(self.bounding_boxes, robot_pos):
-            self.robot_pos = robot_pos
+        # if not in_bound_boxes(self.bounding_boxes, robot_pos):
+        #     self.robot_pos = robot_pos
+        self.robot_pos = robot_pos
 
     def cartesian_move_robot(self, direction):
         cartesian_result = []
@@ -303,9 +304,9 @@ class Field:
         return map
 
     def step(self, action):
-        actions = [0, 2, 4]
-        action = actions[self.step_count % 3]
-        print(self.step_count)
+        # actions = [0, 2, 4]
+        # action = actions[self.step_count % 3]
+        # print(self.step_count)
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
