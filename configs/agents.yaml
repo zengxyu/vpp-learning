@@ -13,7 +13,7 @@ dqn:
   #  EpisodicReplayBuffer, ReplayBuffer, PrioritizedReplayBuffer
   replay_buffer: EpisodicReplayBuffer
   # sequence length
-  episodic_update_len: 10
+  episodic_update_len: 5
   recurrent: True
 
 ddpg:
