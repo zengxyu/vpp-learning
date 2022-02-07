@@ -19,22 +19,23 @@ train: None
 
 #reward weight
 rewards:
-  visit_gain_weight: 100
+  visit_gain_weight: 0
   new_found_targets_weight: 1
   new_free_cells_weight: 0.01
 
 # 1 : true; 0: false
 input:
-  observation_map: 0
-  visit_map: 1
+  observation_map: 1
+  visit_map: 0
 
 network:
-  DQNNetwork: 0
+  NetworkObs: 0
   NetworkVisit: 0
-  NetworkVisitTemporal: 1
+  NetworkVisitTemporal: 0
+  NetworkObsTemporal: 1
   SpatialAttentionModel: 0
 
 action:
-  ActionMoRo10: 0
-  ActionMoRoMultiplier30: 1
+  ActionMoRo10: 1
+  ActionMoRoMultiplier30: 0
 

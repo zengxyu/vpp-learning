@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 
-class DQNNetwork(torch.nn.Module):
+class NetworkObs(torch.nn.Module):
     def __init__(self, action_size):
         super().__init__()
         self.frame_con1 = torch.nn.Conv2d(15, 24, kernel_size=4, stride=2, padding=1)
