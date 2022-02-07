@@ -388,6 +388,33 @@ std::tuple<int, int> count_known_target_layer2(const py::array_t<int> &known_map
     return std::make_tuple(known_target_vec[0], known_target_vec[1]);
 }
 
+void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D &end, int &found_targets, int &free_cells, std::vector<int> &coords, std::vector<int> &values)
+{
+    Vec3D diff = end - cam_pos;
+    for(double frac = 0; frac < diff.abs(); frac += 1)
+    {
+        Vec3D cur = cam_pos + frac * diff.normalized();
+        int x = (int)cur.x;
+        if (!in_range(x, global_map.shape()[0])) break;
+        int y = (int)cur.y;
+        if (!in_range(y, global_map.shape()[1])) break;
+        int z = (int)cur.z;
+        if (!in_range(z, global_map.shape()[2])) break;
+
+        int cell_val = *global_map.data(x, y, z);
+        *known_map.mutable_data(x, y, z) = cell_val;
+        if (cell_val == 3)
+            found_targets += 1;
+        if (cell_val == 1)
+            free_cells += 1;
+        coords.push_back(x);
+        coords.push_back(y);
+        coords.push_back(z);
+        values.push_back(cell_val + 3);
+
+        if (cell_val >= 2) break;
+    }
+}
 
 std::tuple<py::array_t<int>, int,int, std::vector<int>, std::vector<int>> update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D& cam_pos, const Vec3D& ep_left_down, const Vec3D& ep_left_up, const Vec3D& ep_right_down, Vec3D& ep_right_up)
 {
@@ -399,7 +426,21 @@ std::tuple<py::array_t<int>, int,int, std::vector<int>, std::vector<int>> update
     int found_targets = 0;
     int free_cells = 0;
     std::vector<int> coords, values;
-    for (size_t z = (size_t)bb_min.z; z < (size_t)bb_max.z; z++)
+
+    Vec3D diff_x = ep_right_up - ep_left_up;
+    Vec3D diff_y = ep_left_down - ep_left_up;
+
+    for (double x_frac = 0; x_frac < diff_x.abs(); x_frac += 1)
+    {
+        for (double y_frac = 0; y_frac < diff_y.abs(); y_frac += 1)
+        {
+            Vec3D point = ep_left_up + x_frac * diff_x.normalized() + y_frac * diff_y.normalized();
+            update_until_obstacle(known_map, global_map, cam_pos, point, found_targets, free_cells, coords, values);
+        }
+    }
+
+
+    /*for (size_t z = (size_t)bb_min.z; z < (size_t)bb_max.z; z++)
     {
         for (size_t y = (size_t)bb_min.y; y < (size_t)bb_max.y; y++)
         {
@@ -427,7 +468,7 @@ std::tuple<py::array_t<int>, int,int, std::vector<int>, std::vector<int>> update
                 }
             }
         }
-    }
+    }*/
     return std::make_tuple(known_map, found_targets, free_cells, coords, values);
 }
 

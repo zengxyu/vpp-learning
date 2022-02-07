@@ -14,6 +14,9 @@ from environment.utilities.map_helper import make_up_map, make_up_8x15x9x9_map
 from environment.utilities.random_field_helper import random_translate_environment, expand_and_randomize_environment
 from utilities.util import get_project_path
 
+import capnp
+import voxelgrid_capnp
+
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
 
@@ -95,8 +98,9 @@ class Field:
         self.visit_shape = None
         self.visit_map = None
 
-        self.init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
-        self.read_env_from_file(self.init_file_path)
+        self.init_file_path = os.path.join(get_project_path(), 'saved_world.cvx')
+        # self.read_env_from_file(self.init_file_path)
+        self.read_env_from_capnp(self.init_file_path)
 
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
@@ -104,6 +108,31 @@ class Field:
         if not self.headless:
             from environment.field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, env_config["scale"])
+
+    def read_env_from_capnp(self, filename):
+        with open(filename) as file:
+            voxelgrid = voxelgrid_capnp.Voxelgrid.read(file, traversal_limit_in_words=2**32)
+        
+        labels = np.asarray(voxelgrid.labels) + 1
+        self.shape = tuple(voxelgrid.shape)
+        self.global_map = labels.reshape(self.shape)
+        
+        self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
+                            int(self.shape[2] // self.visit_resolution))
+        self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
+
+        self.found_targets = 0
+        self.free_cells = 0
+
+        self.target_count = np.sum(self.global_map == 2)
+        self.free_count = np.sum(self.global_map == 1)
+
+        print("#targets = {}".format(self.target_count))
+        print("#free = {}".format(self.free_count))
+
+        print("#targets/#total = {}".format(self.target_count / (np.product(self.shape))))
+        print("#free/#total = {}".format(self.free_count / (np.product(self.shape))))
+        print("total reward = {}".format(self.target_count + 0.01 * self.free_count))
 
     def read_env_from_file(self, filename):
         self.global_map = np.zeros(self.shape).astype(int)
@@ -350,7 +379,7 @@ class Field:
     def reset(self):
         self.reset_count += 1
         if self.randomize:
-            self.read_env_from_file(self.init_file_path)
+            self.read_env_from_capnp(self.init_file_path)
 
         self.robot_pos = np.array([0.0, 0.0, 0.0])
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
