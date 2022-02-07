@@ -45,7 +45,7 @@ class FieldGUI(ShowBase):
 
         self.colors = PTA_float(self.OCCUPIED_UNSEEN_COLOR + self.TARGET_UNSEEN_COLOR + self.FREE_SEEN_COLOR +
                                 self.OCCUPIED_SEEN_COLOR + self.TARGET_SEEN_COLOR)
-        self.voxgrid = VoxelGrid(self.env.shape, self.colors, self.scale)
+        self.voxgrid = VoxelGrid(self.env.global_map.shape, self.colors, self.scale)
 
         self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
         self.render.attachNewNode(self.field_border)

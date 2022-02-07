@@ -40,7 +40,7 @@ def in_bound_boxes(bounding_boxes, point):
     check if point in bounding boxes
     """
     x, y, z = point
-    if bounding_boxes:
+    if len(bounding_boxes) != 0:
         for start, end in bounding_boxes:
             start_x, start_y, start_z = start
             end_x, end_y, end_z = end
