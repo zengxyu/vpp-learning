@@ -142,7 +142,7 @@ class Field:
 
         self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
-        self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
+        self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint4)
 
         self.target_count = np.sum(self.global_map == 2)
         self.free_count = np.sum(self.global_map == 1)
@@ -383,7 +383,7 @@ class Field:
         neighbor_visit_map = self.visit_map[start_x: end_x, start_y: end_y, start_z: end_z]
         visit_gain = np.sum(1 - neighbor_visit_map)
         self.visit_map[start_x: end_x, start_y: end_y, start_z: end_z] = np.ones_like(neighbor_visit_map).astype(
-            np.uint8)
+            np.uint4)
         # self.visit_map[location[0], location[1], location[2]] = 1
         coverage_rate = np.sum(self.visit_map) / np.product(self.visit_shape)
         return visit_gain, coverage_rate
