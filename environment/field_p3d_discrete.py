@@ -352,7 +352,7 @@ class Field:
             inputs.append([self.visit_map])
 
         inputs = np.array(inputs)
-        if np.shape(inputs)[0] == 0:
+        if np.shape(inputs)[0] == 1:
             return np.array(inputs).squeeze(0)
         else:
             return np.array(inputs)
