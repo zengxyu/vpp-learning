@@ -15,28 +15,25 @@
 namespace capnp {
 namespace schemas {
 
-CAPNP_DECLARE_SCHEMA(ebb0fc0b37fcaba4);
+CAPNP_DECLARE_SCHEMA(c8af65040e5ecb13);
+enum class MapType_c8af65040e5ecb13: uint16_t {
+  UNCHANGED,
+  COUNT_MAP,
+  POINTCLOUD,
+  VOXELGRID,
+  FULL_VOXELGRID,
+};
+CAPNP_DECLARE_ENUM(MapType, c8af65040e5ecb13);
 CAPNP_DECLARE_SCHEMA(f1d090b2c3bf545e);
+CAPNP_DECLARE_SCHEMA(f2a441746f88f727);
+CAPNP_DECLARE_SCHEMA(cf5efa5f93547a02);
 
 }  // namespace schemas
 }  // namespace capnp
 
 namespace vpp_msg {
 
-struct RandomizationParameters {
-  RandomizationParameters() = delete;
-
-  class Reader;
-  class Builder;
-  class Pipeline;
-
-  struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(ebb0fc0b37fcaba4, 1, 2)
-    #if !CAPNP_LITE
-    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
-    #endif  // !CAPNP_LITE
-  };
-};
+typedef ::capnp::schemas::MapType_c8af65040e5ecb13 MapType;
 
 struct Action {
   Action() = delete;
@@ -46,16 +43,47 @@ struct Action {
   class Pipeline;
   enum Which: uint16_t {
     NONE,
-    RESET,
     RELATIVE_JOINT_TARGET,
     ABSOLUTE_JOINT_TARGET,
     GOAL_POSE,
     RELATIVE_POSE,
-    RESET_AND_RANDOMIZE,
+    RESET,
   };
+  struct Reset;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(f1d090b2c3bf545e, 1, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(f1d090b2c3bf545e, 2, 2)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
+struct Action::Reset {
+  Reset() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+  struct RandomizationParameters;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(f2a441746f88f727, 2, 2)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
+struct Action::Reset::RandomizationParameters {
+  RandomizationParameters() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(cf5efa5f93547a02, 2, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -64,7 +92,231 @@ struct Action {
 
 // =======================================================================================
 
-class RandomizationParameters::Reader {
+class Action::Reader {
+public:
+  typedef Action Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline Which which() const;
+  inline bool isNone() const;
+  inline  ::capnp::Void getNone() const;
+
+  inline bool isRelativeJointTarget() const;
+  inline bool hasRelativeJointTarget() const;
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getRelativeJointTarget() const;
+
+  inline bool isAbsoluteJointTarget() const;
+  inline bool hasAbsoluteJointTarget() const;
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getAbsoluteJointTarget() const;
+
+  inline bool isGoalPose() const;
+  inline bool hasGoalPose() const;
+  inline  ::vpp_msg::Pose::Reader getGoalPose() const;
+
+  inline bool isRelativePose() const;
+  inline bool hasRelativePose() const;
+  inline  ::vpp_msg::Pose::Reader getRelativePose() const;
+
+  inline bool isReset() const;
+  inline typename Reset::Reader getReset() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class Action::Builder {
+public:
+  typedef Action Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline Which which();
+  inline bool isNone();
+  inline  ::capnp::Void getNone();
+  inline void setNone( ::capnp::Void value = ::capnp::VOID);
+
+  inline bool isRelativeJointTarget();
+  inline bool hasRelativeJointTarget();
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder getRelativeJointTarget();
+  inline void setRelativeJointTarget( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value);
+  inline void setRelativeJointTarget(::kj::ArrayPtr<const double> value);
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initRelativeJointTarget(unsigned int size);
+  inline void adoptRelativeJointTarget(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
+  inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownRelativeJointTarget();
+
+  inline bool isAbsoluteJointTarget();
+  inline bool hasAbsoluteJointTarget();
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder getAbsoluteJointTarget();
+  inline void setAbsoluteJointTarget( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value);
+  inline void setAbsoluteJointTarget(::kj::ArrayPtr<const double> value);
+  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initAbsoluteJointTarget(unsigned int size);
+  inline void adoptAbsoluteJointTarget(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
+  inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownAbsoluteJointTarget();
+
+  inline bool isGoalPose();
+  inline bool hasGoalPose();
+  inline  ::vpp_msg::Pose::Builder getGoalPose();
+  inline void setGoalPose( ::vpp_msg::Pose::Reader value);
+  inline  ::vpp_msg::Pose::Builder initGoalPose();
+  inline void adoptGoalPose(::capnp::Orphan< ::vpp_msg::Pose>&& value);
+  inline ::capnp::Orphan< ::vpp_msg::Pose> disownGoalPose();
+
+  inline bool isRelativePose();
+  inline bool hasRelativePose();
+  inline  ::vpp_msg::Pose::Builder getRelativePose();
+  inline void setRelativePose( ::vpp_msg::Pose::Reader value);
+  inline  ::vpp_msg::Pose::Builder initRelativePose();
+  inline void adoptRelativePose(::capnp::Orphan< ::vpp_msg::Pose>&& value);
+  inline ::capnp::Orphan< ::vpp_msg::Pose> disownRelativePose();
+
+  inline bool isReset();
+  inline typename Reset::Builder getReset();
+  inline typename Reset::Builder initReset();
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class Action::Pipeline {
+public:
+  typedef Action Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
+class Action::Reset::Reader {
+public:
+  typedef Reset Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline bool getRandomize() const;
+
+  inline typename RandomizationParameters::Reader getRandomizationParameters() const;
+
+  inline  ::vpp_msg::MapType getMapType() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class Action::Reset::Builder {
+public:
+  typedef Reset Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline bool getRandomize();
+  inline void setRandomize(bool value);
+
+  inline typename RandomizationParameters::Builder getRandomizationParameters();
+  inline typename RandomizationParameters::Builder initRandomizationParameters();
+
+  inline  ::vpp_msg::MapType getMapType();
+  inline void setMapType( ::vpp_msg::MapType value);
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class Action::Reset::Pipeline {
+public:
+  typedef Reset Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+  inline typename RandomizationParameters::Pipeline getRandomizationParameters();
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
+class Action::Reset::RandomizationParameters::Reader {
 public:
   typedef RandomizationParameters Reads;
 
@@ -101,7 +353,7 @@ private:
   friend class ::capnp::Orphanage;
 };
 
-class RandomizationParameters::Builder {
+class Action::Reset::RandomizationParameters::Builder {
 public:
   typedef RandomizationParameters Builds;
 
@@ -144,7 +396,7 @@ private:
 };
 
 #if !CAPNP_LITE
-class RandomizationParameters::Pipeline {
+class Action::Reset::RandomizationParameters::Pipeline {
 public:
   typedef RandomizationParameters Pipelines;
 
@@ -162,248 +414,7 @@ private:
 };
 #endif  // !CAPNP_LITE
 
-class Action::Reader {
-public:
-  typedef Action Reads;
-
-  Reader() = default;
-  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
-
-  inline ::capnp::MessageSize totalSize() const {
-    return _reader.totalSize().asPublic();
-  }
-
-#if !CAPNP_LITE
-  inline ::kj::StringTree toString() const {
-    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
-  }
-#endif  // !CAPNP_LITE
-
-  inline Which which() const;
-  inline bool isNone() const;
-  inline  ::capnp::Void getNone() const;
-
-  inline bool isReset() const;
-  inline  ::capnp::Void getReset() const;
-
-  inline bool isRelativeJointTarget() const;
-  inline bool hasRelativeJointTarget() const;
-  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getRelativeJointTarget() const;
-
-  inline bool isAbsoluteJointTarget() const;
-  inline bool hasAbsoluteJointTarget() const;
-  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader getAbsoluteJointTarget() const;
-
-  inline bool isGoalPose() const;
-  inline bool hasGoalPose() const;
-  inline  ::vpp_msg::Pose::Reader getGoalPose() const;
-
-  inline bool isRelativePose() const;
-  inline bool hasRelativePose() const;
-  inline  ::vpp_msg::Pose::Reader getRelativePose() const;
-
-  inline bool isResetAndRandomize() const;
-  inline bool hasResetAndRandomize() const;
-  inline  ::vpp_msg::RandomizationParameters::Reader getResetAndRandomize() const;
-
-private:
-  ::capnp::_::StructReader _reader;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::ToDynamic_;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::_::PointerHelpers;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::List;
-  friend class ::capnp::MessageBuilder;
-  friend class ::capnp::Orphanage;
-};
-
-class Action::Builder {
-public:
-  typedef Action Builds;
-
-  Builder() = delete;  // Deleted to discourage incorrect usage.
-                       // You can explicitly initialize to nullptr instead.
-  inline Builder(decltype(nullptr)) {}
-  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
-  inline operator Reader() const { return Reader(_builder.asReader()); }
-  inline Reader asReader() const { return *this; }
-
-  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
-#if !CAPNP_LITE
-  inline ::kj::StringTree toString() const { return asReader().toString(); }
-#endif  // !CAPNP_LITE
-
-  inline Which which();
-  inline bool isNone();
-  inline  ::capnp::Void getNone();
-  inline void setNone( ::capnp::Void value = ::capnp::VOID);
-
-  inline bool isReset();
-  inline  ::capnp::Void getReset();
-  inline void setReset( ::capnp::Void value = ::capnp::VOID);
-
-  inline bool isRelativeJointTarget();
-  inline bool hasRelativeJointTarget();
-  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder getRelativeJointTarget();
-  inline void setRelativeJointTarget( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value);
-  inline void setRelativeJointTarget(::kj::ArrayPtr<const double> value);
-  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initRelativeJointTarget(unsigned int size);
-  inline void adoptRelativeJointTarget(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
-  inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownRelativeJointTarget();
-
-  inline bool isAbsoluteJointTarget();
-  inline bool hasAbsoluteJointTarget();
-  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder getAbsoluteJointTarget();
-  inline void setAbsoluteJointTarget( ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Reader value);
-  inline void setAbsoluteJointTarget(::kj::ArrayPtr<const double> value);
-  inline  ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>::Builder initAbsoluteJointTarget(unsigned int size);
-  inline void adoptAbsoluteJointTarget(::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>>&& value);
-  inline ::capnp::Orphan< ::capnp::List<double,  ::capnp::Kind::PRIMITIVE>> disownAbsoluteJointTarget();
-
-  inline bool isGoalPose();
-  inline bool hasGoalPose();
-  inline  ::vpp_msg::Pose::Builder getGoalPose();
-  inline void setGoalPose( ::vpp_msg::Pose::Reader value);
-  inline  ::vpp_msg::Pose::Builder initGoalPose();
-  inline void adoptGoalPose(::capnp::Orphan< ::vpp_msg::Pose>&& value);
-  inline ::capnp::Orphan< ::vpp_msg::Pose> disownGoalPose();
-
-  inline bool isRelativePose();
-  inline bool hasRelativePose();
-  inline  ::vpp_msg::Pose::Builder getRelativePose();
-  inline void setRelativePose( ::vpp_msg::Pose::Reader value);
-  inline  ::vpp_msg::Pose::Builder initRelativePose();
-  inline void adoptRelativePose(::capnp::Orphan< ::vpp_msg::Pose>&& value);
-  inline ::capnp::Orphan< ::vpp_msg::Pose> disownRelativePose();
-
-  inline bool isResetAndRandomize();
-  inline bool hasResetAndRandomize();
-  inline  ::vpp_msg::RandomizationParameters::Builder getResetAndRandomize();
-  inline void setResetAndRandomize( ::vpp_msg::RandomizationParameters::Reader value);
-  inline  ::vpp_msg::RandomizationParameters::Builder initResetAndRandomize();
-  inline void adoptResetAndRandomize(::capnp::Orphan< ::vpp_msg::RandomizationParameters>&& value);
-  inline ::capnp::Orphan< ::vpp_msg::RandomizationParameters> disownResetAndRandomize();
-
-private:
-  ::capnp::_::StructBuilder _builder;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::ToDynamic_;
-  friend class ::capnp::Orphanage;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::_::PointerHelpers;
-};
-
-#if !CAPNP_LITE
-class Action::Pipeline {
-public:
-  typedef Action Pipelines;
-
-  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
-  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
-      : _typeless(kj::mv(typeless)) {}
-
-private:
-  ::capnp::AnyPointer::Pipeline _typeless;
-  friend class ::capnp::PipelineHook;
-  template <typename, ::capnp::Kind>
-  friend struct ::capnp::ToDynamic_;
-};
-#endif  // !CAPNP_LITE
-
 // =======================================================================================
-
-inline bool RandomizationParameters::Reader::hasMin() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
-}
-inline bool RandomizationParameters::Builder::hasMin() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
-}
-inline  ::vpp_msg::Point::Reader RandomizationParameters::Reader::getMin() const {
-  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::get(_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline  ::vpp_msg::Point::Builder RandomizationParameters::Builder::getMin() {
-  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::get(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-#if !CAPNP_LITE
-inline  ::vpp_msg::Point::Pipeline RandomizationParameters::Pipeline::getMin() {
-  return  ::vpp_msg::Point::Pipeline(_typeless.getPointerField(0));
-}
-#endif  // !CAPNP_LITE
-inline void RandomizationParameters::Builder::setMin( ::vpp_msg::Point::Reader value) {
-  ::capnp::_::PointerHelpers< ::vpp_msg::Point>::set(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
-}
-inline  ::vpp_msg::Point::Builder RandomizationParameters::Builder::initMin() {
-  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::init(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-inline void RandomizationParameters::Builder::adoptMin(
-    ::capnp::Orphan< ::vpp_msg::Point>&& value) {
-  ::capnp::_::PointerHelpers< ::vpp_msg::Point>::adopt(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::vpp_msg::Point> RandomizationParameters::Builder::disownMin() {
-  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::disown(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
-}
-
-inline bool RandomizationParameters::Reader::hasMax() const {
-  return !_reader.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
-}
-inline bool RandomizationParameters::Builder::hasMax() {
-  return !_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
-}
-inline  ::vpp_msg::Point::Reader RandomizationParameters::Reader::getMax() const {
-  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::get(_reader.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS));
-}
-inline  ::vpp_msg::Point::Builder RandomizationParameters::Builder::getMax() {
-  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::get(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS));
-}
-#if !CAPNP_LITE
-inline  ::vpp_msg::Point::Pipeline RandomizationParameters::Pipeline::getMax() {
-  return  ::vpp_msg::Point::Pipeline(_typeless.getPointerField(1));
-}
-#endif  // !CAPNP_LITE
-inline void RandomizationParameters::Builder::setMax( ::vpp_msg::Point::Reader value) {
-  ::capnp::_::PointerHelpers< ::vpp_msg::Point>::set(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
-}
-inline  ::vpp_msg::Point::Builder RandomizationParameters::Builder::initMax() {
-  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::init(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS));
-}
-inline void RandomizationParameters::Builder::adoptMax(
-    ::capnp::Orphan< ::vpp_msg::Point>&& value) {
-  ::capnp::_::PointerHelpers< ::vpp_msg::Point>::adopt(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
-}
-inline ::capnp::Orphan< ::vpp_msg::Point> RandomizationParameters::Builder::disownMax() {
-  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::disown(_builder.getPointerField(
-      ::capnp::bounded<1>() * ::capnp::POINTERS));
-}
-
-inline double RandomizationParameters::Reader::getMinDist() const {
-  return _reader.getDataField<double>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
-}
-
-inline double RandomizationParameters::Builder::getMinDist() {
-  return _builder.getDataField<double>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
-}
-inline void RandomizationParameters::Builder::setMinDist(double value) {
-  _builder.setDataField<double>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
-}
 
 inline  ::vpp_msg::Action::Which Action::Reader::which() const {
   return _reader.getDataField<Which>(
@@ -436,32 +447,6 @@ inline  ::capnp::Void Action::Builder::getNone() {
 inline void Action::Builder::setNone( ::capnp::Void value) {
   _builder.setDataField<Action::Which>(
       ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::NONE);
-  _builder.setDataField< ::capnp::Void>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
-}
-
-inline bool Action::Reader::isReset() const {
-  return which() == Action::RESET;
-}
-inline bool Action::Builder::isReset() {
-  return which() == Action::RESET;
-}
-inline  ::capnp::Void Action::Reader::getReset() const {
-  KJ_IREQUIRE((which() == Action::RESET),
-              "Must check which() before get()ing a union member.");
-  return _reader.getDataField< ::capnp::Void>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
-}
-
-inline  ::capnp::Void Action::Builder::getReset() {
-  KJ_IREQUIRE((which() == Action::RESET),
-              "Must check which() before get()ing a union member.");
-  return _builder.getDataField< ::capnp::Void>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS);
-}
-inline void Action::Builder::setReset( ::capnp::Void value) {
-  _builder.setDataField<Action::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::RESET);
   _builder.setDataField< ::capnp::Void>(
       ::capnp::bounded<0>() * ::capnp::ELEMENTS, value);
 }
@@ -694,58 +679,171 @@ inline ::capnp::Orphan< ::vpp_msg::Pose> Action::Builder::disownRelativePose() {
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
-inline bool Action::Reader::isResetAndRandomize() const {
-  return which() == Action::RESET_AND_RANDOMIZE;
+inline bool Action::Reader::isReset() const {
+  return which() == Action::RESET;
 }
-inline bool Action::Builder::isResetAndRandomize() {
-  return which() == Action::RESET_AND_RANDOMIZE;
+inline bool Action::Builder::isReset() {
+  return which() == Action::RESET;
 }
-inline bool Action::Reader::hasResetAndRandomize() const {
-  if (which() != Action::RESET_AND_RANDOMIZE) return false;
+inline typename Action::Reset::Reader Action::Reader::getReset() const {
+  KJ_IREQUIRE((which() == Action::RESET),
+              "Must check which() before get()ing a union member.");
+  return typename Action::Reset::Reader(_reader);
+}
+inline typename Action::Reset::Builder Action::Builder::getReset() {
+  KJ_IREQUIRE((which() == Action::RESET),
+              "Must check which() before get()ing a union member.");
+  return typename Action::Reset::Builder(_builder);
+}
+inline typename Action::Reset::Builder Action::Builder::initReset() {
+  _builder.setDataField<Action::Which>(
+      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::RESET);
+  _builder.setDataField<bool>(::capnp::bounded<16>() * ::capnp::ELEMENTS, 0);
+  _builder.setDataField< ::uint16_t>(::capnp::bounded<2>() * ::capnp::ELEMENTS, 0);
+  _builder.setDataField< ::uint64_t>(::capnp::bounded<1>() * ::capnp::ELEMENTS, 0);
+  _builder.getPointerField(::capnp::bounded<0>() * ::capnp::POINTERS).clear();
+  _builder.getPointerField(::capnp::bounded<1>() * ::capnp::POINTERS).clear();
+  return typename Action::Reset::Builder(_builder);
+}
+inline bool Action::Reset::Reader::getRandomize() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<16>() * ::capnp::ELEMENTS);
+}
+
+inline bool Action::Reset::Builder::getRandomize() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<16>() * ::capnp::ELEMENTS);
+}
+inline void Action::Reset::Builder::setRandomize(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<16>() * ::capnp::ELEMENTS, value);
+}
+
+inline typename Action::Reset::RandomizationParameters::Reader Action::Reset::Reader::getRandomizationParameters() const {
+  return typename Action::Reset::RandomizationParameters::Reader(_reader);
+}
+inline typename Action::Reset::RandomizationParameters::Builder Action::Reset::Builder::getRandomizationParameters() {
+  return typename Action::Reset::RandomizationParameters::Builder(_builder);
+}
+#if !CAPNP_LITE
+inline typename Action::Reset::RandomizationParameters::Pipeline Action::Reset::Pipeline::getRandomizationParameters() {
+  return typename Action::Reset::RandomizationParameters::Pipeline(_typeless.noop());
+}
+#endif  // !CAPNP_LITE
+inline typename Action::Reset::RandomizationParameters::Builder Action::Reset::Builder::initRandomizationParameters() {
+  _builder.setDataField< ::uint64_t>(::capnp::bounded<1>() * ::capnp::ELEMENTS, 0);
+  _builder.getPointerField(::capnp::bounded<0>() * ::capnp::POINTERS).clear();
+  _builder.getPointerField(::capnp::bounded<1>() * ::capnp::POINTERS).clear();
+  return typename Action::Reset::RandomizationParameters::Builder(_builder);
+}
+inline  ::vpp_msg::MapType Action::Reset::Reader::getMapType() const {
+  return _reader.getDataField< ::vpp_msg::MapType>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
+}
+
+inline  ::vpp_msg::MapType Action::Reset::Builder::getMapType() {
+  return _builder.getDataField< ::vpp_msg::MapType>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS);
+}
+inline void Action::Reset::Builder::setMapType( ::vpp_msg::MapType value) {
+  _builder.setDataField< ::vpp_msg::MapType>(
+      ::capnp::bounded<2>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool Action::Reset::RandomizationParameters::Reader::hasMin() const {
   return !_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
 }
-inline bool Action::Builder::hasResetAndRandomize() {
-  if (which() != Action::RESET_AND_RANDOMIZE) return false;
+inline bool Action::Reset::RandomizationParameters::Builder::hasMin() {
   return !_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
 }
-inline  ::vpp_msg::RandomizationParameters::Reader Action::Reader::getResetAndRandomize() const {
-  KJ_IREQUIRE((which() == Action::RESET_AND_RANDOMIZE),
-              "Must check which() before get()ing a union member.");
-  return ::capnp::_::PointerHelpers< ::vpp_msg::RandomizationParameters>::get(_reader.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
+inline  ::vpp_msg::Point::Reader Action::Reset::RandomizationParameters::Reader::getMin() const {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS),
+        ::capnp::schemas::bp_cf5efa5f93547a02 + 48);
 }
-inline  ::vpp_msg::RandomizationParameters::Builder Action::Builder::getResetAndRandomize() {
-  KJ_IREQUIRE((which() == Action::RESET_AND_RANDOMIZE),
-              "Must check which() before get()ing a union member.");
-  return ::capnp::_::PointerHelpers< ::vpp_msg::RandomizationParameters>::get(_builder.getPointerField(
-      ::capnp::bounded<0>() * ::capnp::POINTERS));
+inline  ::vpp_msg::Point::Builder Action::Reset::RandomizationParameters::Builder::getMin() {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS),
+        ::capnp::schemas::bp_cf5efa5f93547a02 + 48);
 }
-inline void Action::Builder::setResetAndRandomize( ::vpp_msg::RandomizationParameters::Reader value) {
-  _builder.setDataField<Action::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::RESET_AND_RANDOMIZE);
-  ::capnp::_::PointerHelpers< ::vpp_msg::RandomizationParameters>::set(_builder.getPointerField(
+#if !CAPNP_LITE
+inline  ::vpp_msg::Point::Pipeline Action::Reset::RandomizationParameters::Pipeline::getMin() {
+  return  ::vpp_msg::Point::Pipeline(_typeless.getPointerField(0));
+}
+#endif  // !CAPNP_LITE
+inline void Action::Reset::RandomizationParameters::Builder::setMin( ::vpp_msg::Point::Reader value) {
+  ::capnp::_::PointerHelpers< ::vpp_msg::Point>::set(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), value);
 }
-inline  ::vpp_msg::RandomizationParameters::Builder Action::Builder::initResetAndRandomize() {
-  _builder.setDataField<Action::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::RESET_AND_RANDOMIZE);
-  return ::capnp::_::PointerHelpers< ::vpp_msg::RandomizationParameters>::init(_builder.getPointerField(
+inline  ::vpp_msg::Point::Builder Action::Reset::RandomizationParameters::Builder::initMin() {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::init(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
-inline void Action::Builder::adoptResetAndRandomize(
-    ::capnp::Orphan< ::vpp_msg::RandomizationParameters>&& value) {
-  _builder.setDataField<Action::Which>(
-      ::capnp::bounded<0>() * ::capnp::ELEMENTS, Action::RESET_AND_RANDOMIZE);
-  ::capnp::_::PointerHelpers< ::vpp_msg::RandomizationParameters>::adopt(_builder.getPointerField(
+inline void Action::Reset::RandomizationParameters::Builder::adoptMin(
+    ::capnp::Orphan< ::vpp_msg::Point>&& value) {
+  ::capnp::_::PointerHelpers< ::vpp_msg::Point>::adopt(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
 }
-inline ::capnp::Orphan< ::vpp_msg::RandomizationParameters> Action::Builder::disownResetAndRandomize() {
-  KJ_IREQUIRE((which() == Action::RESET_AND_RANDOMIZE),
-              "Must check which() before get()ing a union member.");
-  return ::capnp::_::PointerHelpers< ::vpp_msg::RandomizationParameters>::disown(_builder.getPointerField(
+inline ::capnp::Orphan< ::vpp_msg::Point> Action::Reset::RandomizationParameters::Builder::disownMin() {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool Action::Reset::RandomizationParameters::Reader::hasMax() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline bool Action::Reset::RandomizationParameters::Builder::hasMax() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline  ::vpp_msg::Point::Reader Action::Reset::RandomizationParameters::Reader::getMax() const {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::get(_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS),
+        ::capnp::schemas::bp_cf5efa5f93547a02 + 59);
+}
+inline  ::vpp_msg::Point::Builder Action::Reset::RandomizationParameters::Builder::getMax() {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::get(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS),
+        ::capnp::schemas::bp_cf5efa5f93547a02 + 59);
+}
+#if !CAPNP_LITE
+inline  ::vpp_msg::Point::Pipeline Action::Reset::RandomizationParameters::Pipeline::getMax() {
+  return  ::vpp_msg::Point::Pipeline(_typeless.getPointerField(1));
+}
+#endif  // !CAPNP_LITE
+inline void Action::Reset::RandomizationParameters::Builder::setMax( ::vpp_msg::Point::Reader value) {
+  ::capnp::_::PointerHelpers< ::vpp_msg::Point>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline  ::vpp_msg::Point::Builder Action::Reset::RandomizationParameters::Builder::initMax() {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::init(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline void Action::Reset::RandomizationParameters::Builder::adoptMax(
+    ::capnp::Orphan< ::vpp_msg::Point>&& value) {
+  ::capnp::_::PointerHelpers< ::vpp_msg::Point>::adopt(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::vpp_msg::Point> Action::Reset::RandomizationParameters::Builder::disownMax() {
+  return ::capnp::_::PointerHelpers< ::vpp_msg::Point>::disown(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+
+inline double Action::Reset::RandomizationParameters::Reader::getMinDist() const {
+  return _reader.getDataField<double>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, 4600877379321698714ull);
+}
+
+inline double Action::Reset::RandomizationParameters::Builder::getMinDist() {
+  return _builder.getDataField<double>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, 4600877379321698714ull);
+}
+inline void Action::Reset::RandomizationParameters::Builder::setMinDist(double value) {
+  _builder.setDataField<double>(
+      ::capnp::bounded<1>() * ::capnp::ELEMENTS, value, 4600877379321698714ull);
 }
 
 }  // namespace
