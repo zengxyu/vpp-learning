@@ -10,7 +10,9 @@
 ===========================================
 """
 from rl_agents.network.network_attention import SpatialAttentionModel
-from rl_agents.network.network_dqn import DQNNetwork
+
+from rl_agents.network.network_obs import NetworkObs
+from rl_agents.network.network_obs_lstm import NetworkObsTemporal
 from rl_agents.network.network_visit import NetworkVisit
 
 from rl_agents.network.network_visit_temporal import NetworkVisitTemporal
@@ -20,14 +22,17 @@ def build_network(parser_args, action_size):
     networks = parser_args.training_config["network"]
     assert sum(networks.values()) == 1, "Only one network can be choose"
 
-    if networks["DQNNetwork"]:
-        network = DQNNetwork(action_size)
+    if networks["NetworkObs"]:
+        network = NetworkObs(action_size)
+    elif networks["NetworkObsTemporal"]:
+        network = NetworkObsTemporal(action_size)
     elif networks["NetworkVisit"]:
         network = NetworkVisit(action_size)
     elif networks["NetworkVisitTemporal"]:
         network = NetworkVisitTemporal(action_size)
     elif networks["SpatialAttentionModel"]:
-        network = SpatialAttentionModel(n_actions=action_size)
+        network = SpatialAttentionModel(action_size)
+
     # elif networks["NetworkRNN"]:
     #     network = NetworkRNN(n_actions=action_size)
     else:
