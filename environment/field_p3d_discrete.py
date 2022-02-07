@@ -1,6 +1,7 @@
 #!/usr/bin/environment python
 import os.path
 import sys
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "capnp"))
 
 import numpy as np
@@ -127,7 +128,7 @@ class Field:
 
         # read from local file
         with open(filename) as file:
-            voxelgrid = voxelgrid_capnp.Voxelgrid.read(file, traversal_limit_in_words=2**32)
+            voxelgrid = voxelgrid_capnp.Voxelgrid.read(file, traversal_limit_in_words=2 ** 32)
         labels = np.asarray(voxelgrid.labels)
         self.shape = tuple(voxelgrid.shape)
         self.global_map = labels.reshape(self.shape)
@@ -146,7 +147,7 @@ class Field:
                             int(self.shape[2] // self.visit_resolution))
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
 
-        self.target_count = np.sum(self.global_map == 2)
+        self.target_count = np.sum(self.global_map == 2) + np.sum(self.global_map == 3)
         self.free_count = np.sum(self.global_map == 1)
 
         print("#targets = {}".format(self.target_count))
@@ -359,7 +360,6 @@ class Field:
             return np.array(inputs).squeeze(0)
         else:
             return np.array(inputs)
-
 
     def get_reward(self, visit_gain, new_found_targets, new_free_cells):
         weight = self.training_config["rewards"]
