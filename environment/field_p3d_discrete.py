@@ -351,7 +351,12 @@ class Field:
         if self.training_config["input"]["visit_map"]:
             inputs.append([self.visit_map])
 
-        return np.array(inputs).squeeze(0)
+        inputs = np.array(inputs)
+        if np.shape(inputs)[0] == 0:
+            return np.array(inputs).squeeze(0)
+        else:
+            return np.array(inputs)
+
 
     def get_reward(self, visit_gain, new_found_targets, new_free_cells):
         weight = self.training_config["rewards"]

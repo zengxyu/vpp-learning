@@ -34,6 +34,7 @@ network:
   NetworkVisitTemporal: 0
   NetworkObsTemporal: 1
   SpatialAttentionModel: 0
+  NetworkObsVisitLstm: 0
 
 action:
   ActionMoRo10: 1
