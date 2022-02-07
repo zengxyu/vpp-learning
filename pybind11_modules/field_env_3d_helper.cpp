@@ -359,31 +359,11 @@ count_known_target_layer2(const py::array_t<int> &known_map, const Vec3D &start,
     return std::make_tuple(known_target_vec[0], known_target_vec[1]);
 }
 
-double compute_hypot(double x, double y, double z) {
-    //TODO Tobias check
-    return sqrt(x * x + y * y + z * z);
-}
-
-double get_distance(Vec3D point1, Vec3D point2) {
-    //TODO Tobias check
-    return compute_hypot(point1.x - point2.x, point1.y - point2.y, point1.z - point2.z);
-}
-
-Vec3D get_unit_dir_vec(Vec3D start_point, Vec3D end_point) {
-    // get the unit vector of the direction from start point to end point. TODO Tobias check
-    Vec3D diff = Vec3D(end_point.x - start_point.x, end_point.y - start_point.y, end_point.z - start_point.z);
-    double distance = compute_hypot(diff.x, diff.y, diff.z);
-    if (distance != 0) {
-        return diff / distance;
-    } else {
-        return diff;
-    }
-}
 
 bool has_obstacle(const py::array_t<int> &global_map, Vec3D point1, Vec3D point2, double step) {
 //    TODO Tobias check
-    double len = get_distance(point1, point2);
-    Vec3D unit_dir_vec = get_unit_dir_vec(point1, point2);
+    Vec3D diff = end_point - start_point;
+    Vec3D unit_dir_vec = diff.normalized();
 
     for (double frac = 0; frac < len; frac += step) {
         Vec3D cur = point1 + frac * unit_dir_vec;
