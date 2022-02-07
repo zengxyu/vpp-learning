@@ -277,7 +277,7 @@ count_known_target_layer5(const py::array_t<int> &known_map, const Vec3D &start,
             int z = (int) cur.z;
             if (!in_range(z, known_map.shape()[2])) break;
             int cell_val = *known_map.data(x, y, z);
-            if (cell_val == 2)
+            if (cell_val >=2)
                 known_target++;
         }
         known_target_vec.push_back(known_target);
@@ -351,7 +351,7 @@ count_known_target_layer2(const py::array_t<int> &known_map, const Vec3D &start,
             int z = (int) cur.z;
             if (!in_range(z, known_map.shape()[2])) break;
             int cell_val = *known_map.data(x, y, z);
-            if (cell_val == 2)
+            if (cell_val >= 2)
                 known_target++;
         }
         known_target_vec.push_back(known_target);
@@ -364,6 +364,8 @@ void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &
                            std::vector<int> &values) {
     Vec3D diff = end - cam_pos;
     for (double frac = 0; frac < diff.abs(); frac += 1) {
+
+
         Vec3D cur = cam_pos + frac * diff.normalized();
         int x = (int) cur.x;
         if (!in_range(x, global_map.shape()[0])) break;
@@ -372,9 +374,12 @@ void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &
         int z = (int) cur.z;
         if (!in_range(z, global_map.shape()[2])) break;
 
+        if (*known_map.data(x, y, z) != 0)
+            continue;
+
         int cell_val = *global_map.data(x, y, z);
         *known_map.mutable_data(x, y, z) = cell_val;
-        if (cell_val == 3 || cell_val == 2)
+        if (cell_val >= 2)
             found_targets += 1;
         if (cell_val == 1)
             free_cells += 1;
