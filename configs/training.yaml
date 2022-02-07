@@ -25,14 +25,14 @@ rewards:
 
 # 1 : true; 0: false
 input:
-  observation_map: 0
-  visit_map: 1
+  observation_map: 1
+  visit_map: 0
 
 network:
   NetworkObs: 0
   NetworkVisit: 0
-  NetworkVisitTemporal: 1
-  NetworkObsTemporal: 0
+  NetworkVisitTemporal: 0
+  NetworkObsTemporal: 1
   SpatialAttentionModel: 0
   NetworkObsVisitLstm: 0
 
