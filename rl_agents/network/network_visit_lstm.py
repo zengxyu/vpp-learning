@@ -18,7 +18,7 @@ from pfrl.q_functions import DiscreteActionValueHead
 from torch import nn
 
 
-class NetworkVisitTemporal(Recurrent, torch.nn.Module):
+class NetworkVisitLstm(Recurrent, torch.nn.Module):
     def __init__(self, action_size):
         super().__init__()
         self.recurrent_sequential = pfrl.nn.RecurrentSequential(nn.Conv3d(1, 4, kernel_size=4, stride=2, padding=1),
@@ -39,7 +39,6 @@ class NetworkVisitTemporal(Recurrent, torch.nn.Module):
         self.lstm_neighbor2 = nn.LSTM(128, self.hn_neighbor_state_dim, batch_first=True)
 
     def forward(self, state, cur):
-        obs = state.data
         state = state.float()
         out = self.recurrent_sequential(state, cur)
 

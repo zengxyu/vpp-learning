@@ -9,33 +9,32 @@
         
 ===========================================
 """
-from rl_agents.network.network_attention import SpatialAttentionModel
 
 from rl_agents.network.network_obs import NetworkObs
-from rl_agents.network.network_obs_lstm import NetworkObsTemporal
+from rl_agents.network.network_obs_lstm import NetworkObsLstm
+from rl_agents.network.network_obs_visit_lstm import NetworkObsVisitLstm
 from rl_agents.network.network_visit import NetworkVisit
-
-from rl_agents.network.network_visit_temporal import NetworkVisitTemporal
+from rl_agents.network.network_visit_lstm import NetworkVisitLstm
+from rl_agents.network.network_attention import SpatialAttentionModel
 
 
 def build_network(parser_args, action_size):
     networks = parser_args.training_config["network"]
-    assert sum(networks.values()) == 1, "Only one network can be choose"
+    assert sum(networks.values()) == 1, "Only one network can be choose!"
 
     if networks["NetworkObs"]:
         network = NetworkObs(action_size)
     elif networks["NetworkObsTemporal"]:
-        network = NetworkObsTemporal(action_size)
+        network = NetworkObsLstm(action_size)
     elif networks["NetworkVisit"]:
         network = NetworkVisit(action_size)
     elif networks["NetworkVisitTemporal"]:
-        network = NetworkVisitTemporal(action_size)
+        network = NetworkVisitLstm(action_size)
+    elif networks["NetworkObsVisitLstm"]:
+        network = NetworkObsVisitLstm(action_size)
     elif networks["SpatialAttentionModel"]:
         network = SpatialAttentionModel(action_size)
-
-    # elif networks["NetworkRNN"]:
-    #     network = NetworkRNN(n_actions=action_size)
     else:
-        raise NotImplementedError("Action : {} has not been implemented")
+        raise NotImplementedError("Action : {} has not been implemented!")
 
     return network

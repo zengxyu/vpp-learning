@@ -12,13 +12,11 @@
 
 import pfrl
 import torch
-import torch.nn.functional as F
-from pfrl.nn import Recurrent
 from pfrl.q_functions import DiscreteActionValueHead
 from torch import nn
 
 
-class NetworkObsTemporal(torch.nn.Module):
+class NetworkObsLstm(torch.nn.Module):
     def __init__(self, action_size):
         super().__init__()
         self.recurrent_sequential = pfrl.nn.RecurrentSequential(nn.Conv2d(15, 24, kernel_size=4, stride=2, padding=1),
