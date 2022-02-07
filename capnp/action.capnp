@@ -6,20 +6,29 @@ $Cxx.namespace("vpp_msg");
 using import "pose.capnp".Point;
 using import "pose.capnp".Pose;
 
-struct RandomizationParameters {
-  min @0 :Point;
-  max @1 :Point;
-  minDist @2 :Float64;
+enum MapType {
+  unchanged @0;
+  countMap @1;
+  pointcloud @2;
+  voxelgrid @3;
+  fullVoxelgrid @4;
 }
 
 struct Action {
   union {
     none @0 :Void;
-    reset @1 :Void;
-    relativeJointTarget @2 :List(Float64);
-    absoluteJointTarget @3 :List(Float64);
-    goalPose @4 :Pose;
-    relativePose @5 :Pose;
-    resetAndRandomize @6 :RandomizationParameters;
+    reset :group {
+      randomize @5 :Bool = false;
+      randomizationParameters :group {
+        min @6 :Point = (x = -1, y = -1, z = -0.1);
+        max @7 :Point = (x = 1, y = 1, z = 0.1);
+        minDist @8 :Float64 = 0.4;
+      }
+      mapType @9 :MapType = unchanged;
+    }
+    relativeJointTarget @1 :List(Float64);
+    absoluteJointTarget @2 :List(Float64);
+    goalPose @3 :Pose;
+    relativePose @4 :Pose;
   }
 }

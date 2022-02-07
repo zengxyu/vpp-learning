@@ -1,6 +1,7 @@
 #!/usr/bin/environment python
 import os.path
 import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "capnp"))
 
 import numpy as np
 from enum import IntEnum
@@ -9,7 +10,8 @@ import binvox_rw
 import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
-
+import capnp
+import voxelgrid_capnp
 from environment.utilities.check_occupied_helper import has_obstacle, in_bound_boxes
 from environment.utilities.map_helper import make_up_map, make_up_8x15x9x9_map
 from environment.utilities.random_field_helper import random_translate_environment, get_random_multi_tree_environment
@@ -102,7 +104,7 @@ class Field:
         self.map = None
         self.bounding_boxes = None
 
-        self.init_file_path = os.path.join(get_project_path(), 'VG07_6.binvox')
+        self.init_file_path = os.path.join(get_project_path(), "data", 'saved_world.cvx')
         self.initialize(self.init_file_path)
 
         print("max steps:", self.max_steps)
@@ -124,16 +126,16 @@ class Field:
         self.free_cells = 0
 
         # read from local file
-        with open(filename, 'rb') as f:
-            model = binvox_rw.read_as_3d_array(f)
-        read_model = np.transpose(model.data, (2, 0, 1)).astype(int)
-        rs = read_model.shape
-        self.global_map[0:rs[0], 0:rs[1], 0:rs[2]] = read_model
+        with open(filename) as file:
+            voxelgrid = voxelgrid_capnp.Voxelgrid.read(file, traversal_limit_in_words=2**32)
+        labels = np.asarray(voxelgrid.labels)
+        self.shape = tuple(voxelgrid.shape)
+        self.global_map = labels.reshape(self.shape)
 
-        # randomize the environment if needed
-        if self.randomize:
-            self.global_map, self.bounding_boxes = get_random_multi_tree_environment(self.global_map, self.shape,
-                                                                                     self.num_plants, self.thresh)
+        # # randomize the environment if needed
+        # if self.randomize:
+        #     self.global_map, self.bounding_boxes = get_random_multi_tree_environment(self.global_map, self.shape,
+        #                                                                              self.num_plants, self.thresh)
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
         self.shape = self.global_map.shape
@@ -301,9 +303,9 @@ class Field:
         return map
 
     def step(self, action):
-        # actions = [0, 2, 4]
-        # action = actions[self.step_count % 3]
-        # print(self.step_count)
+        actions = [0, 2, 4]
+        action = actions[self.step_count % 3]
+        print(self.step_count)
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
