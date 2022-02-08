@@ -43,6 +43,7 @@ def trim_zeros(arr):
 def random_translate_environment(global_map, global_shape, old_pos, thresh=300):
     # minus 1 for trim_zeros()
     # add 1 back
+    # 45 x 49 x 79
     trim_data = trim_zeros(global_map)
     global_shape_z, global_shape_x, global_shape_y = global_shape
     trim_data_z, trim_data_x, trim_data_y = np.shape(trim_data)

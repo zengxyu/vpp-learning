@@ -348,18 +348,14 @@ class Field:
 
     def get_inputs(self):
         # create input
-        inputs = []
+        if self.training_config["input"]["observation_map"] and self.training_config["input"]["visit_map"]:
+            return self.map, np.array([self.visit_map])
+
         if self.training_config["input"]["observation_map"]:
-            inputs.append(self.map)
+            return np.array(self.map)
 
         if self.training_config["input"]["visit_map"]:
-            inputs.append([self.visit_map])
-
-        inputs = np.array(inputs)
-        if np.shape(inputs)[0] == 1:
-            return np.array(inputs).squeeze(0)
-        else:
-            return np.array(inputs)
+            return np.array([self.visit_map])
 
     def get_reward(self, visit_gain, new_found_targets, new_free_cells):
         weight = self.training_config["rewards"]
