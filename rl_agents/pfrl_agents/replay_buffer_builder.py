@@ -34,5 +34,13 @@ def get_replay_buffer_by_name(parser_args, name):
         )
     elif name == "EpisodicReplayBuffer":
         return replay_buffers.EpisodicReplayBuffer(config[name]["capacity"])
+
+    elif name == "PrioritizedEpisodicReplayBuffer":
+        return replay_buffers.PrioritizedEpisodicReplayBuffer(capacity=config[name]["capacity"],
+                                                              alpha=config[name]["alpha"],
+                                                              beta0=config[name]["beta0"],
+                                                              normalize_by_max=config[name]["normalize_by_max"],
+                                                              )
+
     else:
         raise NotImplementedError("Cannot find replay buffer by name : {}".format(name))
