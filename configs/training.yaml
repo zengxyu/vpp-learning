@@ -19,7 +19,7 @@ train: None
 
 #reward weight
 rewards:
-  visit_gain_weight: 100
+  visit_gain_weight: 0
   new_found_targets_weight: 1
   new_free_cells_weight: 0.01
 
