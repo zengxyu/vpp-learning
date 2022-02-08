@@ -26,4 +26,3 @@ zmq
 pyzmq
 pycapnp
 panda3d
-pfrl
