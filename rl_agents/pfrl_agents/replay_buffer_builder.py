@@ -40,6 +40,11 @@ def get_replay_buffer_by_name(parser_args, name):
                                                               alpha=config[name]["alpha"],
                                                               beta0=config[name]["beta0"],
                                                               normalize_by_max=config[name]["normalize_by_max"],
+                                                              return_sample_weights=config[name][
+                                                                  "return_sample_weights"],
+                                                              wait_priority_after_sampling=config[name][
+                                                                  "wait_priority_after_sampling"]
+
                                                               )
 
     else:
