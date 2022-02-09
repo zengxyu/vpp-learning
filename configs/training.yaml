@@ -28,8 +28,8 @@ rewards:
 input:
   observation_map: 1
   visit_map: 0
-  relative_movement: 1
-  absolute_movement: 0
+  relative_movement: 0
+  absolute_movement: 1
 
 network:
   NetworkObs: 0
