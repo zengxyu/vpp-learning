@@ -9,7 +9,8 @@ save_result_n: 1000
 
 bl_console_logging_level: WARNING
 bl_file_logging_level: WARNING
-smooth_n: 100
+train_smooth_n: 100
+test_smooth_n: 10
 
 # choose from [NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL]
 logging_level: WARNING
@@ -27,7 +28,8 @@ rewards:
 input:
   observation_map: 1
   visit_map: 0
-  relative_movement: 1
+  relative_movement: 0
+  absolute_movement: 1
 
 network:
   NetworkObs: 0

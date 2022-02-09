@@ -353,8 +353,12 @@ class Field:
 
     def get_inputs(self):
         relative_movement = np.append(self.relative_position, self.relative_rotation)
+        absolute_movement = np.append(self.robot_pos, self.robot_rot.as_euler('xyz'))
 
         # create input
+        if self.training_config["input"]["observation_map"] and self.training_config["input"]["absolute_movement"]:
+            return self.map, absolute_movement
+
         if self.training_config["input"]["observation_map"] and self.training_config["input"]["relative_movement"]:
             return self.map, relative_movement
 

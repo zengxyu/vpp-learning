@@ -47,9 +47,9 @@ def copy_configs_to_folder(from_folder, to_folder):
     if not os.path.exists(to_folder):
         shutil.copytree(from_folder, to_folder)
     else:
-        logging.info("File exists:", to_folder)
+        logging.info("File exists:{}".format(to_folder))
         key = input(
-            "Output directory already exists! From {} to {}. Overwrite the folder? (y/n).".format(from_folder,
+            "Output directory already exists! \nFrom {} to {}. \nOverwrite the folder? (y/n).".format(from_folder,
                                                                                                   to_folder))
         if key == 'y':
             shutil.rmtree(to_folder)

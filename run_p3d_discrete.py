@@ -5,8 +5,10 @@ from rl_agents.pfrl_agents.agent_builder import build_ddqn_agent
 from rl_agents.pfrl_agents.network_builder import build_network
 from trainer_p3d.P3DTrainer import P3DTrainer
 from utilities.basic_logger import setup_logger
+from utilities.set_random_seed import set_random_seeds
 
 setup_logger()
+set_random_seeds(50)
 
 parser_args = process_args()
 
