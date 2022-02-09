@@ -21,3 +21,5 @@ PrioritizedEpisodicReplayBuffer:
   # Anneal beta from beta0 to 1 throughout training
   betasteps : 200000
   normalize_by_max : memory
+  return_sample_weights: False
+  wait_priority_after_sampling: False
