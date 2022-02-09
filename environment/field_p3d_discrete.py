@@ -150,7 +150,7 @@ class Field:
                             int(self.shape[2] // self.visit_resolution))
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
 
-        self.target_count = np.sum(self.global_map == 2) + np.sum(self.global_map == 3)
+        self.target_count = np.sum(self.global_map >= 2)
         self.free_count = np.sum(self.global_map == 1)
 
         print("#targets = {}".format(self.target_count))
