@@ -27,14 +27,15 @@ class P3DTrainer(object):
         self.n_smooth = 200
         self.global_i_step = 0
         self.start_time = time.time()
-        self.train_collector = EpisodeInfo(self.training_config["smooth_n"])
-        self.test_collector = EpisodeInfo(self.training_config["smooth_n"])
+        self.train_collector = EpisodeInfo(self.training_config["train_smooth_n"])
+        self.test_collector = EpisodeInfo(self.training_config["test_smooth_n"])
         # discrete
         if not parser_args.train:
             logging.info("load model from {} {}".format(self.parser_args.in_model, parser_args.in_model_index))
             self.agent.load("{}/model_epi_{}".format(self.parser_args.in_model, parser_args.in_model_index))
 
     def run(self):
+        print("========================================Start running========================================")
         head = self.parser_args.head
         if self.parser_args.train and not head:
             print("Start training")
@@ -47,12 +48,12 @@ class P3DTrainer(object):
         else:
             if head:
                 print("Start evaluating with head")
-                main_thread = threading.Thread(target=self.evaluate_10_times)
+                main_thread = threading.Thread(target=self.evaluate_n_times)
                 main_thread.start()
                 self.env.gui.run()
             else:
                 print("Start evaluating without head")
-                self.evaluate_10_times()
+                self.evaluate_n_times()
 
     def training(self):
         phase = "Train"
@@ -102,8 +103,9 @@ class P3DTrainer(object):
         save_episodes_info(phase, self.test_collector, self.test_i_episode, self.parser_args)
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
-    def evaluate_10_times(self):
-        for i in range(10):
+    def evaluate_n_times(self, n=10):
+        for i in range(n):
+            print("\nEpisode:{}".format(i))
             self.evaluating()
 
 
