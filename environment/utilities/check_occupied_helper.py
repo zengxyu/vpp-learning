@@ -42,8 +42,8 @@ def in_bound_boxes(bounding_boxes, point):
     x, y, z = point
     if len(bounding_boxes) != 0:
         for start, end in bounding_boxes:
-            start_x, start_y, start_z = start
-            end_x, end_y, end_z = end
+            start_z, start_x, start_y = start
+            end_z, end_x, end_y = end
             if start_x <= x <= end_x and start_y <= y <= end_y and start_z <= z <= end_z:
                 return True
     return False

@@ -147,9 +147,10 @@ class Field:
         self.shape = self.global_map.shape
 
         self.calculate_allow_range(self.shape)
-
+        #
         if self.randomize_sensor_position:
             self.robot_pos = np.random.randint(low=self.allowed_lower_bound, high=self.allowed_upper_bound, size=(3,))
+            print("randomized sensor starting point = ", self.robot_pos)
 
         self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
@@ -294,9 +295,9 @@ class Field:
         robot_pos = self.robot_pos + direction
         robot_pos = np.clip(robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
         self.relative_position = direction
-        # if not in_bound_boxes(self.bounding_boxes, robot_pos):
-        #     self.robot_pos = robot_pos
-        self.robot_pos = robot_pos
+        if not in_bound_boxes(self.bounding_boxes, robot_pos):
+            self.robot_pos = robot_pos
+        # self.robot_pos = robot_pos
 
     def cartesian_move_robot(self, direction):
         cartesian_result = []
@@ -315,8 +316,8 @@ class Field:
         return map
 
     def step(self, action):
-        # actions = [0, 2, 4]
-        # action = actions[self.step_count % 3]
+        # actions = [0, 2]
+        # action = actions[self.step_count % 2]
         # print(self.step_count)
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
