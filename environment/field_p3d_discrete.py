@@ -2,6 +2,9 @@
 import os.path
 import sys
 
+from environment.utilities.plant_models_loader import load_plants
+from environment.utilities.random_env_helper import get_random_multi_plant_models
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "capnp"))
 
 import numpy as np
@@ -15,7 +18,6 @@ import capnp
 import voxelgrid_capnp
 from environment.utilities.check_occupied_helper import has_obstacle, in_bound_boxes
 from environment.utilities.map_helper import make_up_map, make_up_8x15x9x9_map
-from environment.utilities.random_field_helper import random_translate_environment, get_random_multi_tree_environment
 from utilities.util import get_project_path
 
 vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
@@ -77,6 +79,8 @@ class Field:
 
         self.head = parser_args.head
         self.randomize = self.env_config["randomize"]
+        self.randomize_sensor_position = self.env_config["randomize_sensor_position"]
+
         self.num_plants = self.env_config["num_plants"]
         self.thresh = self.env_config["thresh"]
 
@@ -109,7 +113,11 @@ class Field:
         self.relative_rotation = np.array([0., 0., 0.])
 
         self.init_file_path = os.path.join(get_project_path(), "data", 'saved_world.cvx')
-        self.initialize(self.init_file_path)
+        self.plant_models_dir = os.path.join(get_project_path(), "data", 'plant_models')
+        self.plants = load_plants(self.plant_models_dir, self.env_config["plant_types"], self.env_config["roi_neighbors"],
+                                  self.env_config["resolution"])
+
+        self.initialize()
 
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
@@ -118,7 +126,7 @@ class Field:
             from environment.field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, self.env_config["scale"])
 
-    def initialize(self, filename):
+    def initialize(self):
         self.global_map = np.zeros(self.shape).astype(int)
         self.known_map = np.zeros(self.shape).astype(int)
 
@@ -129,22 +137,19 @@ class Field:
         self.found_targets = 0
         self.free_cells = 0
 
-        # read from local file
-        with open(filename) as file:
-            voxelgrid = voxelgrid_capnp.Voxelgrid.read(file, traversal_limit_in_words=2 ** 32)
-        labels = np.asarray(voxelgrid.labels)
-        self.shape = tuple(voxelgrid.shape)
-        self.global_map = labels.reshape(self.shape)
-
+        # TODO insert the plants randomly into the ground
         # # randomize the environment if needed
         if self.randomize:
-            self.global_map, self.bounding_boxes = get_random_multi_tree_environment(self.global_map, self.shape,
-                                                                                     self.num_plants, self.thresh)
+            self.global_map, self.bounding_boxes = get_random_multi_plant_models(self.global_map, self.plants,
+                                                                                 self.thresh)
 
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
         self.shape = self.global_map.shape
 
         self.calculate_allow_range(self.shape)
+
+        if self.randomize_sensor_position:
+            self.robot_pos = np.random.randint(low=self.allowed_lower_bound, high=self.allowed_upper_bound, size=(3,))
 
         self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
@@ -403,14 +408,13 @@ class Field:
 
     def reset(self):
         self.reset_count += 1
-        self.initialize(self.init_file_path)
+        self.initialize()
 
         if self.head:
             self.gui.messenger.send('reset', [], 'default')
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
             # self.gui.reset()
-
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 

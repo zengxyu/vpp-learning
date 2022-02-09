@@ -81,6 +81,44 @@ def random_translate_environment(global_map, global_shape, old_pos, thresh=300):
     return new_global_map, (loc_z, loc_x, loc_y), (loc_z + trim_data_z, loc_x + trim_data_x, loc_y + trim_data_y)
 
 
+def random_translate_plant(plant, global_map, old_pos, thresh):
+    # minus 1 for trim_zeros()
+    # add 1 back
+    # 45 x 49 x 79
+    trim_data = trim_zeros(plant)
+    trim_data_z, trim_data_x, trim_data_y = np.shape(trim_data)
+    global_shape_z, global_shape_x, global_shape_y = np.shape(global_map)
+    old_z, old_x, old_y = old_pos
+
+    loc_z, loc_x, loc_y = None, None, None
+
+    count = 0
+
+    if trim_data is not None:
+        # make sure the the plant fully fitting within the wall
+        max_z = global_shape_z - trim_data_z
+        max_x = global_shape_x - trim_data_x
+        max_y = global_shape_y - trim_data_y
+
+        # randomly initialize the position
+        loc_z = random.randint(0, max_z - 1)
+        loc_x = random.randint(0, max_x - 1)
+        loc_y = random.randint(0, max_y - 1)
+
+        while np.linalg.norm([loc_z - old_z, loc_x - old_x, loc_y - old_y]) < thresh:
+            # loc_z = random.randint(0, max_z - 1)
+            loc_x = random.randint(0, max_x - 1)
+            loc_y = random.randint(0, max_y - 1)
+            count += 1
+            if count >= 1000:
+                logging.info("Loop too many times when generate the plants")
+                break
+
+        global_map[0: trim_data_z, loc_x:loc_x + trim_data_x, loc_y:loc_y + trim_data_y] = trim_data
+
+    return global_map, (loc_z, loc_x, loc_y), (loc_z + trim_data_z, loc_x + trim_data_x, loc_y + trim_data_y)
+
+
 def get_random_multi_tree_environment(global_map, global_shape, num, thresh):
     """
     get random multiple tree environment
@@ -95,6 +133,17 @@ def get_random_multi_tree_environment(global_map, global_shape, num, thresh):
         new_global_map = np.logical_or(new_global_map, trans_map).astype(int)
 
     return new_global_map, np.array(bound_boxes)
+
+
+def get_random_multi_plant_models(global_map, plants, thresh):
+    start_pos = (0., 0., 0.)
+    bound_boxes = []
+
+    for plant in plants:
+        global_map, start_pos, end_pos = random_translate_plant(plant, global_map, start_pos, thresh)
+        bound_boxes.append([start_pos, end_pos])
+
+    return global_map, np.array(bound_boxes)
 
 
 if __name__ == '__main__':
