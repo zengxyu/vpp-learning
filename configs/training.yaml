@@ -26,7 +26,8 @@ rewards:
 # 1 : true; 0: false
 input:
   observation_map: 1
-  visit_map: 1
+  visit_map: 0
+  relative_movement: 1
 
 network:
   NetworkObs: 0
@@ -34,7 +35,8 @@ network:
   NetworkVisitLstm: 0
   NetworkObsLstm: 0
   NetworkObsVisit: 0
-  NetworkObsVisitLstm: 1
+  NetworkObsVisitLstm: 0
+  NetworkObsMoveLstm: 1
   SpatialAttentionModel: 0
 
 action:

@@ -105,6 +105,9 @@ class Field:
         self.map = None
         self.bounding_boxes = None
 
+        self.relative_position = np.array([0., 0., 0.])
+        self.relative_rotation = np.array([0., 0., 0.])
+
         self.init_file_path = os.path.join(get_project_path(), "data", 'saved_world.cvx')
         self.initialize(self.init_file_path)
 
@@ -285,6 +288,7 @@ class Field:
     def move_robot(self, direction):
         robot_pos = self.robot_pos + direction
         robot_pos = np.clip(robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
+        self.relative_position = direction
         # if not in_bound_boxes(self.bounding_boxes, robot_pos):
         #     self.robot_pos = robot_pos
         self.robot_pos = robot_pos
@@ -299,6 +303,7 @@ class Field:
 
     def rotate_robot(self, rot):
         self.robot_rot = rot * self.robot_rot
+        self.relative_rotation = rot.as_euler('xyz')
 
     def concat(self, unknown_map, known_free_map, known_target_map):
         map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
@@ -347,7 +352,12 @@ class Field:
         return inputs, reward, done, info
 
     def get_inputs(self):
+        relative_movement = np.append(self.relative_position, self.relative_rotation)
+
         # create input
+        if self.training_config["input"]["observation_map"] and self.training_config["input"]["relative_movement"]:
+            return self.map, relative_movement
+
         if self.training_config["input"]["observation_map"] and self.training_config["input"]["visit_map"]:
             return self.map, np.array([self.visit_map])
 
