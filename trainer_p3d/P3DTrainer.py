@@ -4,6 +4,7 @@ import pickle
 import time
 from typing import Dict, List
 
+import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 from utilities.Info import EpisodeInfo
@@ -142,8 +143,9 @@ def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_inf
     episode_info_collector.add({"new_free_cells_rate": new_free_cells_sum / env.free_count})
     episode_info_collector.add({"coverage_rate": infos[-1]["coverage_rate"]})
 
-    episode_info_collector.add({"average_q": agent_statistics[0][1]})
-    episode_info_collector.add({"loss": agent_statistics[1][1]})
+    if not np.isnan(agent_statistics[0][1]):
+        episode_info_collector.add({"average_q": agent_statistics[0][1]})
+        episode_info_collector.add({"loss": agent_statistics[1][1]})
 
 
 def save_episodes_info(phase, episode_info_collector, i_episode, parser_args):
