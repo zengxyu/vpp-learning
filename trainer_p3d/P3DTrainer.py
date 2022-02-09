@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import time
@@ -29,12 +30,13 @@ class P3DTrainer(object):
         self.test_collector = EpisodeInfo(self.training_config["smooth_n"])
         # discrete
         if not parser_args.train:
-            self.agent.load("{}/model_epi_{}".format(self.training_config["in_model"], parser_args.in_model_index))
+            logging.info("load model from {} {}".format(self.parser_args.in_model, parser_args.in_model_index))
+            self.agent.load("{}/model_epi_{}".format(self.parser_args.in_model, parser_args.in_model_index))
 
     def run(self):
-        headless = self.parser_args.env_config["headless"]
-
-        if headless:
+        head = self.parser_args.head
+        if self.parser_args.train and not head:
+            print("Start training")
             for i in range(self.training_config["num_episodes_to_run"]):
                 print("\nEpisode:{}".format(i))
                 self.training()
@@ -42,11 +44,14 @@ class P3DTrainer(object):
                     print("\nTest Episode:{}".format(i))
                     self.evaluating()
         else:
-            # field.gui.taskMgr.setupTaskChain('mainTaskChain', numThreads=1)
-            # field.gui.taskMgr.add(main_loop, 'mainTask', taskChain='mainTaskChain')
-            main_thread = threading.Thread(target=self.evaluate_10_times)
-            main_thread.start()
-            self.env.gui.run()
+            if head:
+                print("Start evaluating with head")
+                main_thread = threading.Thread(target=self.evaluate_10_times)
+                main_thread.start()
+                self.env.gui.run()
+            else:
+                print("Start evaluating without head")
+                self.evaluate_10_times()
 
     def training(self):
         phase = "Train"
