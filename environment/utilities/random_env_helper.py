@@ -101,14 +101,13 @@ def random_translate_plant(plant, global_map, old_pos, thresh):
         max_y = global_shape_y - trim_data_y
 
         # randomly initialize the position
-        loc_z = random.randint(0, max_z - 1)
         loc_x = random.randint(0, max_x - 1)
         loc_y = random.randint(0, max_y - 1)
 
-        while np.linalg.norm([loc_z - old_z, loc_x - old_x, loc_y - old_y]) < thresh:
+        while np.linalg.norm([loc_x - old_x, loc_y - old_y]) < thresh:
             # loc_z = random.randint(0, max_z - 1)
-            loc_x = random.randint(0, max_x - 1)
-            loc_y = random.randint(0, max_y - 1)
+            loc_x = random.randint(20, max_x - 20)
+            loc_y = random.randint(20, max_y - 20)
             count += 1
             if count >= 1000:
                 logging.info("Loop too many times when generate the plants")
@@ -116,7 +115,7 @@ def random_translate_plant(plant, global_map, old_pos, thresh):
 
         global_map[0: trim_data_z, loc_x:loc_x + trim_data_x, loc_y:loc_y + trim_data_y] = trim_data
 
-    return global_map, (loc_z, loc_x, loc_y), (loc_z + trim_data_z, loc_x + trim_data_x, loc_y + trim_data_y)
+    return global_map, (0, loc_x, loc_y), (trim_data_z, loc_x + trim_data_x, loc_y + trim_data_y)
 
 
 def get_random_multi_tree_environment(global_map, global_shape, num, thresh):
