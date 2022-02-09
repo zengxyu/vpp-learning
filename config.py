@@ -87,6 +87,7 @@ def process_args():
     parser.add_argument("--in_folder", type=str, default=None)
     parser.add_argument("--in_model_index", type=int)
     parser.add_argument("--train", action="store_true", default=False)
+    parser.add_argument("--head", action="store_true", default=False)
 
     parser_args = parser.parse_args()
 

@@ -75,7 +75,7 @@ class Field:
         self.MOVE_STEP = self.env_config["move_step"]
         self.ROT_STEP = self.env_config["rot_step"]
 
-        self.headless = self.env_config["headless"]
+        self.head = parser_args.head
         self.randomize = self.env_config["randomize"]
         self.num_plants = self.env_config["num_plants"]
         self.thresh = self.env_config["thresh"]
@@ -114,7 +114,7 @@ class Field:
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
-        if not self.headless:
+        if self.head:
             from environment.field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, self.env_config["scale"])
 
@@ -270,7 +270,7 @@ class Field:
                 ep_right_down)),
             Vec3D(*tuple(
                 ep_right_up)))
-        if not self.headless:
+        if self.head:
             self.gui.messenger.send('update_fov_and_cells',
                                     [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up,
                                      coords, values], 'default')
@@ -401,7 +401,7 @@ class Field:
         self.reset_count += 1
         self.initialize(self.init_file_path)
 
-        if not self.headless:
+        if self.head:
             self.gui.messenger.send('reset', [], 'default')
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
