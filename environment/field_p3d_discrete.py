@@ -81,8 +81,8 @@ class Field:
         self.randomize = self.env_config["randomize"]
         self.randomize_sensor_position = self.env_config["randomize_sensor_position"]
 
-        self.num_plants = self.env_config["num_plants"]
         self.thresh = self.env_config["thresh"]
+        self.margin = self.env_config["margin"]
 
         self.action_space = action_space
         self.reset_count = 0
@@ -92,6 +92,8 @@ class Field:
         self.known_map = np.zeros(self.shape).astype(int)
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
+        self.relative_position = np.array([0., 0., 0.])
+        self.relative_rotation = np.array([0., 0., 0.])
 
         self.target_count = 0
         self.free_count = 0
@@ -108,9 +110,6 @@ class Field:
         self.visit_map = None
         self.map = None
         self.bounding_boxes = None
-
-        self.relative_position = np.array([0., 0., 0.])
-        self.relative_rotation = np.array([0., 0., 0.])
 
         self.init_file_path = os.path.join(get_project_path(), "data", 'saved_world.cvx')
         self.plant_models_dir = os.path.join(get_project_path(), "data", 'plant_models')
@@ -134,6 +133,9 @@ class Field:
         self.robot_pos = np.array([0.0, 0.0, 0.0])
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
+        self.relative_position = np.array([0., 0., 0.])
+        self.relative_rotation = np.array([0., 0., 0.])
+
         self.step_count = 0
         self.found_targets = 0
         self.free_cells = 0
@@ -142,8 +144,7 @@ class Field:
         # # randomize the environment if needed
         if self.randomize:
             self.global_map, self.bounding_boxes = get_random_multi_plant_models(self.global_map, self.plants,
-                                                                                 self.thresh)
-
+                                                                                 self.thresh, self.margin)
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
         self.shape = self.global_map.shape
 
@@ -261,8 +262,6 @@ class Field:
 
     def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
-        # print("self.known_map size:{}".format(self.known_map.shape))
-        # print("self.global_map size:{}".format(self.global_map.shape))
 
         self.known_map, found_targets, free_cells, coords, values = field_env_3d_helper.update_grid_inds_in_view(
             self.known_map,
@@ -302,6 +301,9 @@ class Field:
             # update robot_pose
             self.robot_pos = robot_pos
             self.relative_position = direction
+
+        print("\nself.bounding_boxes:\n{}".format(self.bounding_boxes))
+        print("\nself.robot_pos:\n{}".format(self.robot_pos))
 
     def cartesian_move_robot(self, direction):
         cartesian_result = []
