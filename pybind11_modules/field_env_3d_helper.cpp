@@ -386,7 +386,7 @@ void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &
         coords.push_back(x);
         coords.push_back(y);
         coords.push_back(z);
-        values.push_back(cell_val + 3);
+        values.push_back(cell_val + 2);
 
         if (cell_val >= 2) break;
     }
