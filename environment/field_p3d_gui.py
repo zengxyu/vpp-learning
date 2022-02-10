@@ -39,6 +39,10 @@ class FieldGUI(ShowBase):
         self.OCCUPIED_SEEN_COLOR = (0 / 255, 255 / 255, 255 / 255, 1.0)  # OrangeRed
         self.TARGET_SEEN_COLOR = (218 / 255, 112 / 255, 214 / 255, 1.0)  # Orchid
 
+        self.X_COLOR = (1, 0, 0, 1)
+        self.Y_COLOR = (0, 1, 0, 1)
+        self.Z_COLOR = (0, 0, 1, 1)
+
         self.voxgrid_node = GeomNode("voxgrid")
         self.fov_node = None
         self.fov_node_path = None
@@ -68,23 +72,43 @@ class FieldGUI(ShowBase):
 
     def create_edged_cube(self, min, max):
         lines = LineSegs()
+        lines.setColor(self.X_COLOR)
         lines.moveTo(min[0], min[1], min[2])
         lines.drawTo(max[0], min[1], min[2])
+        lines.setColor(self.Y_COLOR)
+        lines.moveTo(max[0], min[1], min[2])
         lines.drawTo(max[0], max[1], min[2])
+        lines.setColor(self.X_COLOR)
+        lines.moveTo(max[0], max[1], min[2])
         lines.drawTo(min[0], max[1], min[2])
+        lines.setColor(self.Y_COLOR)
+        lines.moveTo(min[0], max[1], min[2])
         lines.drawTo(min[0], min[1], min[2])
+        lines.setColor(self.Z_COLOR)
+        lines.moveTo(min[0], min[1], min[2])
         lines.drawTo(min[0], min[1], max[2])
+        lines.setColor(self.X_COLOR)
+        lines.moveTo(min[0], min[1], max[2])
         lines.drawTo(max[0], min[1], max[2])
+        lines.setColor(self.Z_COLOR)
+        lines.moveTo(max[0], min[1], max[2])
         lines.drawTo(max[0], min[1], min[2])
 
+        lines.setColor(self.Z_COLOR)
         lines.moveTo(max[0], max[1], min[2])
         lines.drawTo(max[0], max[1], max[2])
+        lines.setColor(self.Y_COLOR)
+        lines.moveTo(max[0], max[1], max[2])
         lines.drawTo(max[0], min[1], max[2])
 
+        lines.setColor(self.X_COLOR)
         lines.moveTo(max[0], max[1], max[2])
         lines.drawTo(min[0], max[1], max[2])
+        lines.setColor(self.Y_COLOR)
+        lines.moveTo(min[0], max[1], max[2])
         lines.drawTo(min[0], min[1], max[2])
 
+        lines.setColor(self.Z_COLOR)
         lines.moveTo(min[0], max[1], max[2])
         lines.drawTo(min[0], max[1], min[2])
 
