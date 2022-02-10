@@ -40,9 +40,6 @@ def trim_zeros(arr):
     return arr[slices]
 
 
-first = True
-
-
 def random_translate_plant(plant, global_map, old_pos, thresh, margin):
     # minus 1 for trim_zeros()
     # add 1 back
@@ -78,12 +75,12 @@ def random_translate_plant(plant, global_map, old_pos, thresh, margin):
     return global_map, (loc_x, loc_y, 0), (loc_x + plant_shape_xx, loc_y + plant_shape_yy, 0 + plant_shape_zz)
 
 
-def get_random_multi_plant_models(global_map, plants, thresh,margin):
+def get_random_multi_plant_models(global_map, plants, thresh, margin):
     start_pos = (0., 0., 0.)
     bound_boxes = []
 
     for plant in plants:
-        global_map, start_pos, end_pos = random_translate_plant(plant, global_map, start_pos, thresh,margin)
+        global_map, start_pos, end_pos = random_translate_plant(plant, global_map, start_pos, thresh, margin)
         bound_boxes.append([start_pos, end_pos])
 
     return global_map, np.array(bound_boxes)

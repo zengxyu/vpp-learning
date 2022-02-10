@@ -302,8 +302,8 @@ class Field:
             self.robot_pos = robot_pos
             self.relative_position = direction
 
-        print("\nself.bounding_boxes:\n{}".format(self.bounding_boxes))
-        print("\nself.robot_pos:\n{}".format(self.robot_pos))
+        # print("\nself.bounding_boxes:\n{}".format(self.bounding_boxes))
+        # print("\nself.robot_pos:\n{}".format(self.robot_pos))
 
     def cartesian_move_robot(self, direction):
         cartesian_result = []
