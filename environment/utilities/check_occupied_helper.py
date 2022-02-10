@@ -45,6 +45,5 @@ def in_bound_boxes(bounding_boxes, point):
             start_x, start_y, start_z = start
             end_x, end_y, end_z = end
             if start_x <= x <= end_x and start_y <= y <= end_y and start_z <= z <= end_z:
-                print("in bounding box")
                 return True
     return False

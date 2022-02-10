@@ -28,8 +28,8 @@ rewards:
 input:
   observation_map: 1
   visit_map: 0
-  relative_movement: 0
-  absolute_movement: 1
+  relative_movement: 1
+  absolute_movement: 0
 
 network:
   NetworkObs: 0
@@ -42,6 +42,6 @@ network:
   SpatialAttentionModel: 0
 
 action:
-  ActionMoRo10: 1
-  ActionMoRoMultiplier30: 0
+  ActionMoRo10: 0
+  ActionMoRoMultiplier30: 1
 
