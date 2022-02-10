@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, Enum
 import numpy as np
 from scipy.spatial.transform import Rotation
 
@@ -41,7 +41,7 @@ class ActionMoRoMultiplier30(object):
         self.n = 30
         self.action_space = []
         for action in ActionMoRo10IntEnum:
-            for mtplier in MultiplierIntEnum:
+            for mtplier in MultiplierEnum:
                 self.action_space.append([action, mtplier])
 
     def get_relative_move_rot(self, axes, action_ind, move_step, rot_step):
@@ -72,57 +72,6 @@ class ActionMoRoMultiplier30(object):
         else:
             raise NotImplementedError
         return relative_move, relative_rot
-
-
-class ActionMoRoMul108(object):
-    def __init__(self):
-        self.action_space = []
-        for mtplier in MultiplierIntEnum:
-            for mo_action in ActionMo6IntEnum:
-                for ro_action in ActionRo6IntEnum:
-                    self.action_space.append([mo_action, ro_action, mtplier])
-
-    def get_relative_move_rot2(self, axes, action_ind, move_step, rot_step):
-        relative_move = np.array([0, 0, 0])
-        relative_rot = Rotation.from_quat(np.array([0, 0, 0, 1.0]))
-        mo_action, ro_action, multiplier = self.action_space[action_ind]
-
-        if mo_action == ActionMo6IntEnum.MOVE_FORWARD:
-            relative_move = axes[0] * move_step * multiplier
-        elif mo_action == ActionMo6IntEnum.MOVE_BACKWARD:
-            relative_move = -axes[0] * move_step * multiplier
-        elif mo_action == ActionMo6IntEnum.MOVE_LEFT:
-            relative_move = axes[1] * move_step * multiplier
-        elif mo_action == ActionMo6IntEnum.MOVE_RIGHT:
-            relative_move = -axes[1] * move_step * multiplier
-        elif mo_action == ActionMo6IntEnum.MOVE_UP:
-            relative_move = axes[2] * move_step * multiplier
-        elif mo_action == ActionMo6IntEnum.MOVE_DOWN:
-            relative_move = -axes[2] * move_step * multiplier
-
-        if ro_action == ActionRo6IntEnum.ROTATE_ROLL_P:
-            relative_rot = Rotation.from_rotvec(np.radians(rot_step * multiplier) * axes[0])
-        elif ro_action == ActionRo6IntEnum.ROTATE_ROLL_N:
-            relative_rot = Rotation.from_rotvec(np.radians(-rot_step * multiplier) * axes[0])
-        elif ro_action == ActionRo6IntEnum.ROTATE_PITCH_P:
-            relative_rot = Rotation.from_rotvec(np.radians(rot_step * multiplier) * axes[1])
-        elif ro_action == ActionRo6IntEnum.ROTATE_PITCH_N:
-            relative_rot = Rotation.from_rotvec(np.radians(-rot_step * multiplier) * axes[1])
-        elif ro_action == ActionRo6IntEnum.ROTATE_YAW_P:
-            relative_rot = Rotation.from_rotvec(np.radians(rot_step * multiplier) * axes[2])
-        elif ro_action == ActionRo6IntEnum.ROTATE_YAW_N:
-            relative_rot = Rotation.from_rotvec(np.radians(-rot_step * multiplier) * axes[2])
-        else:
-            raise NotImplementedError
-        return relative_move, relative_rot
-
-    def get_action_size(self):
-        return len(ActionMo6IntEnum) * len(ActionRo6IntEnum) * len(MultiplierIntEnum)
-
-
-class ActionMoRoContinuous(object):
-    def get_action_size(self, robot_pos, robot_rot):
-        return len(robot_pos) + len(robot_rot)
 
 
 class ActionMoRo10IntEnum(IntEnum):
@@ -171,10 +120,7 @@ class ActionMoRo15IntEnum(IntEnum):
     LARGE_STEP = 14
 
 
-class MultiplierIntEnum(IntEnum):
-    LARGE_STEP = 1.5
-    MEDIUM_STEP = 1
-    SMALL_STEP = 0.5
+MultiplierEnum = [0.5, 1.0, 1.5]
 
 
 class ActionMo6IntEnum(IntEnum):
