@@ -88,7 +88,7 @@ def random_translate_plant(plant, global_map, old_pos, thresh):
     plant = trim_zeros(plant)
     plant_shape_z, plant_shape_y, plant_shape_x = np.shape(plant)
     global_shape_z, global_shape_y, global_shape_x = np.shape(global_map)
-    old_z, old_x, old_y = old_pos
+    old_z, old_y, old_x = old_pos
 
     loc_z, loc_y, loc_x = None, None, None
 
@@ -104,7 +104,7 @@ def random_translate_plant(plant, global_map, old_pos, thresh):
         loc_y = random.randint(0, max_y - 1)
         loc_x = random.randint(0, max_x - 1)
 
-        while np.linalg.norm([loc_y - old_x, loc_x - old_y]) < thresh:
+        while np.linalg.norm([loc_y - old_y, loc_x - old_x]) < thresh:
             # loc_z = random.randint(0, max_z - 1)
             loc_y = random.randint(20, max_y - 20)
             loc_x = random.randint(20, max_x - 20)
