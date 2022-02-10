@@ -54,6 +54,10 @@ class FieldGUI(ShowBase):
         self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
         self.render.attachNewNode(self.field_border)
 
+        for bbox in self.env.bounding_boxes:
+            bbox_field = self.create_edged_cube(np.asarray(bbox[0]) * self.scale, np.asarray(bbox[1]) * self.scale)
+            self.render.attachNewNode(bbox_field)
+
         self.voxgrid_node.addGeom(self.voxgrid.getGeom())
 
         self.render.attachNewNode(self.voxgrid_node)
