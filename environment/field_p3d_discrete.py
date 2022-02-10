@@ -72,7 +72,7 @@ class Field:
         self.sensor_range = self.env_config["sensor_range"]
         self.hfov = self.env_config["hfov"]
         self.vfov = self.env_config["vfov"]
-        self.shape = (self.env_config["shape_z"], self.env_config["shape_x"], self.env_config["shape_y"])
+        self.shape = (self.env_config["shape_x"], self.env_config["shape_y"], self.env_config["shape_z"])
         self.max_steps = self.env_config["max_steps"]
         self.MOVE_STEP = self.env_config["move_step"]
         self.ROT_STEP = self.env_config["rot_step"]
