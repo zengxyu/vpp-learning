@@ -141,6 +141,12 @@ def get_random_multi_plant_models(global_map, plants, thresh):
     for plant in plants:
         global_map, start_pos, end_pos = random_translate_plant(plant, global_map, start_pos, thresh)
         bound_boxes.append([start_pos, end_pos])
+    # assert np.sum(global_map == 1) == np.sum(plants[0] == 1) + np.sum(plants[1] == 1) + np.sum(plants[2] == 1) + np.sum(
+    #     plants[3] == 1)
+    # assert np.sum(global_map == 2) == np.sum(plants[0] == 2) + np.sum(plants[1] == 2) + np.sum(plants[2] == 2) + np.sum(
+    #     plants[3] == 2)
+    # assert np.sum(global_map == 3) == np.sum(plants[0] == 3) + np.sum(plants[1] == 3) + np.sum(plants[2] == 3) + np.sum(
+    #     plants[3] == 3)
 
     return global_map, np.array(bound_boxes)
 
