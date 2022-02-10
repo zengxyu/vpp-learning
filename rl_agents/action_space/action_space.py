@@ -172,9 +172,9 @@ class ActionMoRo15IntEnum(IntEnum):
 
 
 class MultiplierIntEnum(IntEnum):
-    LARGE_STEP = 3
-    MEDIUM_STEP = 2
-    SMALL_STEP = 1
+    LARGE_STEP = 1.5
+    MEDIUM_STEP = 1
+    SMALL_STEP = 0.5
 
 
 class ActionMo6IntEnum(IntEnum):
