@@ -46,6 +46,7 @@ def read_from_local(file_path):
     labels = np.asarray(voxelgrid.labels)
     shape = tuple(voxelgrid.shape)
     data = labels.reshape(shape)
+    data = np.transpose(data, (2, 1, 0))
     return data
 
 

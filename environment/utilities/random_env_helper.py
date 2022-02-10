@@ -86,52 +86,34 @@ def random_translate_plant(plant, global_map, old_pos, thresh):
     # add 1 back
     # 45 x 49 x 79
     plant = trim_zeros(plant)
-    plant_shape_z, plant_shape_y, plant_shape_x = np.shape(plant)
-    global_shape_z, global_shape_y, global_shape_x = np.shape(global_map)
-    old_z, old_y, old_x = old_pos
+    plant_shape_xx, plant_shape_yy, plant_shape_zz = np.shape(plant)
+    global_shape_xx, global_shape_yy, global_shape_zz = np.shape(global_map)
+    old_x, old_y, old_z = old_pos
 
-    loc_z, loc_y, loc_x = None, None, None
+    loc_x, loc_y, loc_z = None, None, None
 
     count = 0
 
     if plant is not None:
         # make sure the the plant fully fitting within the wall
-        max_z = global_shape_z - plant_shape_z
-        max_y = global_shape_y - plant_shape_y
-        max_x = global_shape_x - plant_shape_x
+        max_x = global_shape_xx - plant_shape_xx
+        max_y = global_shape_yy - plant_shape_yy
 
         # randomly initialize the position
-        loc_y = random.randint(0, max_y - 1)
         loc_x = random.randint(0, max_x - 1)
+        loc_y = random.randint(0, max_y - 1)
 
-        while np.linalg.norm([loc_y - old_y, loc_x - old_x]) < thresh:
-            # loc_z = random.randint(0, max_z - 1)
-            loc_y = random.randint(20, max_y - 20)
+        while np.linalg.norm([loc_x - old_x, loc_y - old_y]) < thresh:
             loc_x = random.randint(20, max_x - 20)
+            loc_y = random.randint(20, max_y - 20)
             count += 1
             if count >= 1000:
                 logging.info("Loop too many times when generate the plants")
                 break
 
-        global_map[0: plant_shape_z, loc_y:loc_y + plant_shape_y, loc_x:loc_x + plant_shape_x] = plant
+        global_map[loc_x: loc_x + plant_shape_xx, loc_y:loc_y + plant_shape_yy, 0:0 + plant_shape_zz] = plant
 
-    return global_map, (0, loc_y, loc_x), (plant_shape_z, loc_y + plant_shape_y, loc_x + plant_shape_x)
-
-
-# def get_random_multi_tree_environment(global_map, global_shape, num, thresh):
-#     """
-#     get random multiple tree environment
-#     """
-#     start_pos = (0., 0., 0.)
-#     bound_boxes = []
-#     new_global_map = np.zeros_like(global_map).astype(int)
-#
-#     for i in range(num):
-#         trans_map, start_pos, end_pos = random_translate_environment(global_map, global_shape, start_pos, thresh)
-#         bound_boxes.append([start_pos, end_pos])
-#         new_global_map = np.logical_or(new_global_map, trans_map).astype(int)
-#
-#     return new_global_map, np.array(bound_boxes)
+    return global_map, (loc_x, loc_y, 0), (loc_x + plant_shape_xx, loc_y + plant_shape_yy, 0 + plant_shape_zz)
 
 
 def get_random_multi_plant_models(global_map, plants, thresh):
