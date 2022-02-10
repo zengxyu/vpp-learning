@@ -114,7 +114,8 @@ class Field:
 
         self.init_file_path = os.path.join(get_project_path(), "data", 'saved_world.cvx')
         self.plant_models_dir = os.path.join(get_project_path(), "data", 'plant_models')
-        self.plants = load_plants(self.plant_models_dir, self.env_config["plant_types"], self.env_config["roi_neighbors"],
+        self.plants = load_plants(self.plant_models_dir, self.env_config["plant_types"],
+                                  self.env_config["roi_neighbors"],
                                   self.env_config["resolution"])
 
         self.initialize()
@@ -294,10 +295,13 @@ class Field:
     def move_robot(self, direction):
         robot_pos = self.robot_pos + direction
         robot_pos = np.clip(robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
-        self.relative_position = direction
-        if not in_bound_boxes(self.bounding_boxes, robot_pos):
+        if self.env_config["use_bbox"] and in_bound_boxes(self.bounding_boxes, robot_pos):
+            # do nothing, do not update robot_pose
+            self.relative_position = np.zeros_like(direction)
+        else:
+            # update robot_pose
             self.robot_pos = robot_pos
-        # self.robot_pos = robot_pos
+            self.relative_position = direction
 
     def cartesian_move_robot(self, direction):
         cartesian_result = []
