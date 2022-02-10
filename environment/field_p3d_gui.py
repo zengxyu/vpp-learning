@@ -27,24 +27,24 @@ class FieldGUI(ShowBase):
 
         # Color constants
         self.FOV_ALPHA = 1.0  # not working
-        self.FOV_UP_COLOR = (220/255, 20/255, 60/255, self.FOV_ALPHA)  # Crimson red
-        self.FOV_DOWN_COLOR = (199/255, 21/255, 133/255, self.FOV_ALPHA)  # MediumVioletRed
-        self.FOV_LEFT_COLOR = (255/255, 69/255, 0/255, self.FOV_ALPHA)  # OrangeRed
-        self.FOV_RIGHT_COLOR = (255/255, 215/255, 0/255, self.FOV_ALPHA)  # Gold
-        self.FOV_FRONT_COLOR = (218/255, 112/255, 214/255, self.FOV_ALPHA)  # Orchid
+        self.FOV_UP_COLOR = (220 / 255, 20 / 255, 60 / 255, self.FOV_ALPHA)  # Crimson red
+        self.FOV_DOWN_COLOR = (199 / 255, 21 / 255, 133 / 255, self.FOV_ALPHA)  # MediumVioletRed
+        self.FOV_LEFT_COLOR = (255 / 255, 69 / 255, 0 / 255, self.FOV_ALPHA)  # OrangeRed
+        self.FOV_RIGHT_COLOR = (255 / 255, 215 / 255, 0 / 255, self.FOV_ALPHA)  # Gold
+        self.FOV_FRONT_COLOR = (218 / 255, 112 / 255, 214 / 255, self.FOV_ALPHA)  # Orchid
 
-        self.OCCUPIED_UNSEEN_COLOR = (220/255, 20/255, 60/255, 1.0)  # Crimson red
-        self.TARGET_UNSEEN_COLOR = (199/255, 21/255, 133/255, 1.0)  # MediumVioletRed
-        self.FREE_SEEN_COLOR = (255/255, 69/255, 0/255, 1.0)  # OrangeRed
-        self.OCCUPIED_SEEN_COLOR = (255/255, 215/255, 0/255, 1.0)  # Gold
-        self.TARGET_SEEN_COLOR = (218/255, 112/255, 214/255, 1.0)  # Orchid
+        self.OCCUPIED_UNSEEN_COLOR = (34 / 255, 139 / 255, 34 / 255, 1.0)  # ForestGreen
+        self.TARGET_UNSEEN_COLOR = (199 / 255, 21 / 255, 133 / 255, 1.0)  # MediumVioletRed
+        self.FREE_SEEN_COLOR = (255 / 255, 215 / 255, 0 / 255, 1.0)  # Gold
+        self.OCCUPIED_SEEN_COLOR = (0 / 255, 255 / 255, 255 / 255, 1.0)  # OrangeRed
+        self.TARGET_SEEN_COLOR = (218 / 255, 112 / 255, 214 / 255, 1.0)  # Orchid
 
         self.voxgrid_node = GeomNode("voxgrid")
         self.fov_node = None
         self.fov_node_path = None
 
         self.colors = PTA_float(self.OCCUPIED_UNSEEN_COLOR + self.TARGET_UNSEEN_COLOR + self.FREE_SEEN_COLOR +
-                                self.OCCUPIED_SEEN_COLOR + self.TARGET_SEEN_COLOR)
+                                self.OCCUPIED_SEEN_COLOR + self.TARGET_SEEN_COLOR )
         self.voxgrid = VoxelGrid(self.env.global_map.shape, self.colors, self.scale)
 
         self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
