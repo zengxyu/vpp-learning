@@ -67,6 +67,7 @@ class GuiFieldValues(IntEnum):
 
 class Field:
     def __init__(self, parser_args, action_space):
+        self.parser_args = parser_args
         self.env_config = parser_args.env_config
         self.training_config = parser_args.training_config
         self.sensor_range = self.env_config["sensor_range"]
@@ -324,7 +325,7 @@ class Field:
     def step(self, action):
         # actions = [0, 2]
         # action = actions[self.step_count % 2]
-        # print(self.step_count)
+
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)

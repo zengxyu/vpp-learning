@@ -21,12 +21,8 @@ class P3DTrainer(object):
         self.action_space = action_space
 
         self.train_i_episode = 0
-        self.train_i_step = 0
         self.test_i_episode = 0
-        self.test_i_step = 0
-        self.n_smooth = 200
         self.global_i_step = 0
-        self.start_time = time.time()
         self.train_collector = EpisodeInfo(self.training_config["train_smooth_n"])
         self.test_collector = EpisodeInfo(self.training_config["test_smooth_n"])
         # discrete
@@ -62,13 +58,13 @@ class P3DTrainer(object):
 
         done = False
         infos = []
-
+        i_step = 0
         while not done:
             action = self.agent.act(state)
             state, reward, done, info = self.env.step(action)
             self.agent.observe(obs=state, reward=reward, done=done, reset=False)
-            self.train_i_step += 1
             self.global_i_step += 1
+            i_step += 1
             infos.append(info)
 
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
@@ -88,14 +84,14 @@ class P3DTrainer(object):
 
         done = False
         infos = []
-
+        i_step = 0
         with self.agent.eval_mode():
             while not done:
                 action = self.agent.act(state)
                 state, reward, done, info = self.env.step(action)
                 self.agent.observe(obs=state, reward=reward, done=done, reset=False)
-                self.train_i_step += 1
                 self.global_i_step += 1
+                i_step += 1
                 infos.append(info)
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.test_collector, env=self.env)
@@ -112,6 +108,10 @@ class P3DTrainer(object):
 def add_scalar(writer, phase, episode_info, i_episode):
     for key, item in episode_info.items():
         writer.add_scalar(str(phase) + "/" + str(key), item, i_episode)
+
+
+def print_info():
+    pass
 
 
 def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_info_collector: EpisodeInfo, env):
