@@ -102,22 +102,22 @@ class EnvironmentClient:
 
     def sendAction(self, action_msg):
         while True:
-            print('Sending message')
+            # print('Sending message')
             try:
                 self.socket.send(action_msg.to_bytes(), flags=zmq.NOBLOCK)
             except zmq.ZMQError:
-                print('Could not send message, trying again in 1s...')
+                # print('Could not send message, trying again in 1s...')
                 time.sleep(1)
                 continue
             break
 
         while True:
             #  Get the reply.
-            print('Receiving message')
+            # print('Receiving message')
             try:
                 message = self.socket.recv()
             except zmq.ZMQError:
-                print('No response received, trying again...')
+                # print('No response received, trying again...')
                 continue
             break
         obs_msg = observation_capnp.Observation.from_bytes(message)

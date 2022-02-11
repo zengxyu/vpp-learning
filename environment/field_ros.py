@@ -95,7 +95,7 @@ class FieldRos:
 
         info = {"visit_gain": np.nan, "new_free_cells": found_free, "new_occupied_cells": found_occ,
                 "new_found_rois": found_roi, "reward": reward, "coverage_rate": np.nan}
-
+        print("robot_pos:{}".format(self.robot_pos))
         return inputs, reward, done, {}
 
     def get_reward(self, visit_gain, found_free, found_occ, found_roi):
