@@ -39,7 +39,8 @@ network:
   NetworkObsLstm: 0
   NetworkObsVisit: 0
   NetworkObsVisitLstm: 0
-  NetworkObsMoveLstm: 1
+  NetworkObsMoveLstm: 0
+  NetworkObsMoveLstmLstm: 1
   SpatialAttentionModel: 0
 
 action:
