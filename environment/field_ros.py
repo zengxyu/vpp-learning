@@ -1,145 +1,142 @@
 #!/usr/bin/environment python
 
 import numpy as np
-from enum import IntEnum
 from scipy.spatial.transform import Rotation
 
+from environment.utilities.map_concat_helper import concat
 from scripts.vpp_env_client import EnvironmentClient
-from utilities.util import get_state_size, get_action_size
 
 
-class FieldValues(IntEnum):
-    UNKNOWN = 0,
-    FREE = 1,
-    OCCUPIED = 2,
-    TARGET = 3
+class FieldRos:
+    def __init__(self, parser_args, action_space):
+        self.parser_args = parser_args
+        self.env_config = parser_args.env_config_ros
+        self.training_config = parser_args.training_config
+        self.max_steps = self.env_config["max_steps"]
+        self.MOVE_STEP = self.env_config["move_step"]
+        self.ROT_STEP = self.env_config["rot_step"]
 
+        self.randomize = self.env_config["randomize"]
+        self.handle_simulation = self.env_config["handle_simulation"]
 
-class GuiFieldValues(IntEnum):
-    FREE_UNSEEN = 0,
-    OCCUPIED_UNSEEN = 1,
-    TARGET_UNSEEN = 2,
-    FREE_SEEN = 3,
-    OCCUPIED_SEEN = 4,
-    TARGET_SEEN = 5
+        self.action_space = action_space
+        self.reset_count = 0
 
-
-class Field:
-    def __init__(self, config, Action, shape, sensor_range, hfov, vfov, max_steps, move_step, handle_simulation):
-        self.found_targets = 0
-        self.free_cells = 0
-        self.sensor_range = sensor_range
-        self.hfov = hfov
-        self.vfov = vfov
-        self.shape = shape
-        self.action_instance = Action()
-        self.global_map = np.zeros(self.shape)
-        self.known_map = np.zeros(self.shape)
-        self.max_steps = max_steps
+        # following variables need to be reset
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
-        self.MOVE_STEP = move_step
-        self.ROT_STEP = 15.0
+        self.relative_position = np.array([0., 0., 0.])
+        self.relative_rotation = np.array([0., 0., 0.])
 
-        self.is_sph_pos = False
-        self.is_global_known_map = False
-        self.is_randomize = False
-        self.randomize_control = False
-        self.is_egocetric = False
-        self.max_targets_found = 0
-        self.avg_targets_found = 0
+        self.free_total = 0
+        self.occ_total = 0
+        self.roi_total = 0
 
-        self.reset_count = 0
-        self.upper_scale = 1
-        self.ratio = 0.1
-        self.client = EnvironmentClient(handle_simulation=handle_simulation)
-        if handle_simulation:
+        self.found_roi_sum = 0
+        self.found_occ_sum = 0
+        self.found_free_sum = 0
+
+        self.step_count = 0
+
+        self.visit_resolution = 16
+        self.visit_shape = None
+        self.visit_map = None
+        self.map = None
+
+        self.client = EnvironmentClient(handle_simulation=self.handle_simulation)
+        if self.handle_simulation:
             self.client.startSimulation()
 
         print("max steps:", self.max_steps)
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
 
-        config.environment = {
-            "is_vpp": True,
-            "reward_threshold": 0,
-            "state_size": get_state_size(self),
-            "action_size": get_action_size(self),
-            "action_shape": get_action_size(self)
-        }
+    def initialize(self):
+        self.robot_pos = np.array([0.0, 0.0, 0.0])
+        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
-    def get_action_size(self):
-        return self.action_instance.get_action_size()
+        self.relative_position = np.array([0., 0., 0.])
+        self.relative_rotation = np.array([0., 0., 0.])
 
-    def move_robot(self, direction):
-        self.robot_pos += direction
-        # self.robot_pos = np.clip(self.robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
-
-    def rotate_robot(self, axis, angle):
-        rot = Rotation.from_rotvec(np.radians(angle) * axis)
-        self.robot_rot = rot * self.robot_rot
-
-    def relative_rotation(self, axis, angle):
-        rot = Rotation.from_rotvec(np.radians(angle) * axis)
-        return rot.as_quat()
+        self.step_count = 0
+        self.found_roi_sum = 0
+        self.found_occ_sum = 0
+        self.found_free_sum = 0
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
-        relative_move, relative_rot = self.action_instance.get_relative_move_rot(axes, action, self.MOVE_STEP,
-                                                                                 self.ROT_STEP)
+        relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
+                                                                              self.ROT_STEP)
         relative_pose = np.append(relative_move, relative_rot.as_quat()).tolist()
-        unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendRelativePose(
-            relative_pose)
-        self.found_targets += reward
+        unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
+        found_roi, found_occ, found_free = self.client.sendRelativePose(relative_pose)
+
+        robot_pos = np.array(robot_pose[:3])
+        robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
+
+        self.relative_position = robot_pos - self.robot_pos
+        # TODO 这里需要已知两向量，求旋转矩阵
+        self.relative_rotation = self.robot_rot.as_euler('xyz') - robot_rot.as_euler('xyz')
+
+        self.robot_pos = robot_pos
+        self.robot_rot = robot_rot
+
+        self.found_roi_sum += found_roi
+        self.found_occ_sum += found_occ
+        self.found_free_sum += found_free
+
         self.step_count += 1
         done = self.step_count >= self.max_steps
-        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
 
-        self.robot_pos = np.array(robotPose[:3])
-        self.robot_rot = Rotation.from_quat(robotPose[3:])
+        self.map = concat(unknown_map, known_free_map, known_roi_map, np.uint8)
 
-        return (map, robotPose), reward, done, {}
+        inputs = self.get_inputs()
+        reward = self.get_reward(0, found_free, found_occ, found_roi)
 
-    def reset(self, is_sph_pos, is_global_known_map, is_egocetric, is_randomize, randomize_control, last_targets_found):
+        info = {"visit_gain": np.nan, "new_free_cells": found_free, "new_occupied_cells": found_occ,
+                "new_found_rois": found_roi, "reward": reward, "coverage_rate": np.nan}
+
+        return inputs, reward, done, {}
+
+    def get_reward(self, visit_gain, found_free, found_occ, found_roi):
+        weight = self.training_config["rewards"]
+        reward = weight["visit_gain_weight"] * visit_gain + \
+                 weight["free_weight"] * found_free + \
+                 weight["occ_weight"] * found_occ + \
+                 weight["roi_weight"] * found_roi
+        return reward
+
+    def get_inputs(self):
+        relative_movement = np.append(self.relative_position, self.relative_rotation)
+        absolute_movement = np.append(self.robot_pos, self.robot_rot.as_euler('xyz'))
+
+        # create input
+        if self.training_config["input"]["observation_map"] and self.training_config["input"]["absolute_movement"]:
+            return self.map, absolute_movement
+
+        if self.training_config["input"]["observation_map"] and self.training_config["input"]["relative_movement"]:
+            return self.map, relative_movement
+
+        if self.training_config["input"]["observation_map"] and self.training_config["input"]["visit_map"]:
+            return self.map, np.array([self.visit_map])
+
+        if self.training_config["input"]["observation_map"]:
+            return np.array(self.map)
+
+        if self.training_config["input"]["visit_map"]:
+            return np.array([self.visit_map])
+
+    def reset(self):
         print("-----------------------------------reset or randomize!-------------------------------------------")
-        self.is_sph_pos = is_sph_pos
-        self.is_global_known_map = is_global_known_map
-        self.is_randomize = is_randomize
-        self.randomize_control = randomize_control
-        self.is_egocetric = is_egocetric
-        self.max_targets_found = last_targets_found
-        if self.reset_count == 0:
-            self.avg_targets_found = 0
-        else:
-            self.avg_targets_found = (
-                                             self.reset_count - 1) / self.reset_count * self.avg_targets_found + 1 / self.reset_count * last_targets_found
         self.reset_count += 1
-
-        self.known_map = np.zeros(self.shape)
-
         self.step_count = 0
-        self.found_targets = 0
-        self.free_cells = 0
 
-        if self.is_randomize:
-            if self.randomize_control:
-                threshold = 1.2 * self.avg_targets_found
-                if last_targets_found >= threshold:
-                    print("last_targets_found :{} >= {}; Randomize THE ENV".format(last_targets_found, threshold))
-                    unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendResetAndRandomize(
-                        [-1, -1, -0.1], [1, 1, 0.1], 0.4)
-                else:
-                    print("last_targets_found :{} < {}, NOT Randomize THE ENV".format(last_targets_found, threshold))
-                    unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendReset()
-            else:
-                unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendResetAndRandomize(
-                    [-1, -1, -0.1], [1, 1, 0.1], 0.4)
-        else:
-            unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendReset()
+        unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells = self.client.sendReset()
 
-        map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
+        self.map = concat(unknown_map, known_free_map, known_roi_map, np.uint8)
+        inputs = self.get_inputs()
 
-        return (map, robotPose)
+        return inputs, robot_pose
 
     # def reset_and_randomize(self):
     #     print("-------------------------------reset and randomize!-----------------------------------")

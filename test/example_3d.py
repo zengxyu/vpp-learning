@@ -194,7 +194,7 @@ class MyApp(ShowBase):
         #    np.array([[[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 0, 0], [1, 1, 1]]]),
         #    (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)))
 
-        with open('VG07_6.binvox', 'rb') as f:
+        with open('../data/VG07_6.binvox', 'rb') as f:
             model = binvox_rw.read_as_3d_array(f)
 
         grid_array = np.transpose(model.data, (2, 0, 1))

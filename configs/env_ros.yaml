@@ -1,0 +1,30 @@
+shape_x: 300
+shape_y: 300
+shape_z: 150
+sensor_range: 80
+hfov: 90.0
+vfov: 60.0
+scale: 0.05
+max_steps: 200
+move_step: 20.0
+rot_step: 20.0
+use_bbox: True
+# handle_simulation
+handle_simulation: False
+
+## load plant models
+plant_types: [ "VG07_6", "VG07_6_more_occ", "VG07_6_no_fruits", "VG07_6_one_fruit" ]
+roi_neighbors: True
+# choose from 0.01, 0.02, 0.005
+resolution: 0.01
+
+# the distance between the randomized generated plants
+thresh: 50
+# the margin of the randomized plants to the environment bounding
+margin: 50
+
+randomize: True
+randomize_sensor_position: False
+
+#field_p3d_gui
+draw_bbox: False

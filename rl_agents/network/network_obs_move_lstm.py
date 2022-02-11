@@ -26,23 +26,28 @@ class NetworkObsMoveLstm(torch.nn.Module):
         self.recurrent_obs = Sequential(
             nn.Conv2d(15, 24, kernel_size=4, stride=2, padding=1),
             nn.ReLU(),
-            nn.Flatten(start_dim=1),
-            nn.Linear(3888, 512),
+            nn.Conv2d(24, 48, kernel_size=4, stride=2, padding=1),
             nn.ReLU(),
-            nn.Linear(512, 64),
-            nn.ReLU())
+            nn.Flatten(start_dim=1),
+            nn.Linear(1728, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 64),
+            nn.ReLU()
+        )
 
         self.recurrent_move = pfrl.nn.RecurrentSequential(
             nn.Linear(6, 64),
             nn.ReLU(),
-            nn.Linear(64, 256),
+            nn.Linear(64, 128),
             nn.ReLU(),
-            nn.LSTM(input_size=256, hidden_size=128),
-            nn.Linear(128, 64),
+            nn.LSTM(input_size=128, hidden_size=96),
+            nn.Linear(96, 64),
             nn.ReLU())
 
-        self.fc1 = nn.Linear(128, 32)
-        self.fc2 = nn.Linear(32, action_size)
+        self.fc1 = nn.Linear(128, 64)
+        self.fc2 = nn.Linear(64, action_size)
 
     def forward(self, state, recurrent_state):
         obs = state[0].data.float()

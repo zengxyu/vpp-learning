@@ -12,7 +12,7 @@
 
 from rl_agents.network.network_obs import NetworkObs
 from rl_agents.network.network_obs_lstm import NetworkObsLstm
-from rl_agents.network.network_obs_rel_move import NetworkObsMoveLstm
+from rl_agents.network.network_obs_move_lstm import NetworkObsMoveLstm
 from rl_agents.network.network_obs_visit import NetworkObsVisit
 from rl_agents.network.network_obs_visit_lstm import NetworkObsVisitLstm
 from rl_agents.network.network_visit import NetworkVisit
