@@ -39,7 +39,7 @@ class NetworkObsMoveLstmLstm(torch.nn.Module):
             nn.ReLU(),
             nn.Conv2d(24, 48, kernel_size=4, stride=2, padding=1),
             nn.ReLU(),
-            nn.Flatten(),
+            nn.Flatten(start_dim=1),
             nn.Linear(1728, 512),
             nn.ReLU(),
             nn.LSTM(input_size=512, hidden_size=256),
