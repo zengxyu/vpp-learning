@@ -54,9 +54,6 @@ class FieldGUI(ShowBase):
         self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
         self.render.attachNewNode(self.field_border)
         self.bbox_fields = []
-        for bbox in self.env.bounding_boxes:
-            bbox_field = self.create_edged_cube(np.asarray(bbox[0]) * self.scale, np.asarray(bbox[1]) * self.scale)
-            self.bbox_fields.append(self.render.attachNewNode(bbox_field))
 
         self.voxgrid_node.addGeom(self.voxgrid.getGeom())
 
@@ -72,7 +69,8 @@ class FieldGUI(ShowBase):
     def reset(self):
         gui_map = self.env.global_map - 1  # GUI map is shifted by one for unseen cells
         self.voxgrid.reset(PTA_int(gui_map.flatten().tolist()))
-        self.reset_bbox_fields()
+        if self.env.parser_args.env_config["draw_bbox"]:
+            self.reset_bbox_fields()
         self.gui_done.set()
 
     def reset_bbox_fields(self):
