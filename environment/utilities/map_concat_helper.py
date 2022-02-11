@@ -14,6 +14,12 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter, sobel
 
 
+def concat(unknown_map, known_free_map, known_target_map, dtype=np.uint8):
+    map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
+    map = map.astype(dtype)
+    return map
+
+
 def count_neighbor_rate(unknown_map, known_free_map, known_target_map, neighbor_layer=2):
     unknown_map_nb = unknown_map[:neighbor_layer, :, :].copy()
     known_free_map_nb = known_free_map[:neighbor_layer, :, :].copy()
@@ -120,13 +126,13 @@ def sum_block(one_map):
     #     spherical_coordinate_map = np.transpose(spherical_coordinate_map, (2, 0, 1))
     #     return spherical_coordinate_map
 # def compute_global_known_map(self, cam_pos, neighbor_dist):
-    #     generate_spherical_coordinate_map = self.generate_spherical_coordinate_map(cam_pos)
-    #     step_size = 10
-    #     res = np.zeros(shape=(2, int(neighbor_dist / step_size), 36, 18))
-    #
-    #     for i in range(0, neighbor_dist, step_size):
-    #         res[0, i // step_size, :, :] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 1)
-    #         res[1, i // step_size, :, :] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 2)
-    #
-    #     res = np.concatenate((res[0], res[1]), axis=0)
-    #     return res
+#     generate_spherical_coordinate_map = self.generate_spherical_coordinate_map(cam_pos)
+#     step_size = 10
+#     res = np.zeros(shape=(2, int(neighbor_dist / step_size), 36, 18))
+#
+#     for i in range(0, neighbor_dist, step_size):
+#         res[0, i // step_size, :, :] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 1)
+#         res[1, i // step_size, :, :] = np.sum(generate_spherical_coordinate_map[:, :, i:i + step_size] == 2)
+#
+#     res = np.concatenate((res[0], res[1]), axis=0)
+#     return res

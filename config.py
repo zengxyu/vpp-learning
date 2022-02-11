@@ -112,6 +112,7 @@ def process_args():
 
     # load some yaml files
     parser_args.env_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "env.yaml")
+    parser_args.env_config_ros = read_yaml(os.path.join(parser_args.out_folder, "configs"), "env_ros.yaml")
     parser_args.agents_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "agents.yaml")
     parser_args.training_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "training.yaml")
 

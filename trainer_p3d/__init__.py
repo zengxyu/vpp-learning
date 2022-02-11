@@ -1,1 +1,0 @@
-from trainer_p3d import P3DTrainer

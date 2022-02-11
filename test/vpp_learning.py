@@ -1,6 +1,6 @@
 import pygame as pg
 from environment.field_2d import Field
-from human_player import HumanPlayer
+from test.human_player import HumanPlayer
 
 pg.init()
 

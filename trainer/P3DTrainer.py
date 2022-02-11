@@ -1,14 +1,10 @@
 import logging
-import os
-import pickle
-import time
-from typing import Dict, List
-
-import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
-from utilities.Info import EpisodeInfo
 from direct.stdpy import threading
+
+from trainer.trainer_helper import add_statistics_to_collector, add_scalar, save_episodes_info
+from utilities.info import EpisodeInfo
 
 
 class P3DTrainer(object):
@@ -103,56 +99,3 @@ class P3DTrainer(object):
         for i in range(n):
             print("\nEpisode:{}".format(i))
             self.evaluating()
-
-
-def add_scalar(writer, phase, episode_info, i_episode):
-    for key, item in episode_info.items():
-        writer.add_scalar(str(phase) + "/" + str(key), item, i_episode)
-
-
-def print_info():
-    pass
-
-
-def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_info_collector: EpisodeInfo, env):
-    # calculate the statistic info for each episode, then added to episode_info_collector
-    new_found_targets_sum = 0
-    new_free_cells_sum = 0
-    rewards_sum = 0
-    visit_gain_sum = 0
-
-    for info in infos:
-        visit_gain_sum += info["visit_gain"]
-        new_found_targets_sum += info["new_found_targets"]
-        new_free_cells_sum += info["new_free_cells"]
-        rewards_sum += info["reward"]
-
-    print("rewards_sum : ", rewards_sum)
-    print("new_found_targets_sum : ", new_found_targets_sum)
-    print("new_free_cells_sum : ", new_free_cells_sum)
-    print("visit_gain_sum : ", visit_gain_sum)
-
-    print("new_found_targets_rate : ", new_found_targets_sum / env.target_count)
-    print("new_free_cells_rate : ", new_free_cells_sum / env.free_count)
-    print("coverage rate : ", infos[-1]["coverage_rate"])
-
-    episode_info_collector.add({"rewards_sum": rewards_sum})
-    episode_info_collector.add({"new_found_targets_sum": new_found_targets_sum})
-    episode_info_collector.add({"new_free_cells_sum": new_free_cells_sum})
-    episode_info_collector.add({"visit_gain_sum": visit_gain_sum})
-
-    episode_info_collector.add({"new_found_targets_rate": new_found_targets_sum / env.target_count})
-    episode_info_collector.add({"new_free_cells_rate": new_free_cells_sum / env.free_count})
-    episode_info_collector.add({"coverage_rate": infos[-1]["coverage_rate"]})
-
-    if not np.isnan(agent_statistics[0][1]):
-        episode_info_collector.add({"average_q": agent_statistics[0][1]})
-        episode_info_collector.add({"loss": agent_statistics[1][1]})
-
-
-def save_episodes_info(phase, episode_info_collector, i_episode, parser_args):
-    save_path = os.path.join(parser_args.out_folder, phase + "_log.pkl")
-    save_n = parser_args.training_config["save_result_n"]
-    if i_episode % save_n == 0:
-        file = open(save_path, 'wb')
-        pickle.dump(episode_info_collector.episode_infos, file)

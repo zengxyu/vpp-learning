@@ -31,4 +31,7 @@ struct Observation {
 
   totalRoiCells @11 :UInt32;
   evalTotalTrajectoryDuration @12 :Float64;
+
+  foundFree @16 :UInt32;
+  foundOcc @17 :UInt32;
 }
