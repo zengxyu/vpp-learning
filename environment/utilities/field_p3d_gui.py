@@ -241,5 +241,6 @@ class FieldGUI(ShowBase):
 
         self.fov_node = self.create_fov_lines(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
         self.fov_node_path = self.render.attachNewNode(self.fov_node)
+        # print(coords)
         self.voxgrid.updateValues(coords, values)
         self.gui_done.set()

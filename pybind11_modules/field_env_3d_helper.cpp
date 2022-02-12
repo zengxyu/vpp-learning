@@ -349,7 +349,9 @@ void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &
 std::tuple<py::array_t<int>, int, int, int, std::vector<int>, std::vector<int>>
 update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D &cam_pos,
                          const Vec3D &ep_left_down, const Vec3D &ep_left_up, const Vec3D &ep_right_down,
-                         Vec3D &ep_right_up) {
+                         const Vec3D &ep_right_up,
+                         const Vec3D &ep_min_left_down, const Vec3D &ep_min_left_up, const Vec3D &ep_min_right_down,
+                         const Vec3D &ep_min_right_up, const double h_ray_num, const double v_ray_num) {
     int found_targets = 0;
     int occupied_cells = 0;
     int free_cells = 0;
@@ -359,11 +361,18 @@ update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &gl
     Vec3D diff_x_normalized = diff_x.normalized();
     Vec3D diff_y = ep_left_down - ep_left_up;
     Vec3D diff_y_normalized = diff_y.normalized();
-    for (double x_frac = 0; x_frac < diff_x.abs(); x_frac++) {
-        for (double y_frac = 0; y_frac < diff_y.abs(); y_frac++) {
+    double diff_x_len = diff_x.abs();
+    double diff_y_len = diff_y.abs();
+
+    double h_step = diff_x.abs() / h_ray_num;
+    double v_step = diff_y.abs() / v_ray_num;
+
+    for (double x_frac = 0; x_frac < diff_x_len; x_frac += h_step) {
+        for (double y_frac = 0; y_frac < diff_y_len; y_frac += v_step) {
             Vec3D point = ep_left_up + x_frac * diff_x_normalized + y_frac * diff_y_normalized;
-            update_until_obstacle(known_map, global_map, cam_pos, point, found_targets, occupied_cells, free_cells, coords,
-                                  values);
+
+            update_until_obstacle(known_map, global_map, cam_pos, point, found_targets, occupied_cells, free_cells,
+                                  coords, values);
         }
     }
 
