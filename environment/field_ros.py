@@ -26,7 +26,7 @@ class FieldRos:
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         self.relative_position = np.array([0., 0., 0.])
-        self.relative_rotation = np.array([0., 0., 0.])
+        self.relative_rotation = Rotation.from_quat([0, 0, 0, 1])
 
         self.free_total = 0
         self.occ_total = 0
@@ -56,7 +56,7 @@ class FieldRos:
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
         self.relative_position = np.array([0., 0., 0.])
-        self.relative_rotation = np.array([0., 0., 0.])
+        self.relative_rotation = Rotation.from_quat([0, 0, 0, 1])
 
         self.step_count = 0
         self.found_roi_sum = 0
@@ -64,19 +64,20 @@ class FieldRos:
         self.found_free_sum = 0
 
     def step(self, action):
+        print("step:{}".format(self.step_count))
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
         relative_pose = np.append(relative_move, relative_rot.as_quat()).tolist()
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
         found_roi, found_occ, found_free = self.client.sendRelativePose(relative_pose)
-
+        print("robot pose:{}".format(robot_pose))
         robot_pos = np.array(robot_pose[:3])
         robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
 
         self.relative_position = robot_pos - self.robot_pos
-        # TODO 这里需要已知两向量，求旋转矩阵
-        self.relative_rotation = self.robot_rot.as_euler('xyz') - robot_rot.as_euler('xyz')
+        relative_rotation, _ = Rotation.align_vectors([robot_rot.as_rotvec()], [self.robot_rot.as_rotvec()])
+        self.relative_rotation = relative_rotation
 
         self.robot_pos = robot_pos
         self.robot_rot = robot_rot
@@ -93,9 +94,8 @@ class FieldRos:
         inputs = self.get_inputs()
         reward = self.get_reward(0, found_free, found_occ, found_roi)
 
-        info = {"visit_gain": np.nan, "new_free_cells": found_free, "new_occupied_cells": found_occ,
+        info = {"visit_gain": 0, "new_free_cells": found_free, "new_occupied_cells": found_occ,
                 "new_found_rois": found_roi, "reward": reward, "coverage_rate": np.nan}
-        print("robot_pos:{}".format(self.robot_pos))
         return inputs, reward, done, info
 
     def get_reward(self, visit_gain, found_free, found_occ, found_roi):
@@ -107,7 +107,7 @@ class FieldRos:
         return reward
 
     def get_inputs(self):
-        relative_movement = np.append(self.relative_position, self.relative_rotation)
+        relative_movement = np.append(self.relative_position, self.relative_rotation.as_euler('xyz'))
         absolute_movement = np.append(self.robot_pos, self.robot_rot.as_euler('xyz'))
 
         # create input
@@ -126,6 +126,7 @@ class FieldRos:
         if self.training_config["input"]["visit_map"]:
             return np.array([self.visit_map])
 
+
     def reset(self):
         print("-----------------------------------reset or randomize!-------------------------------------------")
         self.reset_count += 1
@@ -137,7 +138,7 @@ class FieldRos:
         self.map = concat(unknown_map, known_free_map, known_roi_map, np.uint8)
         inputs = self.get_inputs()
 
-        return inputs, robot_pose
+        return inputs, {}
 
     def reset_stuck_env(self):
         self.shutdown_environment()
