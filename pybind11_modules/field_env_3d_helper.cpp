@@ -314,8 +314,7 @@ count_known_occupied_layer5(const py::array_t<int> &known_map, const Vec3D &star
 
 void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D &cam_pos,
                            const Vec3D &end, int &found_targets, int &found_occ, int &free_cells,
-                           std::vector<int> &coords,
-                           std::vector<int> &values) {
+                           std::vector<int> &coords, std::vector<int> &values) {
     Vec3D diff = end - cam_pos;
     for (double frac = 0; frac < diff.abs(); frac += 1) {
         Vec3D cur = cam_pos + frac * diff.normalized();
@@ -349,9 +348,7 @@ void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &
 std::tuple<py::array_t<int>, int, int, int, std::vector<int>, std::vector<int>>
 update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D &cam_pos,
                          const Vec3D &ep_left_down, const Vec3D &ep_left_up, const Vec3D &ep_right_down,
-                         const Vec3D &ep_right_up,
-                         const Vec3D &ep_min_left_down, const Vec3D &ep_min_left_up, const Vec3D &ep_min_right_down,
-                         const Vec3D &ep_min_right_up, const double h_ray_num, const double v_ray_num) {
+                         const Vec3D &ep_right_up, const double h_ray_num, const double v_ray_num) {
     int found_targets = 0;
     int occupied_cells = 0;
     int free_cells = 0;
