@@ -1,13 +1,15 @@
+import logging
+
 from config import process_args
 from environment.field_ros import FieldRos
 from rl_agents.pfrl_agents.action_builder import build_action_space
 from rl_agents.pfrl_agents.agent_builder import build_ddqn_agent
 from rl_agents.pfrl_agents.network_builder import build_network
 from trainer.RosTrainer import RosTrainer
-from utilities.basic_logger import setup_logger
 from utilities.set_random_seed import set_random_seeds
 
-setup_logger()
+logging.basicConfig(level=logging.ERROR)
+# setup_logger()
 set_random_seeds(100)
 
 parser_args = process_args()
