@@ -11,13 +11,14 @@
 """
 import logging
 import time
+from typing import Dict, List
 
+import numpy as np
 from torch.utils.tensorboard import SummaryWriter
-
 from direct.stdpy import threading
 
 from trainer.P3DTrainer import add_scalar
-from trainer.trainer_helper import add_statistics_to_collector, save_episodes_info
+from trainer.trainer_helper import save_episodes_info
 from utilities.info import EpisodeInfo
 
 
@@ -111,3 +112,31 @@ class RosTrainer(object):
         for i in range(n):
             print("\nEpisode:{}".format(i))
             self.evaluating()
+
+
+def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_info_collector: EpisodeInfo, env):
+    # calculate the statistic info for each episode, then added to episode_info_collector
+    new_free_cells_sum = 0
+    new_occ_cells_sum = 0
+    new_roi_cells_sum = 0
+    rewards_sum = 0
+
+    for info in infos:
+        new_free_cells_sum += info["new_free_cells"]
+        new_occ_cells_sum += info["new_occupied_cells"]
+        new_roi_cells_sum += info["new_found_rois"]
+        rewards_sum += info["reward"]
+
+    print("rewards_sum : ", rewards_sum)
+    print("new_free_cells_sum : ", new_free_cells_sum)
+    print("new_occ_cells_sum : ", new_occ_cells_sum)
+    print("new_roi_cells_sum : ", new_roi_cells_sum)
+
+    episode_info_collector.add({"rewards_sum": rewards_sum})
+    episode_info_collector.add({"new_free_cells_sum": new_free_cells_sum})
+    episode_info_collector.add({"new_occ_cells_sum": new_occ_cells_sum})
+    episode_info_collector.add({"new_roi_cells_sum": new_roi_cells_sum})
+
+    if not np.isnan(agent_statistics[0][1]):
+        episode_info_collector.add({"average_q": agent_statistics[0][1]})
+        episode_info_collector.add({"loss": agent_statistics[1][1]})
