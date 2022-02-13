@@ -296,10 +296,11 @@ count_known_occupied_layer5(const py::array_t<int> &known_map, const Vec3D &star
         for (double frac = i * (len / 5.0); frac < (i + 1) * (len / 5.0); frac += step) {
             Vec3D cur = start + frac * dir_vec;
             int x = (int) cur.x;
-            if (!in_range(x, known_map.shape()[0])) break;
             int y = (int) cur.y;
-            if (!in_range(y, known_map.shape()[1])) break;
             int z = (int) cur.z;
+
+            if (!in_range(x, known_map.shape()[0])) break;
+            if (!in_range(y, known_map.shape()[1])) break;
             if (!in_range(z, known_map.shape()[2])) break;
             int cell_val = *known_map.data(x, y, z);
             if (cell_val == 2)
@@ -366,6 +367,8 @@ update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &gl
 
     double h_step = diff_x.abs() / h_ray_num;
     double v_step = diff_y.abs() / v_ray_num;
+//    std::cout<<h_step<<std::endl;
+//    std::cout<<v_step<<std::endl;
 
     for (double x_frac = 0; x_frac < diff_x_len; x_frac += h_step) {
         for (double y_frac = 0; y_frac < diff_y_len; y_frac += v_step) {
