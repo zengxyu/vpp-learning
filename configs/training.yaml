@@ -20,10 +20,10 @@ train: None
 
 #reward weight
 rewards:
-  free_weight: 0.0001
+  free_weight: 0.001
   occ_weight: 1
   roi_weight: 100
-  visit_gain_weight: 5
+  visit_gain_weight: 100
 
 # 1 : true; 0: false
 input:
@@ -44,6 +44,6 @@ network:
   SpatialAttentionModel: 0
 
 action:
-  ActionMoRo10: 0
-  ActionMoRo20: 1
+  ActionMoRo10: 1
+  ActionMoRo20: 0
 
