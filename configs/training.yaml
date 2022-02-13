@@ -44,6 +44,6 @@ network:
   SpatialAttentionModel: 0
 
 action:
-  ActionMoRo10: 0
-  ActionMoRoMultiplier30: 1
+  ActionMoRo10: 1
+  ActionMoRoMultiplier30: 0
 
