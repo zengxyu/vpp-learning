@@ -366,8 +366,6 @@ update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &gl
 
     double h_step = diff_x.abs() / h_ray_num;
     double v_step = diff_y.abs() / v_ray_num;
-//    std::cout<<h_step<<std::endl;
-//    std::cout<<v_step<<std::endl;
 
     for (double x_frac = 0; x_frac < diff_x_len; x_frac += h_step) {
         for (double y_frac = 0; y_frac < diff_y_len; y_frac += v_step) {
