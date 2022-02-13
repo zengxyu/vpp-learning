@@ -9,7 +9,7 @@
         
 ===========================================
 """
-from rl_agents.action_space.action_space import ActionMoRo10, ActionMoRoMultiplier30
+from rl_agents.action_space.action_space import ActionMoRo10, ActionMoRo20
 
 
 def build_action_space(parser_args):
@@ -17,8 +17,8 @@ def build_action_space(parser_args):
     assert sum(actions.values()) == 1, "Only one action can be choose"
     if actions["ActionMoRo10"]:
         action_space = ActionMoRo10()
-    elif actions["ActionMoRoMultiplier30"]:
-        action_space = ActionMoRoMultiplier30()
+    elif actions["ActionMoRo20"]:
+        action_space = ActionMoRo20()
     else:
         raise NotImplementedError("Action : {} has not been implemented")
 

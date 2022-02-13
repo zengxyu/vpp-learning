@@ -35,13 +35,13 @@ class ActionMoRo10(object):
         return relative_move, relative_rot
 
 
-class ActionMoRoMultiplier30(object):
+class ActionMoRo20(object):
 
     def __init__(self):
-        self.n = 30
+        self.n = 20
         self.action_space = []
-        for action in ActionMoRo10IntEnum:
-            for mtplier in MultiplierEnum:
+        for mtplier in MultiplierEnum:
+            for action in ActionMoRo10IntEnum:
                 self.action_space.append([action, mtplier])
 
     def get_relative_move_rot(self, axes, action_ind, move_step, rot_step):
@@ -120,7 +120,7 @@ class ActionMoRo15IntEnum(IntEnum):
     LARGE_STEP = 14
 
 
-MultiplierEnum = [0.5, 1.0, 1.5]
+MultiplierEnum = [1, 3]
 
 
 class ActionMo6IntEnum(IntEnum):
