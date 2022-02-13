@@ -296,11 +296,10 @@ count_known_occupied_layer5(const py::array_t<int> &known_map, const Vec3D &star
         for (double frac = i * (len / 5.0); frac < (i + 1) * (len / 5.0); frac += step) {
             Vec3D cur = start + frac * dir_vec;
             int x = (int) cur.x;
-            int y = (int) cur.y;
-            int z = (int) cur.z;
-
             if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int) cur.y;
             if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int) cur.z;
             if (!in_range(z, known_map.shape()[2])) break;
             int cell_val = *known_map.data(x, y, z);
             if (cell_val == 2)
