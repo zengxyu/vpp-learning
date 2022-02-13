@@ -102,11 +102,9 @@ class FieldP3D:
         self.map = None
         self.bounding_boxes = None
 
-        self.init_file_path = os.path.join(get_project_path(), "data", 'saved_world.cvx')
         self.plant_models_dir = os.path.join(get_project_path(), "data", 'plant_models')
         self.plants = load_plants(self.plant_models_dir, self.env_config["plant_types"],
-                                  self.env_config["roi_neighbors"],
-                                  self.env_config["resolution"])
+                                  self.env_config["roi_neighbors"], self.env_config["resolution"])
 
         self.initialize()
 
@@ -181,11 +179,7 @@ class FieldP3D:
         ep_right_down = self.robot_pos + vec_right_down * self.max_sensor_range
         ep_right_up = self.robot_pos + vec_right_up * self.max_sensor_range
 
-        ep_min_left_down = self.robot_pos + vec_left_down * self.min_sensor_range
-        ep_min_left_up = self.robot_pos + vec_left_up * self.min_sensor_range
-        ep_min_right_down = self.robot_pos + vec_right_down * self.min_sensor_range
-        ep_min_right_up = self.robot_pos + vec_right_up * self.min_sensor_range
-        return self.robot_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, ep_min_left_down, ep_min_left_up, ep_min_right_down, ep_min_right_up
+        return self.robot_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up
 
     def compute_rot_vecs(self, min_ang_width, max_ang_width, width_steps, min_ang_height, max_ang_height, height_steps):
         axes = self.robot_rot.as_matrix().transpose()
@@ -248,8 +242,7 @@ class FieldP3D:
     def get_bb_points(self, points):
         return np.amin(points, axis=0), np.amax(points, axis=0)
 
-    def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up,
-                                 ep_min_left_down, ep_min_left_up, ep_min_right_down, ep_min_right_up):
+    def update_grid_inds_in_view(self, cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up):
         time_start = time.perf_counter()
 
         self.known_map, roi_cells, occupied_cells, free_cells, coords, values = field_env_3d_helper.update_grid_inds_in_view(
@@ -265,14 +258,7 @@ class FieldP3D:
                 ep_right_down)),
             Vec3D(*tuple(
                 ep_right_up)),
-            Vec3D(*tuple(
-                ep_min_left_down)),
-            Vec3D(*tuple(
-                ep_min_left_up)),
-            Vec3D(*tuple(
-                ep_min_right_down)),
-            Vec3D(*tuple(
-                ep_min_right_up)),
+
             self.hrays,
             self.vrays
         )
@@ -322,13 +308,9 @@ class FieldP3D:
 
         self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
-        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, ep_min_left_down, ep_min_left_up, ep_min_right_down, ep_min_right_up = self.compute_fov()
-        found_roi, found_occ, found_free = self.update_grid_inds_in_view(cam_pos,
-                                                                         ep_left_down,
-                                                                         ep_left_up,
-                                                                         ep_right_down,
-                                                                         ep_right_up, ep_min_left_down, ep_min_left_up,
-                                                                         ep_min_right_down, ep_min_right_up)
+        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
+        found_roi, found_occ, found_free = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
+                                                                         ep_right_down, ep_right_up)
         visit_gain, coverage_rate = self.update_visit_map()
 
         self.found_roi_sum += found_roi
@@ -415,9 +397,8 @@ class FieldP3D:
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
             # self.gui.reset()
-        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, ep_min_left_down, ep_min_left_up, ep_min_right_down, ep_min_right_up = self.compute_fov()
-        self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up, ep_min_left_down,
-                                      ep_min_left_up, ep_min_right_down, ep_min_right_up)
+        cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
+        self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
         unknown_map, known_free_map, known_target_map = self.generate_unknown_map_layer5(cam_pos)
         self.map = concat(unknown_map, known_free_map, known_target_map, np.uint8)
