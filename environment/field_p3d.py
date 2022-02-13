@@ -49,7 +49,14 @@ class FieldP3D:
         self.vfov = self.env_config["vfov"]
         self.hrays = self.env_config["hrays"]
         self.vrays = self.env_config["vrays"]
-        self.shape = (self.env_config["shape_x"], self.env_config["shape_y"], self.env_config["shape_z"])
+
+        self.shape_low_bound = (
+            self.env_config["shape_x_range"][0], self.env_config["shape_y_range"][0],
+            self.env_config["shape_z_range"][0])
+        self.shape_high_bound = (
+            self.env_config["shape_x_range"][1], self.env_config["shape_y_range"][1],
+            self.env_config["shape_z_range"][1])
+
         self.max_steps = self.env_config["max_steps"]
         self.MOVE_STEP = self.env_config["move_step"]
         self.ROT_STEP = self.env_config["rot_step"]
@@ -57,6 +64,7 @@ class FieldP3D:
         self.head = parser_args.head
         self.randomize = self.env_config["randomize"]
         self.randomize_sensor_position = self.env_config["randomize_sensor_position"]
+        self.randomize_world_size = self.env_config["randomize_world_size"]
 
         self.thresh = self.env_config["thresh"]
         self.margin = self.env_config["margin"]
@@ -65,8 +73,10 @@ class FieldP3D:
         self.reset_count = 0
 
         # following variables need to be reset
-        self.global_map = np.zeros(self.shape).astype(int)
-        self.known_map = np.zeros(self.shape).astype(int)
+        self.shape = None
+        self.global_map = None
+        self.known_map = None
+
         self.robot_pos = [0.0, 0.0, 0.0]
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         self.relative_position = np.array([0., 0., 0.])
@@ -108,6 +118,11 @@ class FieldP3D:
             self.gui = FieldGUI(self, self.env_config["scale"])
 
     def initialize(self):
+        self.shape = self.shape_low_bound
+        if self.randomize_world_size:
+            self.shape = np.random.randint(self.shape_low_bound, self.shape_high_bound, (3,))
+
+
         self.global_map = np.zeros(self.shape).astype(int)
         self.known_map = np.zeros(self.shape).astype(int)
 
