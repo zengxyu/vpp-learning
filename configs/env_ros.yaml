@@ -13,11 +13,6 @@ roi_neighbors: True
 # choose from 0.01, 0.02, 0.005
 resolution: 0.01
 
-# the distance between the randomized generated plants
-thresh: 50
-# the margin of the randomized plants to the environment bounding
-margin: 50
-
 randomize: True
 randomize_sensor_position: False
 

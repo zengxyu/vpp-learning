@@ -122,7 +122,6 @@ class FieldP3D:
         if self.randomize_world_size:
             self.shape = np.random.randint(self.shape_low_bound, self.shape_high_bound, (3,))
 
-
         self.global_map = np.zeros(self.shape).astype(int)
         self.known_map = np.zeros(self.shape).astype(int)
 

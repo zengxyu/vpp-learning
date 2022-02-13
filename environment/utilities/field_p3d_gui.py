@@ -49,15 +49,10 @@ class FieldGUI(ShowBase):
 
         self.colors = PTA_float(self.OCCUPIED_UNSEEN_COLOR + self.TARGET_UNSEEN_COLOR + self.FREE_SEEN_COLOR +
                                 self.OCCUPIED_SEEN_COLOR + self.TARGET_SEEN_COLOR)
-        self.voxgrid = VoxelGrid(self.env.global_map.shape, self.colors, self.scale)
-
-        self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
-        self.render.attachNewNode(self.field_border)
         self.bbox_fields = []
-
-        self.voxgrid_node.addGeom(self.voxgrid.getGeom())
-
-        self.render.attachNewNode(self.voxgrid_node)
+        self.fields = []
+        self.voxgrid = None
+        self.field_border = None
 
         self.gui_done = threading.Event()
 
@@ -67,11 +62,29 @@ class FieldGUI(ShowBase):
         self.accept('update_fov_and_cells', self.updateFovAndCells)
 
     def reset(self):
+        self.voxgrid = VoxelGrid(self.env.global_map.shape, self.colors, self.scale)
+        self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
+        self.reset_fields()
+
         gui_map = self.env.global_map - 1  # GUI map is shifted by one for unseen cells
         self.voxgrid.reset(PTA_int(gui_map.flatten().tolist()))
         if self.env.parser_args.env_config["draw_bbox"]:
             self.reset_bbox_fields()
         self.gui_done.set()
+
+    def reset_fields(self):
+        # reset field border
+        if self.fields:
+            for field in self.fields:
+                field.removeNode()
+        self.fields.append(self.render.attachNewNode(self.field_border))
+        self.fields.append(self.render.attachNewNode(self.voxgrid_node))
+
+        # reset voxgrid
+        if self.voxgrid_node:
+            self.voxgrid_node.removeAllGeoms()
+
+        self.voxgrid_node.addGeom(self.voxgrid.getGeom())
 
     def reset_bbox_fields(self):
         # remove the nodes from self.bbox_fields
