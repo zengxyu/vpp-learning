@@ -326,8 +326,8 @@ void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &
         int z = (int) cur.z;
         if (!in_range(z, global_map.shape()[2])) break;
 
+        int cell_val = *global_map.data(x, y, z);
         if (*known_map.data(x, y, z) == 0){
-            int cell_val = *global_map.data(x, y, z);
             *known_map.mutable_data(x, y, z) = cell_val;
             if (cell_val == 3)
                 found_targets += 1;
