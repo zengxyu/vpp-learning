@@ -1,10 +1,10 @@
 import logging
-from torch.utils.tensorboard import SummaryWriter
+import time
 
 from direct.stdpy import threading
-
-from trainer.trainer_helper import add_statistics_to_collector, add_scalar, save_episodes_info
 from utilities.info import EpisodeInfo
+from torch.utils.tensorboard import SummaryWriter
+from trainer.trainer_helper import add_statistics_to_collector, add_scalar, save_episodes_info
 
 
 class P3DTrainer(object):
@@ -22,7 +22,7 @@ class P3DTrainer(object):
         self.train_collector = EpisodeInfo(self.training_config["train_smooth_n"])
         self.test_collector = EpisodeInfo(self.training_config["test_smooth_n"])
         # discrete
-        if not parser_args.train:
+        if not parser_args.train or parser_args.resume:
             logging.info("load model from {} {}".format(self.parser_args.in_model, parser_args.in_model_index))
             self.agent.load("{}/model_epi_{}".format(self.parser_args.in_model, parser_args.in_model_index))
 
@@ -49,6 +49,8 @@ class P3DTrainer(object):
 
     def training(self):
         phase = "Train"
+        start_time = time.time()
+
         self.train_i_episode += 1
         state, _ = self.env.reset()
 
@@ -70,11 +72,12 @@ class P3DTrainer(object):
 
         if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
             self.agent.save("{}/model_epi_{}".format(self.parser_args.out_model, self.train_i_episode))
-
+        print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete training episode {}'.format(self.train_i_episode))
 
     def evaluating(self):
         phase = "ZEvaluation"
+        start_time = time.time()
         self.test_i_episode += 1
         state, _ = self.env.reset()
 
@@ -93,6 +96,7 @@ class P3DTrainer(object):
                                     episode_info_collector=self.test_collector, env=self.env)
         add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)
         save_episodes_info(phase, self.test_collector, self.test_i_episode, self.parser_args)
+        print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
     def evaluate_n_times(self, n=10):

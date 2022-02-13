@@ -96,7 +96,7 @@ class FieldRos:
         info = {"visit_gain": np.nan, "new_free_cells": found_free, "new_occupied_cells": found_occ,
                 "new_found_rois": found_roi, "reward": reward, "coverage_rate": np.nan}
         print("robot_pos:{}".format(self.robot_pos))
-        return inputs, reward, done, {}
+        return inputs, reward, done, info
 
     def get_reward(self, visit_gain, found_free, found_occ, found_roi):
         weight = self.training_config["rewards"]
@@ -131,29 +131,13 @@ class FieldRos:
         self.reset_count += 1
         self.step_count = 0
 
-        unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells = self.client.sendReset()
+        unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells = self.client.sendReset(
+            randomize=self.randomize, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
 
         self.map = concat(unknown_map, known_free_map, known_roi_map, np.uint8)
         inputs = self.get_inputs()
 
         return inputs, robot_pose
-
-    # def reset_and_randomize(self):
-    #     print("-------------------------------reset and randomize!-----------------------------------")
-    #     self.reset_count += 1
-    #     self.known_map = np.zeros(self.shape)
-    #
-    #     self.step_count = 0
-    #     self.found_targets = 0
-    #     self.free_cells = 0
-    #
-    #     unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = self.client.sendResetAndRandomize(
-    #         [-1, -1, -0.1], [1, 1, 0.1], 0.4)
-    #     # print("total roi cells:{}".format(totalRoiCells))
-    #
-    #     map = np.concatenate([unknownCount, freeCount, roiCount], axis=0)
-    #
-    #     return (map, robotPose)
 
     def reset_stuck_env(self):
         self.shutdown_environment()

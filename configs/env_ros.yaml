@@ -1,16 +1,11 @@
-shape_x: 300
-shape_y: 300
-shape_z: 150
-sensor_range: 80
 hfov: 90.0
 vfov: 60.0
 scale: 0.05
 max_steps: 200
 move_step: 20.0
 rot_step: 20.0
-use_bbox: True
 # handle_simulation
-handle_simulation: False
+handle_simulation: True
 
 ## load plant models
 plant_types: [ "VG07_6", "VG07_6_more_occ", "VG07_6_no_fruits", "VG07_6_one_fruit" ]

@@ -87,6 +87,7 @@ def process_args():
     parser.add_argument("--in_folder", type=str, default=None)
     parser.add_argument("--in_model_index", type=int)
     parser.add_argument("--train", action="store_true", default=False)
+    parser.add_argument("--resume", action="store_true", default=False)
     parser.add_argument("--head", action="store_true", default=False)
 
     parser_args = parser.parse_args()
@@ -95,7 +96,8 @@ def process_args():
     if parser_args.train:
         assert parser_args.out_folder
         parser_args.out_folder = os.path.join(get_project_path(), "output", parser_args.out_folder)
-    else:
+
+    if not parser_args.train or parser_args.resume:
         assert parser_args.in_folder and parser_args.in_model_index
         parser_args.out_folder = os.path.join(get_project_path(), "output", parser_args.out_folder)
         parser_args.in_folder = os.path.join(get_project_path(), "output", parser_args.in_folder)
