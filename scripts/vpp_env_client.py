@@ -63,7 +63,7 @@ class EnvironmentClient:
             occupiedCount = np.reshape(np.array(obs_msg.map.countMap.occupiedCount), shape)
             roiCount = np.reshape(np.array(obs_msg.map.countMap.roiCount), shape)
 
-            return unknownCount, freeCount, occupiedCount, roiCount, robotPose, foundFree, foundOcc, foundRois
+            return unknownCount, freeCount, occupiedCount, roiCount, robotPose, foundRois, foundOcc, foundFree
 
         elif which == 'pointcloud':
             reward = 0
