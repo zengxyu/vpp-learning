@@ -72,6 +72,10 @@ class FieldRos:
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
         found_roi, found_occ, found_free = self.client.sendRelativePose(relative_pose)
         print("robot pose:{}".format(robot_pose))
+        print("found_roi:{}".format(found_roi))
+        print("found_occ:{}".format(found_occ))
+        print("found_free:{}".format(found_free))
+
         robot_pos = np.array(robot_pose[:3])
         robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
 
