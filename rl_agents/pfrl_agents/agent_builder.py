@@ -8,6 +8,8 @@ from rl_agents.pfrl_agents.replay_buffer_builder import get_replay_buffer_by_nam
 
 def build_ddqn_agent(parser_args, network: Module, action_space):
     dqn_config = parser_args.agents_config["dqn"]
+    dqn_config["batch_size"] = parser_args.batch_size if parser_args.batch_size is not None else dqn_config["batch_size"]
+
     training_config = parser_args.training_config
 
     optimizer = get_optimizer_by_name(parser_args, dqn_config["optimizer"], network)
