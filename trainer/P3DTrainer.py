@@ -10,12 +10,13 @@ from trainer.trainer_helper import add_scalar, save_episodes_info
 
 
 class P3DTrainer(object):
-    def __init__(self, env, agent, action_space, parser_args):
+    def __init__(self, env, agent, scheduler, action_space, parser_args):
         self.parser_args = parser_args
         self.training_config = parser_args.training_config
         self.writer = SummaryWriter(log_dir=parser_args.out_board)
         self.env = env
         self.agent = agent
+        self.scheduler = scheduler
         self.action_space = action_space
 
         self.train_i_episode = 0
@@ -39,6 +40,8 @@ class P3DTrainer(object):
                 if (i + 1) % 10 == 0:
                     print("\nTest Episode:{}".format(i))
                     self.evaluating()
+                self.scheduler.step()
+                print("Current learning rate : {}".format(self.agent.optimizer.state_dict()['param_groups'][0]['lr']))
         else:
             if head:
                 print("Start evaluating with head")
