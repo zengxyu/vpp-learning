@@ -19,11 +19,11 @@ def get_scheduler_by_name(parser_args, name, optimizer):
     config = read_yaml(config_dir=os.path.join(parser_args.out_folder, "configs"), config_name="scheduler.yaml")
 
     if name == "StepLR":
-        return torch.optim.lr_scheduler.StepLR(optimizer, step_size=config["step_size"], gamma=config["gamma"],
-                                               last_epoch=-1)
+        return torch.optim.lr_scheduler.StepLR(optimizer, step_size=config[name]["step_size"],
+                                               gamma=config[name]["gamma"], last_epoch=-1)
 
     elif name == "MultiStepLR":
-        return torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=config["milestones"], gamma=config["gamma"],
-                                                    last_epoch=-1)
+        return torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=config[name]["milestones"],
+                                                    gamma=config[name]["gamma"], last_epoch=-1)
 
     raise ValueError("Cannot find scheduler by name {}".format(name))
