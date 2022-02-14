@@ -2,7 +2,7 @@ dqn:
   discount_rate: 0.99
   tau: 0.01
   replay_start_size: 64
-  batch_size: 16
+  batch_size: 64
   update_interval: 1
   # target_update_interval(step)
   target_update_interval: 20
