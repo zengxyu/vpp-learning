@@ -89,6 +89,8 @@ def process_args():
     parser.add_argument("--train", action="store_true", default=False)
     parser.add_argument("--resume", action="store_true", default=False)
     parser.add_argument("--head", action="store_true", default=False)
+    parser.add_argument("--batch_size", type=int)
+
 
     parser_args = parser.parse_args()
 
