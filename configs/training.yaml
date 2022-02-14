@@ -19,11 +19,15 @@ train: None
 # parameters (out_folder, in_folder, in_model_index, train) are given by  argparse
 
 #reward weight
+  #  free_weight: 0.001
+  #  occ_weight: 1
+  #  roi_weight: 100
+  #  visit_gain_weight: 100
 rewards:
-  free_weight: 0.001
-  occ_weight: 1
-  roi_weight: 100
-  visit_gain_weight: 100
+  free_weight: 0
+  occ_weight: 0
+  roi_weight: 1
+  visit_gain_weight: 0
 
 # 1 : true; 0: false
 input:
@@ -44,6 +48,6 @@ network:
   SpatialAttentionModel: 0
 
 action:
-  ActionMoRo10: 1
-  ActionMoRo20: 0
+  ActionMoRo10: 0
+  ActionMoRo20: 1
 

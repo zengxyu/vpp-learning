@@ -120,7 +120,7 @@ class ActionMoRo15IntEnum(IntEnum):
     LARGE_STEP = 14
 
 
-MultiplierEnum = [1, 3]
+MultiplierEnum = [0.5, 2.5]
 
 
 class ActionMo6IntEnum(IntEnum):
