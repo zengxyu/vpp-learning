@@ -16,9 +16,9 @@ action_space = build_action_space(parser_args)
 
 network = build_network(parser_args, action_space.n)
 
-agent = build_ddqn_agent(parser_args, network, action_space)
+agent, scheduler = build_ddqn_agent(parser_args, network, action_space)
 
 # load yaml config
 env = FieldP3D(parser_args=parser_args, action_space=action_space)
 
-P3DTrainer(env=env, agent=agent, action_space=action_space, parser_args=parser_args).run()
+P3DTrainer(env=env, agent=agent, scheduler=scheduler, action_space=action_space, parser_args=parser_args).run()
