@@ -61,6 +61,12 @@ class FieldP3D:
         self.MOVE_STEP = self.env_config["move_step"]
         self.ROT_STEP = self.env_config["rot_step"]
 
+        self.obs_hrange = self.env_config["obs_hrange"]
+        self.obs_vrange = self.env_config["obs_vrange"]
+        self.obs_drange = self.env_config["obs_drange"]
+        self.obs_hsteps = self.env_config["obs_hsteps"]
+        self.obs_vsteps = self.env_config["obs_vsteps"]
+
         self.head = parser_args.head
         self.randomize = self.env_config["randomize"]
         self.randomize_sensor_position = self.env_config["randomize_sensor_position"]
@@ -191,9 +197,10 @@ class FieldP3D:
         rot_vecs = generate_vec3d_vectorized(rots)
         return rot_vecs
 
-    def generate_unknown_map_layer5(self, cam_pos, dist=250.0):
-        rot_vecs = self.compute_rot_vecs(-180, 180, 36, 0, 180, 18)
-
+    def generate_unknown_map_layer5(self, cam_pos):
+        rot_vecs = self.compute_rot_vecs(self.obs_hrange[0], self.obs_hrange[1], self.obs_hsteps,
+                                         self.obs_vrange[0], self.obs_vrange[1], self.obs_vsteps)
+        dist = self.obs_drange[1]
         unknown_map = count_unknown_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
                                                       1.0, dist)
         known_free_map = count_known_free_layer5_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
