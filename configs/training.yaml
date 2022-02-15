@@ -21,14 +21,14 @@ train: None
 
 # p3d reward weight
 rewards:
-#  free_weight: 0.0001
-#  occ_weight: 1
-#  roi_weight: 500
-#  visit_gain_weight: 0
-  free_weight: 0
-  occ_weight: 0
+  free_weight: 0.0001
+  occ_weight: 1
   roi_weight: 500
   visit_gain_weight: 0
+#  free_weight: 0
+#  occ_weight: 0
+#  roi_weight: 500
+#  visit_gain_weight: 0
 # ros
 #rewards:
 #  free_weight: 0.005
