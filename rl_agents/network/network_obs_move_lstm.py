@@ -24,9 +24,9 @@ class NetworkObsMoveLstm(torch.nn.Module):
         super().__init__()
 
         self.recurrent_obs = Sequential(
-            nn.Conv2d(15, 24, kernel_size=4, stride=2, padding=1),
+            nn.Conv2d(20, 36, kernel_size=4, stride=2, padding=1),
             nn.ReLU(),
-            nn.Conv2d(24, 48, kernel_size=4, stride=2, padding=1),
+            nn.Conv2d(36, 48, kernel_size=4, stride=2, padding=1),
             nn.ReLU(),
             nn.Flatten(start_dim=1),
             nn.Linear(1728, 512),

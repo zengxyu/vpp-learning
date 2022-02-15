@@ -262,31 +262,6 @@ count_known_free_layer5(const py::array_t<int> &known_map, const Vec3D &start, c
 }
 
 std::tuple<int, int, int, int, int>
-count_known_target_layer5(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec,
-                          const double &step, const double &len) {
-    std::vector<int> known_target_vec;
-
-    for (size_t i = 0; i < 5; i++) {
-        int known_target = 0;
-        for (double frac = i * (len / 5.0); frac < (i + 1) * (len / 5.0); frac += step) {
-            Vec3D cur = start + frac * dir_vec;
-            int x = (int) cur.x;
-            if (!in_range(x, known_map.shape()[0])) break;
-            int y = (int) cur.y;
-            if (!in_range(y, known_map.shape()[1])) break;
-            int z = (int) cur.z;
-            if (!in_range(z, known_map.shape()[2])) break;
-            int cell_val = *known_map.data(x, y, z);
-            if (cell_val == 3)
-                known_target++;
-        }
-        known_target_vec.push_back(known_target);
-    }
-    return std::make_tuple(known_target_vec[0], known_target_vec[1], known_target_vec[2], known_target_vec[3],
-                           known_target_vec[4]);
-}
-
-std::tuple<int, int, int, int, int>
 count_known_occupied_layer5(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec,
                             const double &step, const double &len) {
     std::vector<int> known_occ_vec;
@@ -311,6 +286,31 @@ count_known_occupied_layer5(const py::array_t<int> &known_map, const Vec3D &star
                            known_occ_vec[4]);
 }
 
+std::tuple<int, int, int, int, int>
+count_known_target_layer5(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec,
+                          const double &step, const double &len) {
+    std::vector<int> known_target_vec;
+
+    for (size_t i = 0; i < 5; i++) {
+        int known_target = 0;
+        for (double frac = i * (len / 5.0); frac < (i + 1) * (len / 5.0); frac += step) {
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int) cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int) cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int) cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 3)
+                known_target++;
+        }
+        known_target_vec.push_back(known_target);
+    }
+    return std::make_tuple(known_target_vec[0], known_target_vec[1], known_target_vec[2], known_target_vec[3],
+                           known_target_vec[4]);
+}
+
 
 void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D &cam_pos,
                            const Vec3D &end, int &found_targets, int &found_occ, int &free_cells,
@@ -326,7 +326,7 @@ void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &
         if (!in_range(z, global_map.shape()[2])) break;
 
         int cell_val = *global_map.data(x, y, z);
-        if (*known_map.data(x, y, z) == 0){
+        if (*known_map.data(x, y, z) == 0) {
             *known_map.mutable_data(x, y, z) = cell_val;
             if (cell_val == 3)
                 found_targets += 1;
@@ -376,6 +376,49 @@ update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &gl
     return std::make_tuple(known_map, found_targets, occupied_cells, free_cells, coords, values);
 }
 
+bool check_observable(const py::array_t<int> &global_map, const Vec3D &occ_point, const Vec3D &surface_point) {
+    Vec3D diff = surface_point - occ_point;
+    for (double frac = 0; frac < diff.abs(); frac += 1) {
+        Vec3D cur = occ_point + frac * diff.normalized();
+        int x = (int) cur.x;
+        int y = (int) cur.y;
+        int z = (int) cur.z;
+
+        int cell_val = *global_map.data(x, y, z);
+        if (cell_val >= 2 && !(x == occ_point.x && y == occ_point.y && z == occ_point.z)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+py::array_t<int>
+check_observable_cell_from_surface(py::array_t<int> &observable_map, const py::array_t<int> &global_map,
+                                   const Vec3D &occ_point,
+                                   const Vec3D &ep_left_down, const Vec3D &ep_left_up,
+                                   const Vec3D &ep_right_down,
+                                   const Vec3D &ep_right_up) {
+    Vec3D diff_x = ep_right_up - ep_left_up;
+    Vec3D diff_x_normalized = diff_x.normalized();
+    Vec3D diff_y = ep_left_down - ep_left_up;
+    Vec3D diff_y_normalized = diff_y.normalized();
+    double diff_x_len = diff_x.abs();
+    double diff_y_len = diff_y.abs();
+
+
+    for (double x_frac = 0; x_frac < diff_x_len; x_frac += 1) {
+        for (double y_frac = 0; y_frac < diff_y_len; y_frac += 1) {
+            Vec3D surface_point = ep_left_up + x_frac * diff_x_normalized + y_frac * diff_y_normalized;
+            if (check_observable(global_map, occ_point, surface_point)) {
+                *observable_map.mutable_data(occ_point.x, occ_point.y, occ_point.z) = 1;
+                return observable_map;
+            }
+        }
+    }
+    return observable_map;
+
+}
+
 void test() {
     std::cout << "Test" << std::endl;
 }
@@ -395,6 +438,9 @@ PYBIND11_MODULE(field_env_3d_helper, m) {
     m.def("count_known_free_layer5", &count_known_free_layer5, "Count unknown cells on ray in 5 layers");
     m.def("count_known_occupied_layer5", &count_known_occupied_layer5, "Count unknown cells on ray in 5 layers");
     m.def("count_known_target_layer5", &count_known_target_layer5, "Count unknown cells on ray in 5 layers");
+    m.def("check_observable_cell_from_surface", &check_observable_cell_from_surface,
+          "check if given point is observable from given surface");
+
 
     m.def("test", &test, "Print test");
 }
