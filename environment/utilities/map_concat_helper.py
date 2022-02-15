@@ -14,8 +14,8 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter, sobel
 
 
-def concat(unknown_map, known_free_map, known_target_map, dtype=np.uint8):
-    map = np.concatenate([unknown_map, known_free_map, known_target_map], axis=0)
+def concat(unknown_map, known_free_map, known_occupied_map, known_target_map, dtype=np.uint8):
+    map = np.concatenate([unknown_map, known_free_map, known_occupied_map, known_target_map], axis=0)
     map = map.astype(dtype)
     return map
 
