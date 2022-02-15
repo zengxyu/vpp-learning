@@ -5,7 +5,8 @@ gpu: -1
 debug_mode: False
 num_episodes_to_run: 10000000
 save_model_every_n: 100
-save_result_n: 1000
+save_train_result_n: 100
+save_test_result_n: 10
 
 bl_console_logging_level: WARNING
 bl_file_logging_level: WARNING
