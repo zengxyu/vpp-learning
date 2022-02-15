@@ -88,7 +88,7 @@ class FieldRos:
         self.step_count += 1
         done = self.step_count >= self.max_steps
 
-        self.map = concat(unknown_map, known_free_map, known_roi_map, np.uint8)
+        self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
 
         inputs = self.get_inputs()
         reward = self.get_reward(0, found_free, found_occ, found_roi)
@@ -133,7 +133,7 @@ class FieldRos:
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells = self.client.sendReset(
             randomize=self.randomize, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
 
-        self.map = concat(unknown_map, known_free_map, known_roi_map, np.uint8)
+        self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
         inputs = self.get_inputs()
 
         return inputs, {}

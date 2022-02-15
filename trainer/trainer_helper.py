@@ -22,13 +22,8 @@ def add_scalar(writer, phase, episode_info, i_episode):
         writer.add_scalar(str(phase) + "/" + str(key), item, i_episode)
 
 
-def save_episodes_info(phase, episode_info_collector, i_episode, parser_args):
-    save_path = os.path.join(parser_args.out_result, phase + "_log.pkl")
-    if phase == "Train":
-        save_n = parser_args.training_config["save_train_result_n"]
-    else:
-        save_n = parser_args.training_config["save_test_result_n"]
-
+def save_episodes_info(phase, episode_info_collector, i_episode, out_result, save_n):
+    save_path = os.path.join(out_result, phase + "_log.pkl")
     if i_episode % save_n == 0:
         file = open(save_path, 'wb')
         pickle.dump(episode_info_collector.episode_infos, file)
