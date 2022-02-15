@@ -18,17 +18,18 @@ logging_level: WARNING
 train: None
 # parameters (out_folder, in_folder, in_model_index, train) are given by  argparse
 
-#reward weight
-  #  free_weight: 0.001
-  #  occ_weight: 1
-  #  roi_weight: 100
-  #  visit_gain_weight: 100
-# ros
-rewards:
-  free_weight: 0.005
+# p3d reward weight
+reward:
+  free_weight: 0.0005
   occ_weight: 1
   roi_weight: 100
   visit_gain_weight: 0
+# ros
+#rewards:
+#  free_weight: 0.005
+#  occ_weight: 1
+#  roi_weight: 100
+#  visit_gain_weight: 0
 
 # 1 : true; 0: false
 input:

@@ -45,6 +45,18 @@ def random_translate_plant(plant, global_map, old_pos, thresh, margin):
     # add 1 back
     # 45 x 49 x 79
     plant = trim_zeros(plant)
+
+    # rotate 90
+    if random.random() > 0.5:
+        plant = np.transpose(plant, (1, 0, 2))
+
+    # flip
+    if random.random() > 0.5:
+        plant = np.flip(plant, 1)
+
+    if random.random() > 0.5:
+        plant = np.flip(plant, 0)
+
     plant_shape_xx, plant_shape_yy, plant_shape_zz = np.shape(plant)
     global_shape_xx, global_shape_yy, global_shape_zz = np.shape(global_map)
     old_x, old_y, old_z = old_pos
@@ -59,8 +71,8 @@ def random_translate_plant(plant, global_map, old_pos, thresh, margin):
         max_y = global_shape_yy - plant_shape_yy
 
         # randomly initialize the position
-        loc_x = random.randint(0, max_x - 1)
-        loc_y = random.randint(0, max_y - 1)
+        loc_x = random.randint(margin, max_x - margin)
+        loc_y = random.randint(margin, max_y - margin)
 
         while np.linalg.norm([loc_x - old_x, loc_y - old_y]) < thresh:
             assert margin < max_x - margin and margin < max_y - margin, "Margin is too large"
