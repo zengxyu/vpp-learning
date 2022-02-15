@@ -22,6 +22,21 @@ from trainer.trainer_helper import save_episodes_info
 from utilities.info import EpisodeInfo
 
 
+def print_step_info(episode, step, info):
+    new_free_cells = info["new_free_cells"]
+    new_occupied_cells = info["new_occupied_cells"]
+    new_rois = info["new_found_rois"]
+    reward = info["reward"]
+    print(
+        "episode : {}; step : {}; found free cells : {}; found occupied cells : {}; found rois : {}; reward:{}".format(
+            episode,
+            step,
+            new_free_cells,
+            new_occupied_cells,
+            new_rois,
+            reward))
+
+
 class RosTrainer(object):
     def __init__(self, env, agent, action_space, parser_args):
         self.parser_args = parser_args
@@ -72,6 +87,7 @@ class RosTrainer(object):
             self.global_i_step += 1
             i_step += 1
             infos.append(info)
+            print_step_info(self.train_i_episode, i_step, info)
 
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.train_collector, env=self.env)
@@ -101,6 +117,7 @@ class RosTrainer(object):
                 self.global_i_step += 1
                 i_step += 1
                 infos.append(info)
+                print_step_info(self.test_i_episode, i_step, info)
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.test_collector, env=self.env)
         add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)

@@ -130,12 +130,11 @@ class FieldRos:
         if self.training_config["input"]["visit_map"]:
             return np.array([self.visit_map])
 
-
     def reset(self):
         print("-----------------------------------reset or randomize!-------------------------------------------")
         self.reset_count += 1
         self.step_count = 0
-
+        # but the limitation from -1 to 1 was mainly for the static arm
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells = self.client.sendReset(
             randomize=self.randomize, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
 
