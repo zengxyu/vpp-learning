@@ -20,7 +20,7 @@ train: None
 # parameters (out_folder, in_folder, in_model_index, train) are given by  argparse
 
 # p3d reward weight
-reward:
+rewards:
   free_weight: 0.0005
   occ_weight: 1
   roi_weight: 100
