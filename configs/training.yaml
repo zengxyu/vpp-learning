@@ -25,8 +25,8 @@ train: None
   #  visit_gain_weight: 100
 rewards:
   free_weight: 0
-  occ_weight: 0
-  roi_weight: 1
+  occ_weight: 1
+  roi_weight: 100
   visit_gain_weight: 0
 
 # 1 : true; 0: false
