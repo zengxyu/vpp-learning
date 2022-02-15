@@ -64,17 +64,12 @@ class FieldRos:
         self.found_free_sum = 0
 
     def step(self, action):
-        print("step:{}".format(self.step_count))
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
         relative_pose = np.append(relative_move, relative_rot.as_quat()).tolist()
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
         found_roi, found_occ, found_free = self.client.sendRelativePose(relative_pose)
-        print("robot pose:{}".format(robot_pose))
-        print("found_roi:{}".format(found_roi))
-        print("found_occ:{}".format(found_occ))
-        print("found_free:{}".format(found_free))
 
         robot_pos = np.array(robot_pose[:3])
         robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))

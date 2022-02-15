@@ -28,7 +28,7 @@ def print_step_info(episode, step, info):
     new_rois = info["new_found_rois"]
     reward = info["reward"]
     print(
-        "episode : {}; step : {}; found free cells : {}; found occupied cells : {}; found rois : {}; reward:{}".format(
+        "Episode : {}; step : {}; found free cells : {}; found occupied cells : {}; found rois : {}; reward:{}\n".format(
             episode,
             step,
             new_free_cells,
