@@ -15,7 +15,7 @@ dqn:
   # sequence length
   episodic_update_len: 5
   recurrent: True
-  scheduler: StepLR
+  scheduler: MultiStepLR
 
 ddpg:
   critic:
