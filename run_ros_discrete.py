@@ -18,7 +18,7 @@ action_space = build_action_space(parser_args)
 
 network = build_network(parser_args, action_space.n)
 
-agent = build_ddqn_agent(parser_args, network, action_space)
+agent, _ = build_ddqn_agent(parser_args, network, action_space)
 
 # load yaml config
 env = FieldRos(parser_args=parser_args, action_space=action_space)
