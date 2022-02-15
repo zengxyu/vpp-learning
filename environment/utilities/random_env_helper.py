@@ -14,6 +14,8 @@ import random
 
 import numpy as np
 
+from environment.utilities.observable_cells_helper import compute_observable_occ_roi_cells
+
 
 def paste_slices(tup):
     pos, w, max_w = tup
@@ -41,6 +43,7 @@ def trim_zeros(arr):
 
 
 def random_translate_plant(plant, global_map, old_pos, thresh, margin):
+    # compute_observable_occ_roi_cells(plant)
     # minus 1 for trim_zeros()
     # add 1 back
     # 45 x 49 x 79
