@@ -92,7 +92,8 @@ class RosTrainer(object):
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.train_collector, env=self.env)
         add_scalar(self.writer, phase, self.train_collector.get_smooth_statistics(), self.train_i_episode)
-        save_episodes_info(phase, self.train_collector, self.train_i_episode, self.parser_args)
+        save_episodes_info(phase, self.train_collector, self.train_i_episode, self.parser_args.out_result,
+                           self.training_config["save_train_result_n"])
 
         if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
             self.agent.save("{}/model_epi_{}".format(self.parser_args.out_model, self.train_i_episode))
@@ -121,7 +122,8 @@ class RosTrainer(object):
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.test_collector, env=self.env)
         add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)
-        save_episodes_info(phase, self.test_collector, self.test_i_episode, self.parser_args)
+        save_episodes_info(phase, self.test_collector, self.test_i_episode, self.parser_args.out_result,
+                           self.training_config["save_test_result_n"])
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
