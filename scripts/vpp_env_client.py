@@ -27,7 +27,7 @@ class EnvironmentClient:
             self.uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
             roslaunch.configure_logging(self.uuid)
             self.launch_file = roslaunch.rlutil.resolve_launch_arguments(['vpp_learning_ros', 'ur_with_cam.launch'])
-            self.launch_args = ['world_name:=world19', 'base:=retractable', 'gui:=false']
+            self.launch_args = ['world_name:=world19', 'base:=retractable']
             self.launch_files = [(self.launch_file[0], self.launch_args)]
             signal.signal(signal.SIGINT, self.sigint_handler)
 
