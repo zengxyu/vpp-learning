@@ -67,5 +67,7 @@ def compute_observable_occ_roi_cells(plant):
     observable_occ = observable_map[plant == 2]
     print("#observable occ cells:{}; # observable occ rate:{}".format(np.sum(observable_occ),
                                                                       np.sum(observable_occ) / np.sum(plant == 2)))
+
     print("compute_observable_occ_roi_cells takes time :{} s".format(time.time() - start_time))
+
     return observable_map

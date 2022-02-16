@@ -105,6 +105,9 @@ class FieldP3D:
         self.roi_total = 0
         self.occ_total = 0
         self.free_total = 0
+        self.observable_roi_total = 0
+        self.observable_occ_total = 0
+        self.observable_free_total = 0
 
         self.found_roi_sum = 0
         self.found_occ_sum = 0
@@ -123,6 +126,9 @@ class FieldP3D:
         self.bounding_boxes = None
 
         self.plant_models_dir = os.path.join(get_project_path(), "data", 'plant_models')
+        self.plant_observable_roi_ratios = self.env_config["plant_observable_roi_ratios"]
+        self.plant_observable_occ_ratios = self.env_config["plant_observable_occ_ratios"]
+
         self.plants = load_plants(self.plant_models_dir, self.env_config["plant_types"],
                                   self.env_config["roi_neighbors"], self.env_config["resolution"])
 
@@ -134,6 +140,19 @@ class FieldP3D:
         if self.head:
             from environment.utilities.field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, self.env_config["scale"])
+
+    def calculate_observable_cells_in_total(self):
+        self.observable_roi_total = 0
+        self.observable_occ_total = 0
+
+        for plant, type in zip(self.plants, self.env_config["plant_types"]):
+            self.observable_roi_total += np.sum(plant == 2) * self.plant_observable_roi_ratios[type]
+            self.observable_occ_total += np.sum(plant == 1) * self.plant_observable_occ_ratios[type]
+
+    def calculate_cells_in_total(self):
+        self.roi_total = np.sum(self.global_map == 3)
+        self.occ_total = np.sum(self.global_map == 2)
+        self.free_total = np.sum(self.global_map == 1)
 
     def initialize(self):
         self.shape = self.shape_low_bound
@@ -154,8 +173,7 @@ class FieldP3D:
         self.found_occ_sum = 0
         self.found_free_sum = 0
 
-        # TODO insert the plants randomly into the ground
-        # # randomize the environment if needed
+        # insert the plants randomly into the ground
         if self.randomize:
             self.global_map, self.bounding_boxes = get_random_multi_plant_models(self.global_map, self.plants,
                                                                                  self.thresh, self.margin)
@@ -163,6 +181,10 @@ class FieldP3D:
         self.shape = self.global_map.shape
 
         self.calculate_allow_range(self.shape)
+
+        self.calculate_cells_in_total()
+        self.calculate_observable_cells_in_total()
+
         #
         if self.randomize_sensor_position:
             self.robot_pos = np.random.randint(low=self.allowed_lower_bound, high=self.allowed_upper_bound, size=(3,))
@@ -172,9 +194,10 @@ class FieldP3D:
                             int(self.shape[2] // self.visit_resolution))
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
 
-        self.roi_total = np.sum(self.global_map == 3)
-        self.occ_total = np.sum(self.global_map == 2)
-        self.free_total = np.sum(self.global_map == 1)
+        self.calculate_observable_cells_in_total()
+
+        print("#observable_roi/#roi = {}".format(self.observable_roi_total / self.roi_total))
+        print("#observable_occ/#occ = {}".format(self.observable_occ_total / self.occ_total))
 
         print("#roi = {}; #roi/#total = {}".format(self.roi_total, self.roi_total / (np.product(self.shape))))
         print("#occ = {}; #occ/#total = {}".format(self.occ_total, self.occ_total / (np.product(self.shape))))
@@ -314,19 +337,21 @@ class FieldP3D:
         collision = False
         future_robot_pos = self.robot_pos + direction
         future_robot_pos = np.clip(future_robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
+        if not self.parser_args.train:
+            print("future_robot_pos:{}; self.robot_pos:{}".format(future_robot_pos, self.robot_pos))
 
-        if out_of_world([self.allowed_lower_bound, self.allowed_upper_bound], future_robot_pos):
-            collision = True
-
-        elif self.env_config["use_bbox"] and in_bound_boxes(self.bounding_boxes, future_robot_pos):
+        if (self.env_config["use_bbox"] and in_bound_boxes(self.bounding_boxes, future_robot_pos)):
+            # or out_of_world(
+            #     [self.allowed_lower_bound, self.allowed_upper_bound], future_robot_pos)
             # do nothing, do not update robot_pose
             self.relative_position = np.zeros_like(direction)
             collision = True
         else:
             # update robot_pose
-            self.robot_pos = future_robot_pos
             self.relative_position = direction
-
+            self.robot_pos = future_robot_pos
+        if not self.parser_args.train:
+            print("collision:{}".format(collision))
         return collision
 
     def cartesian_move_robot(self, direction):
@@ -344,7 +369,8 @@ class FieldP3D:
     def step(self, action):
         # actions = [0, 2]
         # action = actions[self.step_count % 2]
-
+        if not self.parser_args.train:
+            print("action:{}".format(action))
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
@@ -372,9 +398,10 @@ class FieldP3D:
         # map = make_up_8x15x9x9_map(map)
 
         reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
+
         # step
         info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
-                "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate}
+                "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate, "collision": collision}
 
         inputs = self.get_inputs()
 
@@ -435,7 +462,6 @@ class FieldP3D:
         visit_gain = np.sum(1 - neighbor_visit_map)
         self.visit_map[start_x: end_x, start_y: end_y, start_z: end_z] = np.ones_like(neighbor_visit_map).astype(
             np.uint8)
-        # self.visit_map[location[0], location[1], location[2]] = 1
         coverage_rate = np.sum(self.visit_map) / np.product(self.visit_shape)
         return visit_gain, coverage_rate
 
