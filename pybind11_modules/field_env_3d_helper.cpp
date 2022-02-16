@@ -311,6 +311,106 @@ count_known_target_layer5(const py::array_t<int> &known_map, const Vec3D &start,
                            known_target_vec[4]);
 }
 
+std::tuple<int, int, int, int, int, int, int, int>
+count_unknown_layer8(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step,
+                     const double &len) {
+    std::vector<int> unknown_vec;
+    double n = 8.;
+
+    for (size_t i = 0; i < 5; i++) {
+        int unknown = 0;
+        for (double frac = i * (len / n); frac < (i + 1) * (len / n); frac += step) {
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int) cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int) cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int) cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 0)
+                unknown++;
+        }
+        unknown_vec.push_back(unknown);
+    }
+    return std::make_tuple(unknown_vec[0], unknown_vec[1], unknown_vec[2], unknown_vec[3],
+                           unknown_vec[4], unknown_vec[5], unknown_vec[6], unknown_vec[7]);
+}
+
+std::tuple<int, int, int, int, int, int, int, int>
+count_known_free_layer8(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec, const double &step,
+                        const double &len) {
+    std::vector<int> known_free_vec;
+    double n = 8.;
+    for (size_t i = 0; i < 5; i++) {
+        int known_free = 0;
+        for (double frac = i * (len / n); frac < (i + 1) * (len / n); frac += step) {
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int) cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int) cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int) cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 1)
+                known_free++;
+        }
+        known_free_vec.push_back(known_free);
+    }
+    return std::make_tuple(known_free_vec[0], known_free_vec[1], known_free_vec[2], known_free_vec[3],
+                           known_free_vec[4], known_free_vec[5], known_free_vec[6], known_free_vec[7]);
+}
+
+std::tuple<int, int, int, int, int, int, int, int>
+count_known_occupied_layer8(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec,
+                            const double &step, const double &len) {
+    std::vector<int> known_occ_vec;
+    double n = 8.;
+    for (size_t i = 0; i < 5; i++) {
+        int known_occ = 0;
+        for (double frac = i * (len / n); frac < (i + 1) * (len / n); frac += step) {
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int) cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int) cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int) cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 2)
+                known_occ++;
+        }
+        known_occ_vec.push_back(known_occ);
+    }
+    return std::make_tuple(known_occ_vec[0], known_occ_vec[1], known_occ_vec[2], known_occ_vec[3],
+                           known_occ_vec[4], known_occ_vec[5], known_occ_vec[6], known_occ_vec[7]);
+}
+
+std::tuple<int, int, int, int, int, int, int, int>
+count_known_target_layer8(const py::array_t<int> &known_map, const Vec3D &start, const Vec3D &dir_vec,
+                          const double &step, const double &len) {
+    std::vector<int> known_target_vec;
+    double n = 8.;
+    for (size_t i = 0; i < n; i++) {
+        int known_target = 0;
+        for (double frac = i * (len / n); frac < (i + 1) * (len / n); frac += step) {
+            Vec3D cur = start + frac * dir_vec;
+            int x = (int) cur.x;
+            if (!in_range(x, known_map.shape()[0])) break;
+            int y = (int) cur.y;
+            if (!in_range(y, known_map.shape()[1])) break;
+            int z = (int) cur.z;
+            if (!in_range(z, known_map.shape()[2])) break;
+            int cell_val = *known_map.data(x, y, z);
+            if (cell_val == 3)
+                known_target++;
+        }
+        known_target_vec.push_back(known_target);
+    }
+    return std::make_tuple(known_target_vec[0], known_target_vec[1], known_target_vec[2], known_target_vec[3],
+                           known_target_vec[4],known_target_vec[5], known_target_vec[6], known_target_vec[7]);
+}
 
 void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D &cam_pos,
                            const Vec3D &end, int &found_targets, int &found_occ, int &free_cells,
@@ -438,6 +538,12 @@ PYBIND11_MODULE(field_env_3d_helper, m) {
     m.def("count_known_free_layer5", &count_known_free_layer5, "Count unknown cells on ray in 5 layers");
     m.def("count_known_occupied_layer5", &count_known_occupied_layer5, "Count unknown cells on ray in 5 layers");
     m.def("count_known_target_layer5", &count_known_target_layer5, "Count unknown cells on ray in 5 layers");
+
+    m.def("count_unknown_layer8", &count_unknown_layer8, "Count unknown cells on ray in 8 layers");
+    m.def("count_known_free_layer8", &count_known_free_layer8, "Count unknown cells on ray in 8 layers");
+    m.def("count_known_occupied_layer8", &count_known_occupied_layer8, "Count unknown cells on ray in 8 layers");
+    m.def("count_known_target_layer8", &count_known_target_layer8, "Count unknown cells on ray in 8 layers");
+
     m.def("check_observable_cell_from_surface", &check_observable_cell_from_surface,
           "check if given point is observable from given surface");
 
