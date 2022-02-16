@@ -51,7 +51,8 @@ network:
   NetworkObsVisit: 0
   NetworkObsVisitLstm: 0
   NetworkObsMoveLstm: 0
-  NetworkObsMoveLstmDeeperObs: 1
+  NetworkObsMoveLstmDeeperObs: 0
+  NetworkObsMoveLstmDeeperObs_48_24_8: 1
   NetworkObsMoveLstmLstm: 0
   SpatialAttentionModel: 0
 
