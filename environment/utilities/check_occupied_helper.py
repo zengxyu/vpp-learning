@@ -47,3 +47,16 @@ def in_bound_boxes(bounding_boxes, point):
             if start_x <= x <= end_x and start_y <= y <= end_y and start_z <= z <= end_z:
                 return True
     return False
+
+
+def out_of_world(world_bounding_box, point):
+    """
+    check if point outside of the world
+    """
+    start, end = world_bounding_box
+    start_x, start_y, start_z = start
+    end_x, end_y, end_z = end
+    x, y, z = point
+    if (x < start_x or x >= end_x) or (y < start_y or y >= end_y) or (z < start_z or z >= end_z):
+        return True
+    return False
