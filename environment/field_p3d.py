@@ -6,7 +6,7 @@ import time
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
 from scipy.spatial.transform import Rotation
-from environment.utilities.check_occupied_helper import has_obstacle, in_bound_boxes
+from environment.utilities.check_occupied_helper import has_obstacle, in_bound_boxes, out_of_world
 from environment.utilities.map_concat_helper import concat
 from environment.utilities.plant_models_loader import load_plants
 from environment.utilities.random_env_helper import get_random_multi_plant_models
@@ -311,18 +311,23 @@ class FieldP3D:
         return roi_cells, occupied_cells, free_cells
 
     def move_robot(self, direction):
-        robot_pos = self.robot_pos + direction
-        robot_pos = np.clip(robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
-        if self.env_config["use_bbox"] and in_bound_boxes(self.bounding_boxes, robot_pos):
+        collision = False
+        future_robot_pos = self.robot_pos + direction
+        future_robot_pos = np.clip(future_robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
+
+        if out_of_world([self.allowed_lower_bound, self.allowed_upper_bound], future_robot_pos):
+            collision = True
+
+        elif self.env_config["use_bbox"] and in_bound_boxes(self.bounding_boxes, future_robot_pos):
             # do nothing, do not update robot_pose
             self.relative_position = np.zeros_like(direction)
+            collision = True
         else:
             # update robot_pose
-            self.robot_pos = robot_pos
+            self.robot_pos = future_robot_pos
             self.relative_position = direction
 
-        # print("\nself.bounding_boxes:\n{}".format(self.bounding_boxes))
-        # print("\nself.robot_pos:\n{}".format(self.robot_pos))
+        return collision
 
     def cartesian_move_robot(self, direction):
         cartesian_result = []
@@ -344,7 +349,7 @@ class FieldP3D:
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
 
-        self.move_robot(relative_move)
+        collision = self.move_robot(relative_move)
         self.rotate_robot(relative_rot)
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         found_roi, found_occ, found_free = self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up,
@@ -366,7 +371,7 @@ class FieldP3D:
 
         # map = make_up_8x15x9x9_map(map)
 
-        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi)
+        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
         # step
         info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
                 "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate}
@@ -404,18 +409,17 @@ class FieldP3D:
         if self.training_config["input"]["visit_map"]:
             return np.array([self.visit_map])
 
-    def get_reward(self, visit_gain, found_free, found_occ, found_roi):
+    def get_reward(self, visit_gain, found_free, found_occ, found_roi, collision):
         weight = self.training_config["rewards"]
         reward = weight["visit_gain_weight"] * visit_gain + \
                  weight["free_weight"] * found_free + \
                  weight["occ_weight"] * found_occ + \
-                 weight["roi_weight"] * found_roi
+                 weight["roi_weight"] * found_roi + \
+                 weight["collision_weight"] * collision
         return reward
 
     def update_visit_map(self):
-        # to encourage exploration, 计算整个图新找到的target的数量， 动作变成36, 鼓励去没去过的地方
-        # 去大的没有去过的格子
-        # need LSTM
+        # to encourage exploration
         location = np.array([self.robot_pos[0] // self.visit_resolution, self.robot_pos[1] // self.visit_resolution,
                              self.robot_pos[2] // self.visit_resolution]).astype(np.int)
         # neighbor box
