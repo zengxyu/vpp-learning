@@ -9,7 +9,7 @@
         
 ===========================================
 """
-from rl_agents.action_space.action_space import ActionMoRo10, ActionMoRo20
+from rl_agents.action_space.action_space import ActionMoRo10, ActionMoRo20, ActionMoRo30
 
 
 def build_action_space(parser_args):
@@ -19,6 +19,8 @@ def build_action_space(parser_args):
         action_space = ActionMoRo10()
     elif actions["ActionMoRo20"]:
         action_space = ActionMoRo20()
+    elif actions["ActionMoRo30"]:
+        action_space = ActionMoRo30()
     else:
         raise NotImplementedError("Action : {} has not been implemented")
 
