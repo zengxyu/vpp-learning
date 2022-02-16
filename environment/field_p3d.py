@@ -337,12 +337,12 @@ class FieldP3D:
         collision = False
         future_robot_pos = self.robot_pos + direction
         future_robot_pos = np.clip(future_robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
-        if not self.parser_args.train:
-            print("future_robot_pos:{}; self.robot_pos:{}".format(future_robot_pos, self.robot_pos))
+        # if not self.parser_args.train:
+        #     print("future_robot_pos:{}; self.robot_pos:{}".format(future_robot_pos, self.robot_pos))
 
-        if (self.env_config["use_bbox"] and in_bound_boxes(self.bounding_boxes, future_robot_pos)):
-            # or out_of_world(
-            #     [self.allowed_lower_bound, self.allowed_upper_bound], future_robot_pos)
+        if ((self.env_config["use_bbox"] and in_bound_boxes(self.bounding_boxes, future_robot_pos)) or out_of_world(
+                [self.allowed_lower_bound, self.allowed_upper_bound], future_robot_pos)):
+
             # do nothing, do not update robot_pose
             self.relative_position = np.zeros_like(direction)
             collision = True
@@ -350,8 +350,8 @@ class FieldP3D:
             # update robot_pose
             self.relative_position = direction
             self.robot_pos = future_robot_pos
-        if not self.parser_args.train:
-            print("collision:{}".format(collision))
+        # if not self.parser_args.train:
+        #     print("collision:{}".format(collision))
         return collision
 
     def cartesian_move_robot(self, direction):
@@ -369,8 +369,8 @@ class FieldP3D:
     def step(self, action):
         # actions = [0, 2]
         # action = actions[self.step_count % 2]
-        if not self.parser_args.train:
-            print("action:{}".format(action))
+        # if not self.parser_args.train:
+        #     print("action:{}".format(action))
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
