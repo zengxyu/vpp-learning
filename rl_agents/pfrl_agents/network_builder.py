@@ -13,6 +13,7 @@
 from rl_agents.network.network_obs import NetworkObs
 from rl_agents.network.network_obs_lstm import NetworkObsLstm
 from rl_agents.network.network_obs_move_lstm import NetworkObsMoveLstm
+from rl_agents.network.network_obs_move_lstm_deeper_obs import NetworkObsMoveLstmDeeperObs
 from rl_agents.network.network_obs_move_lstm_lstm import NetworkObsMoveLstmLstm
 from rl_agents.network.network_obs_visit import NetworkObsVisit
 from rl_agents.network.network_obs_visit_lstm import NetworkObsVisitLstm
@@ -41,6 +42,8 @@ def build_network(parser_args, action_size):
         network = NetworkObsMoveLstm(action_size)
     elif networks["NetworkObsMoveLstmLstm"]:
         network = NetworkObsMoveLstmLstm(action_size)
+    elif networks["NetworkObsMoveLstmDeeperObs"]:
+        network = NetworkObsMoveLstmDeeperObs(action_size)
     elif networks["SpatialAttentionModel"]:
         network = SpatialAttentionModel(action_size)
     else:

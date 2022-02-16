@@ -38,6 +38,18 @@ count_known_occupied_layer5_vectorized = np.vectorize(field_env_3d_helper.count_
 count_known_target_layer5_vectorized = np.vectorize(field_env_3d_helper.count_known_target_layer5,
                                                     otypes=[int, int, int, int, int], excluded=[0, 1, 3, 4])
 
+count_unknown_layer8_vectorized = np.vectorize(field_env_3d_helper.count_unknown_layer8,
+                                               otypes=[int, int, int, int, int, int, int, int], excluded=[0, 1, 3, 4])
+count_known_free_layer8_vectorized = np.vectorize(field_env_3d_helper.count_known_free_layer8,
+                                                  otypes=[int, int, int, int, int, int, int, int],
+                                                  excluded=[0, 1, 3, 4])
+count_known_occupied_layer8_vectorized = np.vectorize(field_env_3d_helper.count_known_occupied_layer8,
+                                                      otypes=[int, int, int, int, int, int, int, int],
+                                                      excluded=[0, 1, 3, 4])
+count_known_target_layer8_vectorized = np.vectorize(field_env_3d_helper.count_known_target_layer8,
+                                                    otypes=[int, int, int, int, int, int, int, int],
+                                                    excluded=[0, 1, 3, 4])
+
 
 class FieldP3D:
     def __init__(self, parser_args, action_space):
@@ -213,6 +225,21 @@ class FieldP3D:
                                                                 rot_vecs, 1.0, dist)
         return unknown_map, known_free_map, known_occupied_map, known_target_map
 
+    def generate_unknown_map_layer8(self, cam_pos):
+        rot_vecs = self.compute_rot_vecs(self.obs_hrange[0], self.obs_hrange[1], self.obs_hsteps,
+                                         self.obs_vrange[0], self.obs_vrange[1], self.obs_vsteps)
+        dist = self.obs_drange[1]
+        unknown_map = count_unknown_layer8_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos), rot_vecs,
+                                                      1.0, dist)
+        known_free_map = count_known_free_layer8_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                            rot_vecs, 1.0, dist)
+        known_occupied_map = count_known_occupied_layer8_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                                    rot_vecs, 1.0, dist)
+        known_target_map = count_known_target_layer8_vectorized(self.known_map, generate_vec3d_from_arr(cam_pos),
+                                                                rot_vecs, 1.0, dist)
+
+        return unknown_map, known_free_map, known_occupied_map, known_target_map
+
     def line_plane_intersection(self, p0, nv, l0, lv):
         """ return intersection of a line with a plane
 
@@ -332,7 +359,7 @@ class FieldP3D:
         done = (self.found_roi_sum == self.roi_total) or (self.step_count >= self.max_steps)
 
         # 5 * 36 * 18
-        unknown_map, known_free_map, known_occupied_map, known_target_map = self.generate_unknown_map_layer5(cam_pos)
+        unknown_map, known_free_map, known_occupied_map, known_target_map = self.generate_unknown_map_layer(cam_pos)
 
         # 15 * 36 * 18
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_target_map, np.uint8)
@@ -347,6 +374,15 @@ class FieldP3D:
         inputs = self.get_inputs()
 
         return inputs, reward, done, info
+
+    def generate_unknown_map_layer(self, cam_pos):
+        if "obs_layers" in self.env_config.keys() and self.env_config["obs_layers"] == 8:
+            unknown_map, known_free_map, known_occupied_map, known_target_map = self.generate_unknown_map_layer8(
+                cam_pos)
+        else:
+            unknown_map, known_free_map, known_occupied_map, known_target_map = self.generate_unknown_map_layer5(
+                cam_pos)
+        return unknown_map, known_free_map, known_occupied_map, known_target_map
 
     def get_inputs(self):
         relative_movement = np.append(self.relative_position, self.relative_rotation)
@@ -411,7 +447,7 @@ class FieldP3D:
         cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up = self.compute_fov()
         self.update_grid_inds_in_view(cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up)
 
-        unknown_map, known_free_map, known_occupied_map, known_target_map = self.generate_unknown_map_layer5(cam_pos)
+        unknown_map, known_free_map, known_occupied_map, known_target_map = self.generate_unknown_map_layer(cam_pos)
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_target_map, np.uint8)
         # map = make_up_8x15x9x9_map(map)
         return self.get_inputs(), {}
