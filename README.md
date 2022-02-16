@@ -2,6 +2,12 @@
 
 Contains environments used for viewpoint planning learning
 
+# Compile p3d environment
+```compile_pybind11_only.sh```
+
+# Compile p3d environment with GUI
+```compile_p3d_modules.sh```
+
 # Train
 ``` python3 run_p3d_discrete.py --out_folder=test_folder --train```
 

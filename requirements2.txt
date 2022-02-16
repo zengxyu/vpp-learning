@@ -16,3 +16,5 @@ zmq
 pyzmq
 pycapnp
 panda3d
+pyyaml
+filelock
