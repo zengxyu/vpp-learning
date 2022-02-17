@@ -18,3 +18,4 @@ pycapnp
 panda3d
 pyyaml
 filelock
+pyquaternion
