@@ -5,11 +5,13 @@ import time
 
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
+from pyquaternion import Quaternion
 from scipy.spatial.transform import Rotation
 from environment.utilities.check_occupied_helper import has_obstacle, in_bound_boxes, out_of_world
 from environment.utilities.map_concat_helper import concat
 from environment.utilities.plant_models_loader import load_plants
 from environment.utilities.random_env_helper import get_random_multi_plant_models
+from environment.utilities.rotation_helper import get_rotation_between_rotations
 
 from utilities.util import get_project_path
 import numpy as np
@@ -193,8 +195,6 @@ class FieldP3D:
         self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
-
-        self.calculate_observable_cells_in_total()
 
         print("#observable_roi/#roi = {}".format(self.observable_roi_total / self.roi_total))
         print("#observable_occ/#occ = {}".format(self.observable_occ_total / self.occ_total))

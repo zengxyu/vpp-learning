@@ -38,7 +38,7 @@ class FieldGUI(ShowBase):
         self.FREE_SEEN_COLOR = (255 / 255, 215 / 255, 0 / 255, 1.0)  # Gold
         self.OCCUPIED_SEEN_COLOR = (0 / 255, 255 / 255, 255 / 255, 1.0)  # OrangeRed
         self.TARGET_SEEN_COLOR = (218 / 255, 112 / 255, 214 / 255, 1.0)  # Orchid
-
+        self.VISIT_COLOR = (139 / 255, 69 / 255, 19 / 255, 1.0)  # Saddle Brown
         self.X_COLOR = (1, 0, 0, 1)
         self.Y_COLOR = (0, 1, 0, 1)
         self.Z_COLOR = (0, 0, 1, 1)
@@ -48,7 +48,7 @@ class FieldGUI(ShowBase):
         self.fov_node_path = None
 
         self.colors = PTA_float(self.OCCUPIED_UNSEEN_COLOR + self.TARGET_UNSEEN_COLOR + self.FREE_SEEN_COLOR +
-                                self.OCCUPIED_SEEN_COLOR + self.TARGET_SEEN_COLOR)
+                                self.OCCUPIED_SEEN_COLOR + self.TARGET_SEEN_COLOR + self.VISIT_COLOR)
         self.bbox_fields = []
         self.fields = []
         self.voxgrid = None

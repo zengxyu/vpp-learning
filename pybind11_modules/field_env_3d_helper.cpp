@@ -409,13 +409,14 @@ count_known_target_layer8(const py::array_t<int> &known_map, const Vec3D &start,
         known_target_vec.push_back(known_target);
     }
     return std::make_tuple(known_target_vec[0], known_target_vec[1], known_target_vec[2], known_target_vec[3],
-                           known_target_vec[4],known_target_vec[5], known_target_vec[6], known_target_vec[7]);
+                           known_target_vec[4], known_target_vec[5], known_target_vec[6], known_target_vec[7]);
 }
 
 void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &global_map, const Vec3D &cam_pos,
                            const Vec3D &end, int &found_targets, int &found_occ, int &free_cells,
                            std::vector<int> &coords, std::vector<int> &values) {
     Vec3D diff = end - cam_pos;
+
     for (double frac = 0; frac < diff.abs(); frac += 1) {
         Vec3D cur = cam_pos + frac * diff.normalized();
         int x = (int) cur.x;
@@ -472,6 +473,10 @@ update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &gl
                                   coords, values);
         }
     }
+    coords.push_back(cam_pos.x);
+    coords.push_back(cam_pos.y);
+    coords.push_back(cam_pos.z);
+    values.push_back(6);
 
     return std::make_tuple(known_map, found_targets, occupied_cells, free_cells, coords, values);
 }

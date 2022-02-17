@@ -6,7 +6,7 @@ import time
 import zmq
 import capnp
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "capnp"))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..", "capnp"))
 import action_capnp
 import observation_capnp
 import numpy as np
@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.ERROR)
 
 
 class EnvironmentClient:
-    def __init__(self, handle_simulation=False):
+    def __init__(self, handle_simulation=False, world_name="world19", base="retractable", gui=False):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.RCVTIMEO = 1000  # in milliseconds
@@ -27,7 +27,7 @@ class EnvironmentClient:
             self.uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
             roslaunch.configure_logging(self.uuid)
             self.launch_file = roslaunch.rlutil.resolve_launch_arguments(['vpp_learning_ros', 'ur_with_cam.launch'])
-            self.launch_args = ['world_name:=world19', 'base:=retractable']
+            self.launch_args = ['world_name:=' + world_name, 'base:=' + base, 'gui:=' + str(gui)]
             self.launch_files = [(self.launch_file[0], self.launch_args)]
             signal.signal(signal.SIGINT, self.sigint_handler)
 
@@ -191,23 +191,31 @@ def main(args):
     client = EnvironmentClient(handle_simulation=True)
     client.startSimulation()
     print('SEND_RESET_1')
-    observation = client.sendReset(randomize=True, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
-    print('SEND_MOVE1_1')
-    observation = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0])
-    print('SEND_MOVE2_1')
-    observation = client.sendRelativeJointTarget([0, 0.1, 0, 0, 0, 0])
-    print('SHUTDOWN_1')
-    client.shutdownSimulation()
-    print('RESTART')
-    client.startSimulation()
-    print('SEND_RESET_2')
-    observation = client.sendReset(randomize=True, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
-    print('SEND_MOVE1_2')
-    observation = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0])
-    print('SEND_MOVE2_2')
-    observation = client.sendRelativeJointTarget([0, 0.1, 0, 0, 0, 0])
-    print('SHUTDOWN_2')
-    client.shutdownSimulation()
+    unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
+    found_roi, found_occ, found_free = client.sendReset(randomize=True, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1],
+                                                        min_dist=0.4)
+    print("robot_pose:{}".format(robot_pose))
+    unknown_map, known_free_map, known_occupied_map, known_roi_map, new_robot_pose, \
+    found_roi, found_occ, found_free = client.sendRelativePose([0, 1, 0, 0, 0, 0, 1])
+    print("relative robot pose:{}".format(new_robot_pose - robot_pose))
+    print("new_robot_pose:{}".format(new_robot_pose))
+
+    # print('SEND_MOVE1_1')
+    # observation = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0])
+    # print('SEND_MOVE2_1')
+    # observation = client.sendRelativeJointTarget([0, 0.1, 0, 0, 0, 0])
+    # print('SHUTDOWN_1')
+    # client.shutdownSimulation()
+    # print('RESTART')
+    # client.startSimulation()
+    # print('SEND_RESET_2')
+    # observation = client.sendReset(randomize=True, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
+    # print('SEND_MOVE1_2')
+    # observation = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0])
+    # print('SEND_MOVE2_2')
+    # observation = client.sendRelativeJointTarget([0, 0.1, 0, 0, 0, 0])
+    # print('SHUTDOWN_2')
+    # client.shutdownSimulation()
 
 
 if __name__ == '__main__':

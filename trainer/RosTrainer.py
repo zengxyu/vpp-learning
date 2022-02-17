@@ -22,21 +22,6 @@ from trainer.trainer_helper import save_episodes_info
 from utilities.info import EpisodeInfo
 
 
-def print_step_info(episode, step, info):
-    new_free_cells = info["new_free_cells"]
-    new_occupied_cells = info["new_occupied_cells"]
-    new_rois = info["new_found_rois"]
-    reward = info["reward"]
-    print(
-        "Episode : {}; step : {}; found free cells : {}; found occupied cells : {}; found rois : {}; reward:{}\n".format(
-            episode,
-            step,
-            new_free_cells,
-            new_occupied_cells,
-            new_rois,
-            reward))
-
-
 class RosTrainer(object):
     def __init__(self, env, agent, action_space, parser_args):
         self.parser_args = parser_args
@@ -51,6 +36,9 @@ class RosTrainer(object):
         self.global_i_step = 0
         self.train_collector = EpisodeInfo(self.training_config["train_smooth_n"])
         self.test_collector = EpisodeInfo(self.training_config["test_smooth_n"])
+        self.train_step_collector = {}
+        self.test_step_collector = {}
+
         # discrete
         if not parser_args.train or parser_args.resume:
             logging.info("load model from {} {}".format(self.parser_args.in_model, parser_args.in_model_index))
@@ -87,7 +75,7 @@ class RosTrainer(object):
             self.global_i_step += 1
             i_step += 1
             infos.append(info)
-            print_step_info(self.train_i_episode, i_step, info)
+            print_step_info(self.train_i_episode, i_step, info, self.train_step_collector)
 
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.train_collector, env=self.env)
@@ -118,7 +106,8 @@ class RosTrainer(object):
                 self.global_i_step += 1
                 i_step += 1
                 infos.append(info)
-                print_step_info(self.test_i_episode, i_step, info)
+                print_step_info(self.test_i_episode, i_step, info, self.test_step_collector)
+
         add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
                                     episode_info_collector=self.test_collector, env=self.env)
         add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)
@@ -159,3 +148,14 @@ def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_inf
     if not np.isnan(agent_statistics[0][1]):
         episode_info_collector.add({"average_q": agent_statistics[0][1]})
         episode_info_collector.add({"loss": agent_statistics[1][1]})
+
+
+def print_step_info(episode: int, step: int, info: Dict, step_collector: Dict):
+    for key in info.keys():
+        if key not in step_collector.keys():
+            step_collector[key] = info[key]
+        else:
+            step_collector[key] += info[key]
+    print("Episode : {}; step : {}".format(episode, step))
+    print("Found cells:\n  {}".format(info))
+    print("Accumulated values:\n  {}\n".format(step_collector))

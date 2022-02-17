@@ -4,7 +4,8 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 from environment.utilities.map_concat_helper import concat
-from scripts.vpp_env_client import EnvironmentClient
+from environment.utilities.rotation_helper import get_rotation_between_rotations
+from environment.scripts.vpp_env_client import EnvironmentClient
 
 
 class FieldRos:
@@ -18,6 +19,7 @@ class FieldRos:
 
         self.randomize = self.env_config["randomize"]
         self.handle_simulation = self.env_config["handle_simulation"]
+        self.resolution = self.env_config["resolution"]
 
         self.action_space = action_space
         self.reset_count = 0
@@ -43,7 +45,8 @@ class FieldRos:
         self.visit_map = None
         self.map = None
 
-        self.client = EnvironmentClient(handle_simulation=self.handle_simulation)
+        self.client = EnvironmentClient(self.handle_simulation, self.env_config["world_name"], self.env_config["base"],
+                                        self.parser_args.head)
         if self.handle_simulation:
             self.client.startSimulation()
 
@@ -67,6 +70,7 @@ class FieldRos:
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
+
         relative_pose = np.append(relative_move, relative_rot.as_quat()).tolist()
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
         found_roi, found_occ, found_free = self.client.sendRelativePose(relative_pose)
@@ -75,8 +79,7 @@ class FieldRos:
         robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
 
         self.relative_position = robot_pos - self.robot_pos
-        relative_rotation, _ = Rotation.align_vectors([robot_rot.as_rotvec()], [self.robot_rot.as_rotvec()])
-        self.relative_rotation = relative_rotation
+        self.relative_rotation = get_rotation_between_rotations(self.robot_rot, robot_rot)
 
         self.robot_pos = robot_pos
         self.robot_rot = robot_rot
@@ -95,6 +98,7 @@ class FieldRos:
 
         info = {"visit_gain": 0, "new_free_cells": found_free, "new_occupied_cells": found_occ,
                 "new_found_rois": found_roi, "reward": reward, "coverage_rate": np.nan}
+
         return inputs, reward, done, info
 
     def get_reward(self, visit_gain, found_free, found_occ, found_roi):
@@ -132,7 +136,8 @@ class FieldRos:
         # but the limitation from -1 to 1 was mainly for the static arm
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells = self.client.sendReset(
             randomize=self.randomize, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
-
+        self.robot_pos = np.array(robot_pose[:3])
+        self.robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
         inputs = self.get_inputs()
 
