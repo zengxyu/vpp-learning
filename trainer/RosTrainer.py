@@ -143,9 +143,9 @@ def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_inf
     print("new_roi_cells_sum : ", new_roi_cells_sum)
 
     episode_info_collector.add({"rewards_sum": rewards_sum})
-    episode_info_collector.add({"new_free_cells_sum": new_free_cells_sum})
-    episode_info_collector.add({"new_occ_cells_sum": new_occ_cells_sum})
-    episode_info_collector.add({"new_roi_cells_sum": new_roi_cells_sum})
+    episode_info_collector.add({"found_free_sum": new_free_cells_sum})
+    episode_info_collector.add({"found_occ_sum": new_occ_cells_sum})
+    episode_info_collector.add({"found_roi_sum": new_roi_cells_sum})
 
     if not np.isnan(agent_statistics[0][1]):
         episode_info_collector.add({"average_q": agent_statistics[0][1]})
