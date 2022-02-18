@@ -25,7 +25,7 @@ rewards:
   occ_weight: 1
   roi_weight: 200
   visit_gain_weight: 100
-  collision_weight: -10
+  collision_weight: 0
   #  free_weight: 0
   #  occ_weight: 0
   #  roi_weight: 200
@@ -59,7 +59,7 @@ network:
   SpatialAttentionModel: 0
 
 action:
-  ActionMoRo10: 1
+  ActionMoRo10: 0
   ActionMoRo20: 0
-  ActionMoRo30: 0
+  ActionMoRo30: 1
 
