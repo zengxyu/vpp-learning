@@ -5,7 +5,7 @@ from scipy.spatial.transform import Rotation
 
 from environment.utilities.map_concat_helper import concat
 from environment.utilities.rotation_helper import get_rotation_between_rotations
-from environment.scripts.vpp_env_client import EnvironmentClient
+from environment.ros_client.vpp_env_client import EnvironmentClient
 
 
 class FieldRos:
@@ -13,6 +13,19 @@ class FieldRos:
         self.parser_args = parser_args
         self.env_config = parser_args.env_config_ros
         self.training_config = parser_args.training_config
+
+        self.shape_low_bound = (
+            self.env_config["shape_x_range"][0], self.env_config["shape_y_range"][0],
+            self.env_config["shape_z_range"][0])
+        self.shape_high_bound = (
+            self.env_config["shape_x_range"][1], self.env_config["shape_y_range"][1],
+            self.env_config["shape_z_range"][1])
+
+        self.shape = (
+            self.shape_high_bound[0] - self.shape_low_bound[0],
+            self.shape_high_bound[1] - self.shape_low_bound[1],
+            self.shape_high_bound[2] - self.shape_low_bound[2])
+
         self.max_steps = self.env_config["max_steps"]
         self.MOVE_STEP = self.env_config["move_step"]
         self.ROT_STEP = self.env_config["rot_step"]
@@ -55,8 +68,6 @@ class FieldRos:
         print("rot step:", self.ROT_STEP)
 
     def initialize(self):
-        self.robot_pos = np.array([0.0, 0.0, 0.0])
-        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
         self.relative_position = np.array([0., 0., 0.])
         self.relative_rotation = Rotation.from_quat([0, 0, 0, 1])
@@ -65,6 +76,10 @@ class FieldRos:
         self.found_roi_sum = 0
         self.found_occ_sum = 0
         self.found_free_sum = 0
+
+        self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
+                            int(self.shape[2] // self.visit_resolution))
+        self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
 
     def step(self, action):
         axes = self.robot_rot.as_matrix().transpose()
@@ -84,6 +99,8 @@ class FieldRos:
         self.robot_pos = robot_pos
         self.robot_rot = robot_rot
 
+        visit_gain, coverage_rate = self.update_visit_map()
+
         self.found_roi_sum += found_roi
         self.found_occ_sum += found_occ
         self.found_free_sum += found_free
@@ -94,10 +111,10 @@ class FieldRos:
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
 
         inputs = self.get_inputs()
-        reward = self.get_reward(0, found_free, found_occ, found_roi)
+        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi)
 
-        info = {"visit_gain": 0, "new_free_cells": found_free, "new_occupied_cells": found_occ,
-                "new_found_rois": found_roi, "reward": reward, "coverage_rate": np.nan}
+        info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
+                "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate}
 
         return inputs, reward, done, info
 
@@ -108,6 +125,27 @@ class FieldRos:
                  weight["occ_weight"] * found_occ + \
                  weight["roi_weight"] * found_roi
         return reward
+
+    def update_visit_map(self):
+        # to encourage exploration
+        location = np.array([(self.robot_pos[0] - self.shape_low_bound[0]) // self.visit_resolution,
+                             (self.robot_pos[1] - self.shape_low_bound[1]) // self.visit_resolution,
+                             (self.robot_pos[2] - self.shape_low_bound[2]) // self.visit_resolution]).astype(np.int)
+        # neighbor box
+        nd = 1
+        start_x = max(0, location[0] - nd)
+        end_x = min(self.visit_shape[0], location[0] + nd + 1)
+        start_y = max(0, location[1] - nd)
+        end_y = min(self.visit_shape[1], location[1] + nd + 1)
+        start_z = max(0, location[2] - nd)
+        end_z = min(self.visit_shape[2], location[2] + nd + 1)
+
+        neighbor_visit_map = self.visit_map[start_x: end_x, start_y: end_y, start_z: end_z]
+        visit_gain = np.sum(1 - neighbor_visit_map)
+        self.visit_map[start_x: end_x, start_y: end_y, start_z: end_z] = np.ones_like(neighbor_visit_map).astype(
+            np.uint8)
+        coverage_rate = np.sum(self.visit_map) / np.product(self.visit_shape)
+        return visit_gain, coverage_rate
 
     def get_inputs(self):
         relative_movement = np.append(self.relative_position, self.relative_rotation.as_euler('xyz'))
@@ -132,7 +170,8 @@ class FieldRos:
     def reset(self):
         print("-----------------------------------reset or randomize!-------------------------------------------")
         self.reset_count += 1
-        self.step_count = 0
+        self.initialize()
+
         # but the limitation from -1 to 1 was mainly for the static arm
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells = self.client.sendReset(
             randomize=self.randomize, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
