@@ -140,18 +140,18 @@ def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_inf
     print("new_roi_cells_rate : ", new_roi_cells_sum / env.roi_total)
     print("coverage rate : ", infos[-1]["coverage_rate"])
 
-    episode_info_collector.add({"rewards_sum": rewards_sum})
     episode_info_collector.add({"found_free_sum": new_free_cells_sum})
     episode_info_collector.add({"found_occ_sum": new_occ_cells_sum})
     episode_info_collector.add({"found_roi_sum": new_roi_cells_sum})
+    episode_info_collector.add({"rewards_sum": rewards_sum})
     episode_info_collector.add({"collision_sum": collision_sum})
     episode_info_collector.add({"visit_gain_sum": visit_gain_sum})
 
-    episode_info_collector.add({"#found_free/#total_free": new_free_cells_sum / env.free_total})
-    episode_info_collector.add({"#found_occ/#total_occ": new_occ_cells_sum / env.occ_total})
-    episode_info_collector.add({"#found_roi/#total_roi": new_roi_cells_sum / env.roi_total})
-    episode_info_collector.add({"#found_occ/#total_observable_occ": new_occ_cells_sum / env.observable_occ_total})
-    episode_info_collector.add({"#found_roi/#total_observable_roi": new_roi_cells_sum / env.observable_roi_total})
+    episode_info_collector.add({"found_free_to_total": new_free_cells_sum / env.free_total})
+    episode_info_collector.add({"found_occ_to_total": new_occ_cells_sum / env.occ_total})
+    episode_info_collector.add({"found_roi_to_total": new_roi_cells_sum / env.roi_total})
+    episode_info_collector.add({"found_occ_to_observable": new_occ_cells_sum / env.observable_occ_total})
+    episode_info_collector.add({"found_roi_to_observable": new_roi_cells_sum / env.observable_roi_total})
 
     episode_info_collector.add({"coverage_rate": infos[-1]["coverage_rate"]})
 
