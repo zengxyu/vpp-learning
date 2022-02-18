@@ -92,7 +92,7 @@ class FieldGUI(ShowBase):
             for bbox in self.bbox_fields:
                 bbox.removeNode()
         # add new bbox
-        for bbox in self.env.bounding_boxes:
+        for bbox in self.env.plant_bounding_boxes:
             bbox_field = self.create_edged_cube(np.asarray(bbox[0]) * self.scale, np.asarray(bbox[1]) * self.scale)
             self.bbox_fields.append(self.render.attachNewNode(bbox_field))
 

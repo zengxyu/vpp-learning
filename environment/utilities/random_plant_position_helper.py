@@ -11,9 +11,11 @@
 """
 import logging
 import random
+from typing import List
 
 import numpy as np
 
+from environment.utilities.bound_helper import BoundBox
 from environment.utilities.observable_cells_helper import compute_observable_occ_roi_cells
 
 
@@ -42,11 +44,12 @@ def trim_zeros(arr):
     return arr[slices]
 
 
-def random_translate_plant(plant, global_map, old_pos, thresh, margin):
+def random_translate_plant(plant, global_map, old_pos, thresh, margin: np.array):
     # compute_observable_occ_roi_cells(plant)
     # minus 1 for trim_zeros()
     # add 1 back
     # 45 x 49 x 79
+    margin_x, margin_y = margin
     plant = trim_zeros(plant)
 
     # rotate 90
@@ -74,13 +77,13 @@ def random_translate_plant(plant, global_map, old_pos, thresh, margin):
         max_y = global_shape_yy - plant_shape_yy
 
         # randomly initialize the position
-        loc_x = random.randint(margin, max_x - margin)
-        loc_y = random.randint(margin, max_y - margin)
+        loc_x = random.randint(margin_x, max_x - margin_x)
+        loc_y = random.randint(margin_y, max_y - margin_y)
 
         while np.linalg.norm([loc_x - old_x, loc_y - old_y]) < thresh:
-            assert margin < max_x - margin and margin < max_y - margin, "Margin is too large"
-            loc_x = random.randint(margin, max_x - margin)
-            loc_y = random.randint(margin, max_y - margin)
+            assert margin_x < max_x - margin_x and margin_y < max_y - margin_y, "Margin is too large"
+            loc_x = random.randint(margin_x, max_x - margin_x)
+            loc_y = random.randint(margin_y, max_y - margin_y)
             count += 1
             if count >= 1000:
                 logging.info("Loop too many times when generate the plants")
@@ -90,12 +93,12 @@ def random_translate_plant(plant, global_map, old_pos, thresh, margin):
     return global_map, (loc_x, loc_y, 0), (loc_x + plant_shape_xx, loc_y + plant_shape_yy, 0 + plant_shape_zz)
 
 
-def get_random_multi_plant_models(global_map, plants, thresh, margin):
+def get_random_multi_plant_models(global_map: np.array, plants: List[np.array], thresh: float, margin: np.array):
     start_pos = (0., 0., 0.)
     bound_boxes = []
 
     for plant in plants:
         global_map, start_pos, end_pos = random_translate_plant(plant, global_map, start_pos, thresh, margin)
-        bound_boxes.append([start_pos, end_pos])
+        bound_boxes.append(BoundBox(lower_bound=start_pos, upper_bound=end_pos))
 
-    return global_map, np.array(bound_boxes)
+    return global_map, bound_boxes

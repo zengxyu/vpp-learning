@@ -5,13 +5,14 @@ import time
 
 import field_env_3d_helper
 from field_env_3d_helper import Vec3D
-from pyquaternion import Quaternion
 from scipy.spatial.transform import Rotation
-from environment.utilities.check_occupied_helper import has_obstacle, in_bound_boxes, out_of_world
+
+from environment.utilities.bound_helper import get_sensor_position_bound, get_world_bound, in_plant_bounds, \
+    out_of_world_bound, out_of_sensor_position_bound, initialize_world_shape
+from environment.utilities.count_cells_helper import count_observable_cells, count_cells
 from environment.utilities.map_concat_helper import concat
 from environment.utilities.plant_models_loader import load_plants
-from environment.utilities.random_env_helper import get_random_multi_plant_models
-from environment.utilities.rotation_helper import get_rotation_between_rotations
+from environment.utilities.random_plant_position_helper import get_random_multi_plant_models
 
 from utilities.util import get_project_path
 import numpy as np
@@ -58,20 +59,12 @@ class FieldP3D:
         self.parser_args = parser_args
         self.env_config = parser_args.env_config
         self.training_config = parser_args.training_config
-        self.max_sensor_range = self.env_config["max_sensor_range"]
-        self.min_sensor_range = self.env_config["min_sensor_range"]
+        self.max_sensor_range = self.env_config["sensor_range"][1]
 
         self.hfov = self.env_config["hfov"]
         self.vfov = self.env_config["vfov"]
         self.hrays = self.env_config["hrays"]
         self.vrays = self.env_config["vrays"]
-
-        self.shape_low_bound = (
-            self.env_config["shape_x_range"][0], self.env_config["shape_y_range"][0],
-            self.env_config["shape_z_range"][0])
-        self.shape_high_bound = (
-            self.env_config["shape_x_range"][1], self.env_config["shape_y_range"][1],
-            self.env_config["shape_z_range"][1])
 
         self.max_steps = self.env_config["max_steps"]
         self.MOVE_STEP = self.env_config["move_step"]
@@ -84,12 +77,13 @@ class FieldP3D:
         self.obs_vsteps = self.env_config["obs_vsteps"]
 
         self.head = parser_args.head
-        self.randomize = self.env_config["randomize"]
+        self.randomize_plant_position = self.env_config["randomize_plant_position"]
         self.randomize_sensor_position = self.env_config["randomize_sensor_position"]
         self.randomize_world_size = self.env_config["randomize_world_size"]
 
         self.thresh = self.env_config["thresh"]
-        self.margin = self.env_config["margin"]
+        self.plant_position_margin = self.env_config["plant_position_margin"]
+        self.sensor_position_margin = self.env_config["sensor_position_margin"]
 
         self.action_space = action_space
         self.reset_count = 0
@@ -99,10 +93,10 @@ class FieldP3D:
         self.global_map = None
         self.known_map = None
 
-        self.robot_pos = [0.0, 0.0, 0.0]
+        self.robot_pos = np.array([0.0, 0.0, 0.0])
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
         self.relative_position = np.array([0., 0., 0.])
-        self.relative_rotation = np.array([0., 0., 0.])
+        self.relative_rotation = Rotation.from_quat([0, 0, 0, 1])
 
         self.roi_total = 0
         self.occ_total = 0
@@ -117,19 +111,16 @@ class FieldP3D:
 
         self.step_count = 0
 
-        self.allowed_range = None
-        self.allowed_lower_bound = None
-        self.allowed_upper_bound = None
+        self.world_bound = None
+        self.sensor_position_bound = None
 
         self.visit_resolution = 16
         self.visit_shape = None
         self.visit_map = None
         self.map = None
-        self.bounding_boxes = None
+        self.plant_bounding_boxes = None
 
         self.plant_models_dir = os.path.join(get_project_path(), "data", 'plant_models')
-        self.plant_observable_roi_ratios = self.env_config["plant_observable_roi_ratios"]
-        self.plant_observable_occ_ratios = self.env_config["plant_observable_occ_ratios"]
 
         self.plants = load_plants(self.plant_models_dir, self.env_config["plant_types"],
                                   self.env_config["roi_neighbors"], self.env_config["resolution"])
@@ -143,23 +134,8 @@ class FieldP3D:
             from environment.utilities.field_p3d_gui import FieldGUI
             self.gui = FieldGUI(self, self.env_config["scale"])
 
-    def calculate_observable_cells_in_total(self):
-        self.observable_roi_total = 0
-        self.observable_occ_total = 0
-
-        for plant, type in zip(self.plants, self.env_config["plant_types"]):
-            self.observable_roi_total += np.sum(plant == 2) * self.plant_observable_roi_ratios[type]
-            self.observable_occ_total += np.sum(plant == 1) * self.plant_observable_occ_ratios[type]
-
-    def calculate_cells_in_total(self):
-        self.roi_total = np.sum(self.global_map == 3)
-        self.occ_total = np.sum(self.global_map == 2)
-        self.free_total = np.sum(self.global_map == 1)
-
     def initialize(self):
-        self.shape = self.shape_low_bound
-        if self.randomize_world_size:
-            self.shape = np.random.randint(self.shape_low_bound, self.shape_high_bound, (3,))
+        self.shape = initialize_world_shape(self.env_config, self.randomize_world_size)
 
         self.global_map = np.zeros(self.shape).astype(int)
         self.known_map = np.zeros(self.shape).astype(int)
@@ -168,28 +144,29 @@ class FieldP3D:
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
         self.relative_position = np.array([0., 0., 0.])
-        self.relative_rotation = np.array([0., 0., 0.])
+        self.relative_rotation = Rotation.from_quat([0, 0, 0, 1])
 
         self.step_count = 0
         self.found_roi_sum = 0
         self.found_occ_sum = 0
         self.found_free_sum = 0
 
+        self.world_bound = get_world_bound(self.shape)
+        self.sensor_position_bound = get_sensor_position_bound(self.world_bound, self.sensor_position_margin)
+
         # insert the plants randomly into the ground
-        if self.randomize:
-            self.global_map, self.bounding_boxes = get_random_multi_plant_models(self.global_map, self.plants,
-                                                                                 self.thresh, self.margin)
+        if self.randomize_plant_position:
+            self.global_map, self.plant_bounding_boxes = get_random_multi_plant_models(self.global_map, self.plants,
+                                                                                       self.thresh,
+                                                                                       self.plant_position_margin)
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-        self.shape = self.global_map.shape
-
-        self.calculate_allow_range(self.shape)
-
-        self.calculate_cells_in_total()
-        self.calculate_observable_cells_in_total()
+        self.roi_total, self.occ_total, self.free_total = count_cells(self.global_map)
+        self.observable_roi_total, self.observable_occ_total = count_observable_cells(self.env_config, self.plants)
 
         #
         if self.randomize_sensor_position:
-            self.robot_pos = np.random.randint(low=self.allowed_lower_bound, high=self.allowed_upper_bound, size=(3,))
+            self.robot_pos = np.random.randint(self.sensor_position_bound.lower_bound,
+                                               self.sensor_position_bound.upper_bound, size=(3,))
             print("randomized sensor starting point = ", self.robot_pos)
 
         self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
@@ -202,12 +179,6 @@ class FieldP3D:
         print("#roi = {}; #roi/#total = {}".format(self.roi_total, self.roi_total / (np.product(self.shape))))
         print("#occ = {}; #occ/#total = {}".format(self.occ_total, self.occ_total / (np.product(self.shape))))
         print("#free = {}; #free/#total = {}".format(self.free_total, self.free_total / (np.product(self.shape))))
-
-    def calculate_allow_range(self, shape):
-        half_shape_z, half_shape_x, half_shape_y = int(shape[0] / 2), int(shape[1] / 2), int(shape[2] / 2)
-        self.allowed_range = np.array([half_shape_z, half_shape_x, half_shape_y])
-        self.allowed_lower_bound = np.array([half_shape_z, half_shape_x, half_shape_y]) - self.allowed_range
-        self.allowed_upper_bound = np.array([half_shape_z, half_shape_x, half_shape_y]) + self.allowed_range - 1
 
     def compute_fov(self):
         axes = self.robot_rot.as_matrix().transpose()
@@ -334,15 +305,13 @@ class FieldP3D:
         return roi_cells, occupied_cells, free_cells
 
     def move_robot(self, direction):
+
         collision = False
         future_robot_pos = self.robot_pos + direction
-        future_robot_pos = np.clip(future_robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
-        # if not self.parser_args.train:
-        #     print("future_robot_pos:{}; self.robot_pos:{}".format(future_robot_pos, self.robot_pos))
-
-        if ((self.env_config["use_bbox"] and in_bound_boxes(self.bounding_boxes, future_robot_pos)) or out_of_world(
-                [self.allowed_lower_bound, self.allowed_upper_bound], future_robot_pos)):
-
+        # future_robot_pos = np.clip(future_robot_pos, self.world_bound.lower_bound, self.world_bound.upper_bound)
+        if ((in_plant_bounds(self.plant_bounding_boxes, future_robot_pos)) or
+                out_of_world_bound(self.world_bound, future_robot_pos) or
+                out_of_sensor_position_bound(self.sensor_position_bound, future_robot_pos)):
             # do nothing, do not update robot_pose
             self.relative_position = np.zeros_like(direction)
             collision = True
@@ -350,21 +319,11 @@ class FieldP3D:
             # update robot_pose
             self.relative_position = direction
             self.robot_pos = future_robot_pos
-        # if not self.parser_args.train:
-        #     print("collision:{}".format(collision))
         return collision
-
-    def cartesian_move_robot(self, direction):
-        cartesian_result = []
-        if not has_obstacle(self.global_map, self.robot_pos, direction, cartesian_result):
-            self.robot_pos += direction
-        else:
-            self.robot_pos += cartesian_result[0]
-        self.robot_pos = np.clip(self.robot_pos, self.allowed_lower_bound, self.allowed_upper_bound)
 
     def rotate_robot(self, rot):
         self.robot_rot = rot * self.robot_rot
-        self.relative_rotation = rot.as_euler('xyz')
+        self.relative_rotation = rot
 
     def step(self, action):
         # actions = [0, 2]
@@ -417,7 +376,7 @@ class FieldP3D:
         return unknown_map, known_free_map, known_occupied_map, known_target_map
 
     def get_inputs(self):
-        relative_movement = np.append(self.relative_position, self.relative_rotation)
+        relative_movement = np.append(self.relative_position, self.relative_rotation.as_euler('xyz'))
         absolute_movement = np.append(self.robot_pos, self.robot_rot.as_euler('xyz'))
 
         # create input

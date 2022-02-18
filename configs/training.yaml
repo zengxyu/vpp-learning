@@ -59,7 +59,7 @@ network:
   SpatialAttentionModel: 0
 
 action:
-  ActionMoRo10: 0
+  ActionMoRo10: 1
   ActionMoRo20: 0
-  ActionMoRo30: 1
+  ActionMoRo30: 0
 
