@@ -63,6 +63,7 @@ class RosTrainer(object):
         phase = "Train"
         start_time = time.time()
         self.train_i_episode += 1
+        self.train_step_collector = {}
         state, _ = self.env.reset()
 
         done = False
@@ -93,6 +94,7 @@ class RosTrainer(object):
         phase = "ZEvaluation"
         start_time = time.time()
         self.test_i_episode += 1
+        self.test_step_collector = {}
         state, _ = self.env.reset()
 
         done = False
