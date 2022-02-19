@@ -7,8 +7,8 @@ max_steps: 200
 move_step: 20.0
 rot_step: 20.0
 
-world_name: world19
-base: retractable
+world_name: world14
+base: static
 # handle_simulation
 handle_simulation: True
 
