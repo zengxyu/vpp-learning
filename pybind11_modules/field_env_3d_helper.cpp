@@ -435,10 +435,13 @@ void update_until_obstacle(py::array_t<int> &known_map, const py::array_t<int> &
                 found_occ += 1;
             if (cell_val == 1)
                 free_cells += 1;
-            coords.push_back(x);
-            coords.push_back(y);
-            coords.push_back(z);
-            values.push_back(cell_val + 2);
+            if (cell_val == 2 || cell_val == 3) {
+                coords.push_back(x);
+                coords.push_back(y);
+                coords.push_back(z);
+                values.push_back(cell_val + 2);
+            }
+
         }
 
 
@@ -473,13 +476,10 @@ update_grid_inds_in_view(py::array_t<int> &known_map, const py::array_t<int> &gl
                                   coords, values);
         }
     }
-    coords.push_back(cam_pos.x);
-    coords.push_back(cam_pos.y);
-    coords.push_back(cam_pos.z);
-    values.push_back(6);
 
     return std::make_tuple(known_map, found_targets, occupied_cells, free_cells, coords, values);
 }
+
 
 bool check_observable(const py::array_t<int> &global_map, const Vec3D &occ_point, const Vec3D &surface_point) {
     Vec3D diff = surface_point - occ_point;
@@ -548,6 +548,7 @@ PYBIND11_MODULE(field_env_3d_helper, m) {
     m.def("count_known_free_layer8", &count_known_free_layer8, "Count unknown cells on ray in 8 layers");
     m.def("count_known_occupied_layer8", &count_known_occupied_layer8, "Count unknown cells on ray in 8 layers");
     m.def("count_known_target_layer8", &count_known_target_layer8, "Count unknown cells on ray in 8 layers");
+//    m.def("update_path", &update_path, "update visit path");
 
     m.def("check_observable_cell_from_surface", &check_observable_cell_from_surface,
           "check if given point is observable from given surface");

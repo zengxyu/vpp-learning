@@ -1,5 +1,6 @@
 #!/usr/bin/environment python
 import os.path
+import pickle
 import sys
 import time
 
@@ -13,6 +14,7 @@ from environment.utilities.count_cells_helper import count_observable_cells, cou
 from environment.utilities.map_concat_helper import concat
 from environment.utilities.plant_models_loader import load_plants
 from environment.utilities.random_plant_position_helper import get_random_multi_plant_models
+from environment.utilities.save_observation_map_helper import save_observation_map
 
 from utilities.util import get_project_path
 import numpy as np
@@ -120,6 +122,8 @@ class FieldP3D:
         self.map = None
         self.plant_bounding_boxes = None
 
+        self.path_coords = []
+
         self.plant_models_dir = os.path.join(get_project_path(), "data", 'plant_models')
 
         self.plants = load_plants(self.plant_models_dir, self.env_config["plant_types"],
@@ -140,7 +144,7 @@ class FieldP3D:
         self.global_map = np.zeros(self.shape).astype(int)
         self.known_map = np.zeros(self.shape).astype(int)
 
-        self.robot_pos = np.array([0.0, 0.0, 0.0])
+        self.robot_pos = np.array([0, 0, 0])
         self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
 
         self.relative_position = np.array([0., 0., 0.])
@@ -163,15 +167,17 @@ class FieldP3D:
         self.roi_total, self.occ_total, self.free_total = count_cells(self.global_map)
         self.observable_roi_total, self.observable_occ_total = count_observable_cells(self.env_config, self.plants)
 
-        #
         if self.randomize_sensor_position:
             self.robot_pos = np.random.randint(self.sensor_position_bound.lower_bound,
                                                self.sensor_position_bound.upper_bound, size=(3,))
             print("randomized sensor starting point = ", self.robot_pos)
 
-        self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
+        self.visit_shape = (int(self.shape[0] // self.visit_resolution),
+                            int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
+
+        self.path_coords = [self.robot_pos]
 
         print("#observable_roi/#roi = {}".format(self.observable_roi_total / self.roi_total))
         print("#observable_occ/#occ = {}".format(self.observable_occ_total / self.occ_total))
@@ -294,10 +300,16 @@ class FieldP3D:
             self.hrays,
             self.vrays
         )
+
+        self.path_coords.append(cam_pos)
+
         if self.head:
             self.gui.messenger.send('update_fov_and_cells',
                                     [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up,
                                      coords, values], 'default')
+            self.gui.messenger.send('draw_coord_line',
+                                    [self.path_coords], 'default')
+
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
 
@@ -330,6 +342,7 @@ class FieldP3D:
         # action = actions[self.step_count % 2]
         # if not self.parser_args.train:
         #     print("action:{}".format(action))
+        # print(self.step_count)
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
@@ -351,9 +364,12 @@ class FieldP3D:
         # 5 * 36 * 18
         unknown_map, known_free_map, known_occupied_map, known_target_map = self.generate_unknown_map_layer(cam_pos)
 
-        # 15 * 36 * 18
+        # 20 * 36 * 18
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_target_map, np.uint8)
 
+        observation_map = np.reshape(self.map, (4, 5, 36, 18))
+        observation_map = np.transpose(observation_map, (0, 2, 1, 3))
+        observation_map = np.reshape(observation_map, (4, 36, 90))
         # map = make_up_8x15x9x9_map(map)
 
         reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
@@ -364,6 +380,7 @@ class FieldP3D:
 
         inputs = self.get_inputs()
 
+        save_observation_map(self.map, self.step_count, self.parser_args)
         return inputs, reward, done, info
 
     def generate_unknown_map_layer(self, cam_pos):
