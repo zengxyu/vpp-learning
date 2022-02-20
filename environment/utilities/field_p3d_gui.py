@@ -46,6 +46,8 @@ class FieldGUI(ShowBase):
         self.voxgrid_node = GeomNode("voxgrid")
         self.fov_node = None
         self.fov_node_path = None
+        self.camera_node = None
+        self.camera_node_path = None
 
         self.colors = PTA_float(self.OCCUPIED_UNSEEN_COLOR + self.TARGET_UNSEEN_COLOR + self.FREE_SEEN_COLOR +
                                 self.OCCUPIED_SEEN_COLOR + self.TARGET_SEEN_COLOR + self.VISIT_COLOR)
@@ -60,6 +62,7 @@ class FieldGUI(ShowBase):
         self.accept('update_cell', self.updateSeenCell)
         self.accept('update_fov', self.updateFov)
         self.accept('update_fov_and_cells', self.updateFovAndCells)
+        self.accept('draw_coord_line', self.updateCameraPathLine)
 
     def reset(self):
         self.voxgrid = VoxelGrid(self.env.global_map.shape, self.colors, self.scale)
@@ -257,3 +260,29 @@ class FieldGUI(ShowBase):
         # print(coords)
         self.voxgrid.updateValues(coords, values)
         self.gui_done.set()
+
+    def updateCameraPathLine(self, coord_list):
+        if self.camera_node_path:
+            self.camera_node_path.removeNode()
+        self.camera_node = self.draw_coord_line(coord_list)
+        self.camera_node_path = self.render.attachNewNode(self.camera_node)
+        self.gui_done.set()
+
+    def draw_coord_line(self, coord_list):
+        coord_list = np.array(coord_list) * self.scale
+        lines = LineSegs()
+        MIN_COLOR = np.array([1, 0.6, 0, 1])
+        MAX_COLOR = np.array([1, 1, 0, 1])
+
+        lines.moveTo(coord_list[0][0], coord_list[0][1], coord_list[0][2])
+        for i in range(1, len(coord_list)):
+            ratio = i / len(coord_list)
+            color = MIN_COLOR * ratio + MAX_COLOR * (1 - ratio)
+            color = tuple(color)
+            lines.setColor(color)
+            lines.drawTo(coord_list[i][0], coord_list[i][1], coord_list[i][2])
+
+        lines.setThickness(4)
+        node = lines.create()
+
+        return node

@@ -1,13 +1,28 @@
 import pickle
-
-import numpy as np
+import argparse
 import cv2
 import torch
 import os
+import os.path
 
-save_path = "/home/zeng/workspace/vpp-learning/results_paper/visualize_observation_map2"
-if not os.path.exists(save_path):
-    os.makedirs(save_path)
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+
+from scipy.spatial.transform import Rotation
+
+from utilities.util import get_project_path
+
+vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
+
+
+def get_parser_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--save_to", type=str, default="test_folder")
+    parser.add_argument("--in_path", type=str, default=None)
+
+    parser_args = parser.parse_args()
+    return parser_args
 
 
 def save_image(name, image):
@@ -56,33 +71,98 @@ def display_image(image, title):
     cv2.destroyAllWindows()
 
 
-path = "/home/zeng/workspace/vpp-learning/output_remote5/out_p3d_static_env_seq_len_10_spacial/experience/buffer.obj"
-exp_obj = open(path, 'rb')
-memory = pickle.load(exp_obj)
-memory.seq_len = 10
-tree_idx, minibatch, ISWeights = memory.sample(is_vpp=True)
-states, actions, rewards, next_states, dones = minibatch
+def load_observation_map(path):
+    observation_map = pickle.load(open(path, "rb"))
+    return observation_map
 
-# 最大奖励的reward
-index = np.argmax(rewards)
-# index = 5
-print(rewards[index])
-frames, poses = states
-frames = minmaxscaler(frames).numpy()
-frame = frames[index]
 
-frames_next, poses_next = next_states
-frames_next = minmaxscaler(frames_next).numpy()
-frame_next = frames_next[index]
+def explode(data):
+    size = np.array(data.shape) * 2
+    data_e = np.zeros(size - 1, dtype=data.dtype)
+    data_e[::2, ::2, ::2] = data
+    return data_e
 
-# resize_frame = con_frame(frame)
-# resize_frame_next = con_frame(frame_next)
-# vertical_con_frame = np.vstack([resize_frame, resize_frame_next])
-cf2 = con_frame2(frame, title="observation_map")
-cf3 = con_frame2(frame_next, title="observation_map_next")
 
-display_image(cf2, "color")
-# display_image(vertical_con_frame, "resize_frame")
-# display_image(resize_frame_next, "resize_frame_next")
+def get_observation_map():
+    dir_path = os.path.join(get_project_path(), "output", "test_folder", "result_log")
+    obs_rois = {}
+    for file_name in os.listdir(dir_path):
+        file_path = os.path.join(dir_path, file_name)
+        observation_map = load_observation_map(file_path)
+        observation_map = np.reshape(observation_map, (4, 5, 36, 18))
+        observation_map = np.transpose(observation_map, (0, 2, 1, 3))
+        observation_map = np.reshape(observation_map, (4, 36, 90))
+        obs_roi = observation_map[1]
+        obs_rois[file_name] = obs_roi
+    pass
 
-# frame = cv2.resize(frame[0], dsize=(frame[0].shape[1] * 5, frame[0].shape[0] * 5))
+
+def compute_vecs():
+    robot_rot = Rotation.from_quat([0, 0, 0, 1])
+    axes = robot_rot.as_matrix().transpose()
+    rh = np.radians(np.linspace(-180, 180, 36))
+    rv = np.radians(np.linspace(-90, 90, 18))
+    rots_x = Rotation.from_rotvec(np.outer(rh, axes[2]))
+    rots_y = Rotation.from_rotvec(np.outer(rv, axes[1]))
+
+    rots = vec_apply(np.outer(rots_x, rots_y), vectors=axes[0])
+    rots = np.reshape(np.array(rots), (-1,))
+
+    rots2 = []
+    for rot in rots:
+        rots2.append([rot[0], rot[1], rot[2]])
+    rots2 = np.array(rots2)
+    return rots2
+
+
+if __name__ == '__main__':
+    get_observation_map()
+    fig = plt.figure()
+    ax = Axes3D(fig)
+
+    rots = compute_vecs()
+    rots = np.reshape(np.array(rots), (-1, 3))
+    rot_num = np.linalg.norm(rots[0])
+    depth = 5
+    frac = rot_num / depth
+    points = []
+    for direction in rots:
+        for i in range(depth):
+            points.append(i * frac * direction)
+
+    points = np.array(points) * 5
+    x = np.array(points[:, 0], np.float)
+    y = np.array(points[:, 1], np.float)
+    z = np.array(points[:, 2], np.float)
+    ax.scatter(x, y, z)
+    # ax.stem(x, y, z)
+    plt.show()
+
+    # # build up the numpy logo
+    # n_voxels = np.zeros((4, 7, 4), dtype=bool)
+    # n_voxels[0, 0, :] = True
+    # n_voxels[-1, 0, :] = True
+    # n_voxels[1, 0, 2] = True
+    # n_voxels[2, 0, 1] = True
+    # facecolors = np.where(n_voxels, '#FFD65D00', '#7A88CCFF')
+    # edgecolors = np.where(n_voxels, '#BFAB6E', '#7D84A6')
+    # filled = np.ones(n_voxels.shape)
+    #
+    # # upscale the above voxel image, leaving gaps
+    # filled_2 = explode(filled)
+    # fcolors_2 = explode(facecolors)
+    # ecolors_2 = explode(edgecolors)
+    #
+    # # Shrink the gaps
+    # x, y, z = np.indices(np.array(filled_2.shape) + 1).astype(float) // 2
+    # x[0::2, :, :] += 0.05
+    # y[:, 0::2, :] += 0.05
+    # z[:, :, 0::2] += 0.05
+    # x[1::2, :, :] += 0.95
+    # y[:, 1::2, :] += 0.95
+    # z[:, :, 1::2] += 0.95
+    #
+    # ax = plt.figure().add_subplot(projection='3d')
+    # ax.voxels(x, y, z, filled_2, facecolors=fcolors_2, edgecolors=ecolors_2)
+    # plt.savefig(os.path.join(get_project_path(), "output", "matplot.png"))
+    # plt.show()
