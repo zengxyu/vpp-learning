@@ -48,7 +48,7 @@ class RosTrainer(object):
         head = self.parser_args.head
         if self.parser_args.train and not head:
             print("Start training")
-            for i in range(self.training_config["num_episodes_to_run"]):
+            for i in range(self.training_config["num_episodes"]):
                 print("\nEpisode:{}".format(i))
                 self.training()
                 if (i + 1) % 10 == 0:
