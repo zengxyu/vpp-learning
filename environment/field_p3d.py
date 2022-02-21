@@ -117,6 +117,8 @@ class FieldP3D:
         self.sensor_position_bound = None
 
         self.collision_count = 0
+        self.stuck_count = 0
+
         self.visit_resolution = 16
         self.visit_shape = None
         self.visit_map = None
@@ -174,7 +176,7 @@ class FieldP3D:
             print("randomized sensor starting point = ", self.robot_pos)
 
         self.collision_count = 0
-
+        self.stuck_count = 0
         self.visit_shape = (int(self.shape[0] // self.visit_resolution),
                             int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
@@ -420,7 +422,14 @@ class FieldP3D:
                  weight["free_weight"] * found_free + \
                  weight["occ_weight"] * found_occ + \
                  weight["roi_weight"] * found_roi + \
-                 weight["collision_weight"] * (self.collision_count - 1)
+                 weight["collision_weight"] * max(self.collision_count - 1, 0) + \
+                 weight["stuck_weight"] * max(self.stuck_count - 5, 0)
+        # print(self.step_count, "collision:{};reward:{}".format(collision, reward))
+
+        if reward == 0:
+            self.stuck_count += 1
+        else:
+            self.stuck_count = 0
         return reward
 
     def update_visit_map(self):
