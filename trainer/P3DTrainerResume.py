@@ -72,7 +72,7 @@ class P3DTrainerResume(object):
             infos.append(info)
 
         self.train_collector.add(infos)
-        self.train_collector.add_p3d_statistic_to_scalar(self.env, self.agent.get_statistics())
+        self.train_collector.get_p3d_smooth_statistic(self.env, self.agent.get_statistics())
         self.train_collector.save_infos(phase, self.train_i_episode, self.parser_args.out_result,
                                         self.training_config["save_train_result_n"])
 
@@ -100,7 +100,7 @@ class P3DTrainerResume(object):
                 infos.append(info)
 
         self.test_collector.add(infos)
-        self.test_collector.add_p3d_statistic_to_scalar(self.env, self.agent.get_statistics())
+        self.test_collector.get_p3d_smooth_statistic(self.env, self.agent.get_statistics())
         self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
                                        self.training_config["save_test_result_n"])
 

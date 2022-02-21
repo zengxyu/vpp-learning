@@ -116,6 +116,7 @@ class FieldP3D:
         self.world_bound = None
         self.sensor_position_bound = None
 
+        self.collision_count = 0
         self.visit_resolution = 16
         self.visit_shape = None
         self.visit_map = None
@@ -171,6 +172,8 @@ class FieldP3D:
             self.robot_pos = np.random.randint(self.sensor_position_bound.lower_bound,
                                                self.sensor_position_bound.upper_bound, size=(3,))
             print("randomized sensor starting point = ", self.robot_pos)
+
+        self.collision_count = 0
 
         self.visit_shape = (int(self.shape[0] // self.visit_resolution),
                             int(self.shape[1] // self.visit_resolution),
@@ -317,7 +320,6 @@ class FieldP3D:
         return roi_cells, occupied_cells, free_cells
 
     def move_robot(self, direction):
-
         collision = False
         future_robot_pos = self.robot_pos + direction
         # future_robot_pos = np.clip(future_robot_pos, self.world_bound.lower_bound, self.world_bound.upper_bound)
@@ -331,6 +333,11 @@ class FieldP3D:
             # update robot_pose
             self.relative_position = direction
             self.robot_pos = future_robot_pos
+
+        if collision:
+            self.collision_count += 1
+        else:
+            self.collision_count = 0
         return collision
 
     def rotate_robot(self, rot):
@@ -367,12 +374,7 @@ class FieldP3D:
         # 20 * 36 * 18
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_target_map, np.uint8)
 
-        observation_map = np.reshape(self.map, (4, 5, 36, 18))
-        observation_map = np.transpose(observation_map, (0, 2, 1, 3))
-        observation_map = np.reshape(observation_map, (4, 36, 90))
-        # map = make_up_8x15x9x9_map(map)
-
-        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
+        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi)
 
         # step
         info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
@@ -412,13 +414,13 @@ class FieldP3D:
         if self.training_config["input"]["visit_map"]:
             return np.array([self.visit_map])
 
-    def get_reward(self, visit_gain, found_free, found_occ, found_roi, collision):
+    def get_reward(self, visit_gain, found_free, found_occ, found_roi):
         weight = self.training_config["rewards"]
         reward = weight["visit_gain_weight"] * visit_gain + \
                  weight["free_weight"] * found_free + \
                  weight["occ_weight"] * found_occ + \
                  weight["roi_weight"] * found_roi + \
-                 weight["collision_weight"] * collision
+                 weight["collision_weight"] * (self.collision_count - 1)
         return reward
 
     def update_visit_map(self):

@@ -78,7 +78,7 @@ class RosTrainer(object):
             print_step_info(self.train_i_episode, i_step, info, self.train_step_collector)
 
         self.train_collector.add(infos)
-        self.train_collector.add_ros_statistic_to_scalar(self.agent.get_statistics())
+        self.train_collector.get_ros_smooth_statistic(self.agent.get_statistics())
         self.train_collector.save_infos(phase, self.train_i_episode, self.parser_args.out_result,
                                         self.training_config["save_train_result_n"])
 
@@ -109,7 +109,7 @@ class RosTrainer(object):
                 print_step_info(self.test_i_episode, i_step, info, self.test_step_collector)
 
         self.test_collector.add(infos)
-        self.test_collector.add_ros_statistic_to_scalar(self.agent.get_statistics())
+        self.test_collector.get_ros_smooth_statistic(self.agent.get_statistics())
         self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
                                        self.training_config["save_test_result_n"])
         print("Episode takes time:{}".format(time.time() - start_time))
