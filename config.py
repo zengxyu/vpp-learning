@@ -93,6 +93,8 @@ def process_args():
     parser.add_argument("--save_model_every_n", type=int)
     parser.add_argument("--num_episodes", type=int)
 
+    # parser.add_argument("--num_episodes", type=int)
+
     parser_args = parser.parse_args()
 
     # set out_folder path and in_folder_path
@@ -129,6 +131,13 @@ def process_args():
         "num_episodes"] = parser_args.num_episodes if parser_args.num_episodes is not None else \
         parser_args.training_config["num_episodes"]
 
+    # parser_args.env_config[
+    #     "upper_bound_range_x"] = parser_args.num_episodes if parser_args.num_episodes is not None else \
+    #     parser_args.training_config["num_episodes"]
+
+    # upper_bound_range_x: [300, 600]
+    # upper_bound_range_y: [300, 600]
+    # upper_bound_range_z: [150, 200]
     print("\nYaml env_config config:", parser_args.env_config)
     print("\nYaml agents_config config:", parser_args.agents_config)
     print("\nYaml training config:", parser_args.training_config)
