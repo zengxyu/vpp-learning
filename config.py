@@ -91,6 +91,7 @@ def process_args():
     parser.add_argument("--head", action="store_true", default=False)
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--save_model_every_n", type=int)
+    parser.add_argument("--num_episodes", type=int)
 
     parser_args = parser.parse_args()
 
@@ -119,9 +120,14 @@ def process_args():
     parser_args.env_config_ros = read_yaml(os.path.join(parser_args.out_folder, "configs"), "env_ros.yaml")
     parser_args.agents_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "agents.yaml")
     parser_args.training_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "training.yaml")
+
     parser_args.training_config[
         "save_model_every_n"] = parser_args.save_model_every_n if parser_args.save_model_every_n is not None else \
         parser_args.training_config["save_model_every_n"]
+
+    parser_args.training_config[
+        "num_episodes"] = parser_args.num_episodes if parser_args.num_episodes is not None else \
+        parser_args.training_config["num_episodes"]
 
     print("\nYaml env_config config:", parser_args.env_config)
     print("\nYaml agents_config config:", parser_args.agents_config)

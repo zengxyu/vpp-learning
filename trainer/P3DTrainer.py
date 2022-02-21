@@ -4,9 +4,8 @@ from typing import Dict, List
 
 import numpy as np
 from direct.stdpy import threading
-from utilities.info import EpisodeInfo
+from utilities.info import EpisodeInfo, InfoCollector
 from torch.utils.tensorboard import SummaryWriter
-from trainer.trainer_helper import add_scalar, save_episodes_info
 
 
 class P3DTrainer(object):
@@ -22,8 +21,8 @@ class P3DTrainer(object):
         self.train_i_episode = 0
         self.test_i_episode = 0
         self.global_i_step = 0
-        self.train_collector = EpisodeInfo(self.training_config["train_smooth_n"])
-        self.test_collector = EpisodeInfo(self.training_config["test_smooth_n"])
+        self.train_collector = InfoCollector(self.training_config["train_smooth_n"])
+        self.test_collector = InfoCollector(self.training_config["test_smooth_n"])
         # discrete
         if not parser_args.train or parser_args.resume:
             logging.info("load model from {} {}".format(self.parser_args.in_model, parser_args.in_model_index))
@@ -34,7 +33,7 @@ class P3DTrainer(object):
         head = self.parser_args.head
         if self.parser_args.train and not head:
             print("Start training")
-            for i in range(self.training_config["num_episodes_to_run"]):
+            for i in range(self.training_config["num_episodes"]):
                 print("\nEpisode:{}".format(i))
                 self.training()
                 if (i + 1) % 10 == 0:
@@ -50,7 +49,7 @@ class P3DTrainer(object):
                 self.env.gui.run()
             else:
                 print("Start evaluating without head")
-                self.evaluate_n_times()
+                self.evaluate_n_times(self.parser_args.num_episodes)
 
     def training(self):
         phase = "Train"
@@ -70,11 +69,10 @@ class P3DTrainer(object):
             i_step += 1
             infos.append(info)
 
-        add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
-                                    episode_info_collector=self.train_collector, env=self.env)
-        add_scalar(self.writer, phase, self.train_collector.get_smooth_statistics(), self.train_i_episode)
-        save_episodes_info(phase, self.train_collector, self.train_i_episode, self.parser_args.out_result,
-                           self.training_config["save_train_result_n"])
+        self.train_collector.add(infos)
+        self.train_collector.add_p3d_statistic_to_scalar(self.env, self.agent.get_statistics())
+        self.train_collector.save_infos(phase, self.train_i_episode, self.parser_args.out_result,
+                                        self.training_config["save_train_result_n"])
 
         if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
             self.agent.save("{}/model_epi_{}".format(self.parser_args.out_model, self.train_i_episode))
@@ -98,11 +96,12 @@ class P3DTrainer(object):
                 self.global_i_step += 1
                 i_step += 1
                 infos.append(info)
-        add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
-                                    episode_info_collector=self.test_collector, env=self.env)
-        add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)
-        save_episodes_info(phase, self.test_collector, self.test_i_episode, self.parser_args.out_result,
-                           self.training_config["save_test_result_n"])
+
+        self.test_collector.add(infos)
+        self.test_collector.add_p3d_statistic_to_scalar(self.env, self.agent.get_statistics())
+        self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
+                                       self.training_config["save_test_result_n"])
+
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
@@ -114,44 +113,47 @@ class P3DTrainer(object):
 
 def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_info_collector: EpisodeInfo, env):
     # calculate the statistic info for each episode, then added to episode_info_collector
-    new_free_cells_sum = 0
-    new_occ_cells_sum = 0
-    new_roi_cells_sum = 0
+    found_free_cells_sum = 0
+    found_occ_cells_sum = 0
+    found_roi_cells_sum = 0
     rewards_sum = 0
     visit_gain_sum = 0
     collision_sum = 0
     for info in infos:
         visit_gain_sum += info["visit_gain"]
-        new_free_cells_sum += info["new_free_cells"]
-        new_occ_cells_sum += info["new_occupied_cells"]
-        new_roi_cells_sum += info["new_found_rois"]
+        found_free_cells_sum += info["new_free_cells"]
+        found_occ_cells_sum += info["new_occupied_cells"]
+        found_roi_cells_sum += info["new_found_rois"]
         rewards_sum += info["reward"]
         collision_sum += info["collision"]
 
+    print("found_roi_sum : ", found_roi_cells_sum)
+    print("found_occ_sum : ", found_occ_cells_sum)
+    print("found_free_sum : ", found_free_cells_sum)
     print("rewards_sum : ", rewards_sum)
-    print("new_roi_cells_sum : ", new_roi_cells_sum)
-    print("new_occ_cells_sum : ", new_occ_cells_sum)
-    print("new_free_cells_sum : ", new_free_cells_sum)
     print("visit_gain_sum : ", visit_gain_sum)
     print("collision_sum : ", collision_sum)
 
-    print("new_roi_cells_rate : ", new_roi_cells_sum / env.roi_total)
-    print("new_occ_cells_rate : ", new_occ_cells_sum / env.occ_total)
-    print("new_free_cells_rate : ", new_free_cells_sum / env.free_total)
+    print("found_roi_rate_to_total : {}; found_roi_rate_to_observable : {}".format(found_roi_cells_sum / env.roi_total,
+                                                                                   found_roi_cells_sum / env.observable_roi_total))
+    print("found_occ_rate_to_total : {}; found_occ_rate_to_observable : {}".format(found_occ_cells_sum / env.occ_total,
+                                                                                   found_occ_cells_sum / env.observable_occ_total))
+    print("found_free_to_total : {};", found_free_cells_sum / env.free_total)
+
     print("coverage rate : ", infos[-1]["coverage_rate"])
 
-    episode_info_collector.add({"found_roi_sum": new_roi_cells_sum})
-    episode_info_collector.add({"found_occ_sum": new_occ_cells_sum})
-    episode_info_collector.add({"found_free_sum": new_free_cells_sum})
+    episode_info_collector.add({"found_roi_sum": found_roi_cells_sum})
+    episode_info_collector.add({"found_occ_sum": found_occ_cells_sum})
+    episode_info_collector.add({"found_free_sum": found_free_cells_sum})
     episode_info_collector.add({"rewards_sum": rewards_sum})
     episode_info_collector.add({"collision_sum": collision_sum})
     episode_info_collector.add({"visit_gain_sum": visit_gain_sum})
 
-    episode_info_collector.add({"found_roi_to_total": new_roi_cells_sum / env.roi_total})
-    episode_info_collector.add({"found_occ_to_total": new_occ_cells_sum / env.occ_total})
-    episode_info_collector.add({"found_free_to_total": new_free_cells_sum / env.free_total})
-    episode_info_collector.add({"found_roi_to_observable": new_roi_cells_sum / env.observable_roi_total})
-    episode_info_collector.add({"found_occ_to_observable": new_occ_cells_sum / env.observable_occ_total})
+    episode_info_collector.add({"found_roi_rate_to_total": found_roi_cells_sum / env.roi_total})
+    episode_info_collector.add({"found_occ_rate_to_total": found_occ_cells_sum / env.occ_total})
+    episode_info_collector.add({"found_free_rate_to_total": found_free_cells_sum / env.free_total})
+    episode_info_collector.add({"found_roi_rate_to_observable": found_roi_cells_sum / env.observable_roi_total})
+    episode_info_collector.add({"found_occ_rate_to_observable": found_occ_cells_sum / env.observable_occ_total})
 
     episode_info_collector.add({"coverage_rate": infos[-1]["coverage_rate"]})
 

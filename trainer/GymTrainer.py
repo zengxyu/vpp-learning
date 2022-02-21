@@ -29,7 +29,7 @@ class GymTrainer(object):
         # Agent
         time_step = 0
 
-        for i_episode in range(self.config.num_episodes_to_run):
+        for i_episode in range(self.config.num_episodes):
             print("\nepisode {} start!".format(i_episode))
             done = False
             losses = []

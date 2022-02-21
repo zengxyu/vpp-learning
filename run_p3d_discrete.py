@@ -8,7 +8,7 @@ from utilities.basic_logger import setup_logger
 from utilities.set_random_seed import set_random_seeds
 
 setup_logger()
-set_random_seeds(100)
+set_random_seeds(115)
 
 parser_args = process_args()
 
