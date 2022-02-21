@@ -10,6 +10,7 @@ from utilities.fixe_model_parameters import fix_observation_parameters
 from utilities.set_random_seed import set_random_seeds
 
 setup_logger()
+# 115
 set_random_seeds(115)
 
 parser_args = process_args()
