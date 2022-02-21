@@ -114,7 +114,7 @@ class InfoCollector:
         result["found_occ_sum"] = found_occ_cells_sum_smooth_n
         result["found_free_sum"] = found_free_cells_sum_smooth_n
         result["rewards_sum"] = rewards_sum_smooth_n
-        result["collision_sum"] = visit_gain_sum_smooth_n
+        result["visit_gain_sum"] = visit_gain_sum_smooth_n
         result["coverage_rate"] = coverage_rate_smooth_n
 
         if not np.isnan(agent_statistics[0][1]):
@@ -169,8 +169,8 @@ class InfoCollector:
         result["found_occ_sum"] = found_occ_cells_sum_smooth_n
         result["found_free_sum"] = found_free_cells_sum_smooth_n
         result["rewards_sum"] = rewards_sum_smooth_n
-        result["collision_sum"] = visit_gain_sum_smooth_n
-        result["visit_gain_sum"] = collision_sum_smooth_n
+        result["visit_gain_sum"] = visit_gain_sum_smooth_n
+        result["collision_sum"] = collision_sum_smooth_n
 
         result["found_roi_rate_to_total"] = found_roi_cells_sum_smooth_n / env.roi_total
         result["found_occ_rate_to_total"] = found_occ_cells_sum_smooth_n / env.occ_total
