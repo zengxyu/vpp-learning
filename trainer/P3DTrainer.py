@@ -51,7 +51,7 @@ class P3DTrainer(object):
                 self.env.gui.run()
             else:
                 print("Start evaluating without head")
-                self.evaluate_n_times(self.parser_args.num_episodes)
+                self.evaluate_n_times(self.parser_args.training_config["num_episodes"])
 
     def training(self):
         phase = "Train"
