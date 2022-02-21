@@ -82,6 +82,7 @@ class FieldRos:
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
 
     def step(self, action):
+        print("action:{}".format(action))
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)

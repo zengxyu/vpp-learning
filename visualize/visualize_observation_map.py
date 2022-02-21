@@ -101,7 +101,7 @@ def compute_vecs():
     robot_rot = Rotation.from_quat([0, 0, 0, 1])
     axes = robot_rot.as_matrix().transpose()
     rh = np.radians(np.linspace(-180, 180, 36))
-    rv = np.radians(np.linspace(-90, 90, 18))
+    rv = np.radians(np.linspace(0, 180, 18))
     rots_x = Rotation.from_rotvec(np.outer(rh, axes[2]))
     rots_y = Rotation.from_rotvec(np.outer(rv, axes[1]))
 
@@ -116,7 +116,7 @@ def compute_vecs():
 
 
 if __name__ == '__main__':
-    get_observation_map()
+    # get_observation_map()
     fig = plt.figure()
     ax = Axes3D(fig)
 

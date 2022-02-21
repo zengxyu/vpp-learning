@@ -17,9 +17,8 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 from direct.stdpy import threading
 
-from trainer.P3DTrainer import add_scalar
 from trainer.trainer_helper import save_episodes_info
-from utilities.info import EpisodeInfo
+from utilities.info import EpisodeInfo, InfoCollector
 
 
 class RosTrainer(object):
@@ -34,8 +33,8 @@ class RosTrainer(object):
         self.train_i_episode = 0
         self.test_i_episode = 0
         self.global_i_step = 0
-        self.train_collector = EpisodeInfo(self.training_config["train_smooth_n"])
-        self.test_collector = EpisodeInfo(self.training_config["test_smooth_n"])
+        self.train_collector = InfoCollector(self.training_config["train_smooth_n"])
+        self.test_collector = InfoCollector(self.training_config["test_smooth_n"])
         self.train_step_collector = {}
         self.test_step_collector = {}
 
@@ -78,11 +77,10 @@ class RosTrainer(object):
             infos.append(info)
             print_step_info(self.train_i_episode, i_step, info, self.train_step_collector)
 
-        add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
-                                    episode_info_collector=self.train_collector, env=self.env)
-        add_scalar(self.writer, phase, self.train_collector.get_smooth_statistics(), self.train_i_episode)
-        save_episodes_info(phase, self.train_collector, self.train_i_episode, self.parser_args.out_result,
-                           self.training_config["save_train_result_n"])
+        self.train_collector.add(infos)
+        self.train_collector.add_ros_statistic_to_scalar(self.agent.get_statistics())
+        self.train_collector.save_infos(phase, self.train_i_episode, self.parser_args.out_result,
+                                        self.training_config["save_train_result_n"])
 
         if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
             self.agent.save("{}/model_epi_{}".format(self.parser_args.out_model, self.train_i_episode))
@@ -110,11 +108,10 @@ class RosTrainer(object):
                 infos.append(info)
                 print_step_info(self.test_i_episode, i_step, info, self.test_step_collector)
 
-        add_statistics_to_collector(infos=infos, agent_statistics=self.agent.get_statistics(),
-                                    episode_info_collector=self.test_collector, env=self.env)
-        add_scalar(self.writer, phase, self.test_collector.get_smooth_statistics(), self.test_i_episode)
-        save_episodes_info(phase, self.test_collector, self.test_i_episode, self.parser_args.out_result,
-                           self.training_config["save_test_result_n"])
+        self.test_collector.add(infos)
+        self.test_collector.add_ros_statistic_to_scalar(self.agent.get_statistics())
+        self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
+                                       self.training_config["save_test_result_n"])
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
@@ -122,34 +119,6 @@ class RosTrainer(object):
         for i in range(n):
             print("\nEpisode:{}".format(i))
             self.evaluating()
-
-
-def add_statistics_to_collector(infos: List[Dict], agent_statistics, episode_info_collector: EpisodeInfo, env):
-    # calculate the statistic info for each episode, then added to episode_info_collector
-    new_free_cells_sum = 0
-    new_occ_cells_sum = 0
-    new_roi_cells_sum = 0
-    rewards_sum = 0
-
-    for info in infos:
-        new_free_cells_sum += info["new_free_cells"]
-        new_occ_cells_sum += info["new_occupied_cells"]
-        new_roi_cells_sum += info["new_found_rois"]
-        rewards_sum += info["reward"]
-
-    print("rewards_sum : ", rewards_sum)
-    print("new_roi_cells_sum : ", new_roi_cells_sum)
-    print("new_occ_cells_sum : ", new_occ_cells_sum)
-    print("new_free_cells_sum : ", new_free_cells_sum)
-
-    episode_info_collector.add({"rewards_sum": rewards_sum})
-    episode_info_collector.add({"found_roi_sum": new_roi_cells_sum})
-    episode_info_collector.add({"found_occ_sum": new_occ_cells_sum})
-    episode_info_collector.add({"found_free_sum": new_free_cells_sum})
-
-    if not np.isnan(agent_statistics[0][1]):
-        episode_info_collector.add({"average_q": agent_statistics[0][1]})
-        episode_info_collector.add({"loss": agent_statistics[1][1]})
 
 
 def print_step_info(episode: int, step: int, info: Dict, step_collector: Dict):
