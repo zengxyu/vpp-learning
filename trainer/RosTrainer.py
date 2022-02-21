@@ -17,7 +17,7 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 from direct.stdpy import threading
 
-from trainer.trainer_helper import save_episodes_info
+from trainer.trainer_helper import save_episodes_info, add_scalar
 from utilities.info import EpisodeInfo, InfoCollector
 
 
@@ -78,9 +78,10 @@ class RosTrainer(object):
             print_step_info(self.train_i_episode, i_step, info, self.train_step_collector)
 
         self.train_collector.add(infos)
-        self.train_collector.get_ros_smooth_statistic(self.agent.get_statistics())
+        smooth_results = self.train_collector.get_ros_smooth_statistic(self.agent.get_statistics())
         self.train_collector.save_infos(phase, self.train_i_episode, self.parser_args.out_result,
                                         self.training_config["save_train_result_n"])
+        add_scalar(self.writer, phase, smooth_results, self.train_i_episode)
 
         if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
             self.agent.save("{}/model_epi_{}".format(self.parser_args.out_model, self.train_i_episode))
@@ -109,9 +110,11 @@ class RosTrainer(object):
                 print_step_info(self.test_i_episode, i_step, info, self.test_step_collector)
 
         self.test_collector.add(infos)
-        self.test_collector.get_ros_smooth_statistic(self.agent.get_statistics())
+        smooth_results = self.test_collector.get_ros_smooth_statistic(self.agent.get_statistics())
         self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
                                        self.training_config["save_test_result_n"])
+        add_scalar(self.writer, phase, smooth_results, self.test_i_episode)
+
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
