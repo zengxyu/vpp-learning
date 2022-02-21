@@ -80,7 +80,7 @@ class InfoCollector:
                 else:
                     self.episode_infos[key][-1].append(step_info[key])
 
-    def add_ros_statistic_to_scalar(self, agent_statistics):
+    def get_ros_smooth_statistic(self, agent_statistics):
         left_index = max(self.length - self.smooth_n, 0)
         found_roi_cells_sum_latest_n = np.sum(np.array(self.episode_infos["new_found_rois"])[left_index:, :], axis=1)
         found_occ_cells_sum_latest_n = np.sum(np.array(self.episode_infos["new_occupied_cells"])[left_index:, :],
@@ -120,10 +120,9 @@ class InfoCollector:
         if not np.isnan(agent_statistics[0][1]):
             result["average_q"] = agent_statistics[0][1]
             result["loss"] = agent_statistics[1][1]
-
         return result
 
-    def add_p3d_statistic_to_scalar(self, env, agent_statistics):
+    def get_p3d_smooth_statistic(self, env, agent_statistics):
         left_index = max(self.length - self.smooth_n, 0)
         found_roi_cells_sum_latest_n = np.sum(np.array(self.episode_infos["new_found_rois"])[left_index:, :], axis=1)
         found_occ_cells_sum_latest_n = np.sum(np.array(self.episode_infos["new_occupied_cells"])[left_index:, :],

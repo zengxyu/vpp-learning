@@ -4,6 +4,7 @@ from rl_agents.pfrl_agents.action_builder import build_action_space
 from rl_agents.pfrl_agents.agent_builder import build_ddqn_agent
 from rl_agents.pfrl_agents.network_builder import build_network
 from trainer.P3DTrainer import P3DTrainer
+from trainer.P3DTrainerResume import P3DTrainerResume
 from utilities.basic_logger import setup_logger
 from utilities.fixe_model_parameters import fix_observation_parameters
 from utilities.set_random_seed import set_random_seeds
@@ -24,4 +25,4 @@ agent, scheduler = build_ddqn_agent(parser_args, network, action_space)
 # load yaml config
 env = FieldP3D(parser_args=parser_args, action_space=action_space)
 
-P3DTrainer(env=env, agent=agent, scheduler=scheduler, action_space=action_space, parser_args=parser_args).run()
+P3DTrainerResume(env=env, agent=agent, scheduler=scheduler, action_space=action_space, parser_args=parser_args).run()
