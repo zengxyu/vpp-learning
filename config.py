@@ -74,7 +74,7 @@ def setup_folder(parser_args):
     create_folders(
         [parser_args.out_folder, parser_args.out_model, parser_args.out_board, parser_args.out_result])
 
-    if not parser_args.train:
+    if not parser_args.train or parser_args.resume:
         if parser_args.in_folder is not None and parser_args.in_folder != "":
             parser_args.in_model = os.path.join(parser_args.in_folder, "model")
 
