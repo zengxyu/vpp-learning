@@ -141,6 +141,7 @@ class FieldRos:
             self.stuck_count = 0
 
         reward += weight["stuck_weight"] * max(self.stuck_count - 5, 0)
+        print(self.step_count, "after add stuck penalty:{}".format(reward))
 
         return reward
 
