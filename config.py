@@ -130,7 +130,7 @@ def process_args():
     parser_args.training_config[
         "num_episodes"] = parser_args.num_episodes if parser_args.num_episodes is not None else \
         parser_args.training_config["num_episodes"]
-
+    # TODO add it here
     # parser_args.env_config[
     #     "upper_bound_range_x"] = parser_args.num_episodes if parser_args.num_episodes is not None else \
     #     parser_args.training_config["num_episodes"]

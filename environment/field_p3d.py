@@ -14,6 +14,7 @@ from environment.utilities.count_cells_helper import count_observable_cells, cou
 from environment.utilities.map_concat_helper import concat
 from environment.utilities.plant_models_loader import load_plants
 from environment.utilities.random_plant_position_helper import get_random_multi_plant_models
+from environment.utilities.randomize_camera_position import randomize_camera_position
 from environment.utilities.save_observation_map_helper import save_observation_map
 
 from utilities.util import get_project_path
@@ -169,6 +170,9 @@ class FieldP3D:
         self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
         self.roi_total, self.occ_total, self.free_total = count_cells(self.global_map)
         self.observable_roi_total, self.observable_occ_total = count_observable_cells(self.env_config, self.plants)
+
+        if self.randomize_sensor_position:
+            self.robot_pos = randomize_camera_position(self.sensor_position_bound, self.plant_bounding_boxes)
 
         if self.randomize_sensor_position:
             self.robot_pos = np.random.randint(self.sensor_position_bound.lower_bound,
@@ -376,7 +380,7 @@ class FieldP3D:
         # 20 * 36 * 18
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_target_map, np.uint8)
 
-        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi)
+        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
 
         # step
         info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
@@ -416,20 +420,22 @@ class FieldP3D:
         if self.training_config["input"]["visit_map"]:
             return np.array([self.visit_map])
 
-    def get_reward(self, visit_gain, found_free, found_occ, found_roi):
+    def get_reward(self, visit_gain, found_free, found_occ, found_roi, collision):
         weight = self.training_config["rewards"]
         reward = weight["visit_gain_weight"] * visit_gain + \
                  weight["free_weight"] * found_free + \
                  weight["occ_weight"] * found_occ + \
                  weight["roi_weight"] * found_roi + \
-                 weight["collision_weight"] * max(self.collision_count - 1, 0) + \
-                 weight["stuck_weight"] * max(self.stuck_count - 5, 0)
+                 weight["collision_weight"] * max(self.collision_count - 1, 0)
         # print(self.step_count, "collision:{};reward:{}".format(collision, reward))
 
         if reward == 0:
             self.stuck_count += 1
         else:
             self.stuck_count = 0
+
+        reward += weight["stuck_weight"] * max(self.stuck_count - 5, 0)
+
         return reward
 
     def update_visit_map(self):
