@@ -119,3 +119,16 @@ def get_random_multi_plant_models(global_map: np.array, plants: List[np.array], 
         start_pos_list.append(start_pos)
 
     return global_map, bound_boxes
+
+
+def get_random_number_of_plants(plant_num_range, plant_types, plants):
+    num = np.random.choice(plant_num_range)
+    indexes = np.random.randint(0, len(plant_types), num)
+    chosen_plant_types = []
+    chosen_plants = []
+    for index in indexes:
+        plant_type = plant_types[index]
+        plant = plants[index]
+        chosen_plant_types.append(plant_type)
+        chosen_plants.append(plant)
+    return chosen_plant_types, chosen_plants
