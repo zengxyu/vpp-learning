@@ -4,8 +4,8 @@ shape_z_range: [ 0, 290 ]
 
 scale: 0.05
 max_steps: 200
-move_step: 10.0
-rot_step: 15.0
+move_step: 20.0
+rot_step: 20.0
 
 world_name: world14
 base: static
