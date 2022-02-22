@@ -22,6 +22,9 @@ class BoundBox:
                self.lower_bound[1] < self.upper_bound[1] and \
                self.lower_bound[2] < self.upper_bound[2]
 
+    def __str__(self):
+        return "Lower bound : {}; Upper bound : {}".format(self.lower_bound, self.upper_bound)
+
 
 def initialize_world_shape(env_config, randomize_world_size):
     """
