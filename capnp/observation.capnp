@@ -34,4 +34,6 @@ struct Observation {
 
   foundFree @16 :UInt32;
   foundOcc @17 :UInt32;
+
+  hasMoved @18 :Bool;
 }

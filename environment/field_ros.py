@@ -57,6 +57,8 @@ class FieldRos:
         self.visit_shape = None
         self.visit_map = None
         self.map = None
+        self.stuck_count = 0
+        self.collision_count = 0
 
         self.client = EnvironmentClient(self.handle_simulation, self.env_config["world_name"], self.env_config["base"],
                                         self.parser_args.head)
@@ -80,6 +82,8 @@ class FieldRos:
         self.visit_shape = (int(self.shape[0] // self.visit_resolution), int(self.shape[1] // self.visit_resolution),
                             int(self.shape[2] // self.visit_resolution))
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
+        self.stuck_count = 0
+        self.collision_count = 0
 
     def step(self, action):
         print("action:{}".format(action))
@@ -89,7 +93,7 @@ class FieldRos:
 
         relative_pose = np.append(relative_move, relative_rot.as_quat()).tolist()
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
-        found_roi, found_occ, found_free = self.client.sendRelativePose(relative_pose)
+        found_roi, found_occ, found_free, has_move = self.client.sendRelativePose(relative_pose)
 
         robot_pos = np.array(robot_pose[:3])
         robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
@@ -111,20 +115,33 @@ class FieldRos:
 
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
 
+        if not has_move:
+            self.collision_count += 1
+
         inputs = self.get_inputs()
-        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi)
+        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, not has_move)
 
         info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
                 "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate}
 
         return inputs, reward, done, info
 
-    def get_reward(self, visit_gain, found_free, found_occ, found_roi):
+    def get_reward(self, visit_gain, found_free, found_occ, found_roi, collision):
         weight = self.training_config["rewards"]
         reward = weight["visit_gain_weight"] * visit_gain + \
                  weight["free_weight"] * found_free + \
                  weight["occ_weight"] * found_occ + \
-                 weight["roi_weight"] * found_roi
+                 weight["roi_weight"] * found_roi + \
+                 weight["collision_weight"] * max(self.collision_count - 1, 0)
+        print(self.step_count, "collision:{}; reward:{}".format(collision, reward))
+
+        if reward == 0:
+            self.stuck_count += 1
+        else:
+            self.stuck_count = 0
+
+        reward += weight["stuck_weight"] * max(self.stuck_count - 5, 0)
+
         return reward
 
     def update_visit_map(self):
@@ -174,7 +191,7 @@ class FieldRos:
         self.initialize()
 
         # but the limitation from -1 to 1 was mainly for the static arm
-        unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells = self.client.sendReset(
+        unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells, has_move = self.client.sendReset(
             randomize=self.randomize, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
         self.robot_pos = np.array(robot_pose[:3])
         self.robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
