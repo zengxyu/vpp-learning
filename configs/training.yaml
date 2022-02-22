@@ -23,7 +23,7 @@ rewards:
   free_weight: 0
   occ_weight: 1
   roi_weight: 200
-  visit_gain_weight: 50
+  visit_gain_weight: 100
   collision_weight: 0
   stuck_weight: -100
   #  free_weight: 0
