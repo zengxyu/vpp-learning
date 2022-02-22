@@ -88,24 +88,28 @@ class InfoCollector:
         found_free_cells_sum_latest_n = np.sum(np.array(self.episode_infos["new_free_cells"])[left_index:, :], axis=1)
         rewards_sum_latest_n = np.sum(np.array(self.episode_infos["reward"])[left_index:, :], axis=1)
         visit_gain_sum_latest_n = np.sum(np.array(self.episode_infos["visit_gain"])[left_index:, :], axis=1)
+        collision_sum_latest_n = np.sum(np.array(self.episode_infos["collision"])[left_index:, :], axis=1)
         coverage_latest_n = np.array(self.episode_infos["coverage_rate"])[left_index:, -1]
 
         found_roi_cells_sum_latest = found_roi_cells_sum_latest_n[-1]
         found_occ_cells_sum_latest = found_occ_cells_sum_latest_n[-1]
         found_free_cells_sum_latest = found_free_cells_sum_latest_n[-1]
         rewards_sum_latest = rewards_sum_latest_n[-1]
+        collision_sum_latest = collision_sum_latest_n[-1]
         visit_gain_sum_latest = visit_gain_sum_latest_n[-1]
 
         print("found_roi_sum : ", found_roi_cells_sum_latest)
         print("found_occ_sum : ", found_occ_cells_sum_latest)
         print("found_free_sum : ", found_free_cells_sum_latest)
         print("rewards_sum : ", rewards_sum_latest)
+        print("collision_sum : ", collision_sum_latest)
         print("visit_gain_sum : ", visit_gain_sum_latest)
 
         found_roi_cells_sum_smooth_n = np.mean(found_roi_cells_sum_latest_n)
         found_occ_cells_sum_smooth_n = np.mean(found_occ_cells_sum_latest_n)
         found_free_cells_sum_smooth_n = np.mean(found_free_cells_sum_latest_n)
         rewards_sum_smooth_n = np.mean(rewards_sum_latest_n)
+        collision_sum_smooth_n = np.mean(collision_sum_latest_n)
         visit_gain_sum_smooth_n = np.mean(visit_gain_sum_latest_n)
         coverage_rate_smooth_n = np.mean(coverage_latest_n)
 
@@ -115,6 +119,7 @@ class InfoCollector:
         result["found_free_sum"] = found_free_cells_sum_smooth_n
         result["rewards_sum"] = rewards_sum_smooth_n
         result["visit_gain_sum"] = visit_gain_sum_smooth_n
+        result["collision_sum"] = collision_sum_smooth_n
         result["coverage_rate"] = coverage_rate_smooth_n
 
         if not np.isnan(agent_statistics[0][1]):
@@ -124,6 +129,7 @@ class InfoCollector:
 
     def get_p3d_smooth_statistic(self, env, agent_statistics):
         left_index = max(self.length - self.smooth_n, 0)
+        # compute the sum of the latest n episodes
         found_roi_cells_sum_latest_n = np.sum(np.array(self.episode_infos["new_found_rois"])[left_index:, :], axis=1)
         found_occ_cells_sum_latest_n = np.sum(np.array(self.episode_infos["new_occupied_cells"])[left_index:, :],
                                               axis=1)

@@ -53,7 +53,7 @@ class FieldRos:
 
         self.step_count = 0
 
-        self.visit_resolution = 16
+        self.visit_resolution = 8
         self.visit_shape = None
         self.visit_map = None
         self.map = None
@@ -86,16 +86,18 @@ class FieldRos:
         self.collision_count = 0
 
     def step(self, action):
+        # actions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        # action = actions[self.step_count % len(actions)]
         print("action:{}".format(action))
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
-
-        relative_pose = np.append(relative_move, relative_rot.as_quat()).tolist()
+        # relative_move_ros =
+        relative_pose = np.append(relative_move * self.resolution, relative_rot.as_quat()).tolist()
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
         found_roi, found_occ, found_free, has_move = self.client.sendRelativePose(relative_pose)
 
-        robot_pos = np.array(robot_pose[:3])
+        robot_pos = np.array(robot_pose[:3]) / self.resolution
         robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
 
         self.relative_position = robot_pos - self.robot_pos
@@ -115,15 +117,16 @@ class FieldRos:
 
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
 
-        if not has_move:
+        collision = not has_move
+        if collision:
             self.collision_count += 1
 
         inputs = self.get_inputs()
-        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, not has_move)
+        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
 
         info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
-                "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate}
-
+                "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate, "collision": collision}
+        print("robot pos : {}; robot rotation : {}".format(self.robot_pos, self.robot_rot.as_euler("xyz")))
         return inputs, reward, done, info
 
     def get_reward(self, visit_gain, found_free, found_occ, found_roi, collision):
