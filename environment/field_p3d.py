@@ -13,7 +13,8 @@ from environment.utilities.bound_helper import get_sensor_position_bound, get_wo
 from environment.utilities.count_cells_helper import count_observable_cells, count_cells
 from environment.utilities.map_concat_helper import concat
 from environment.utilities.plant_models_loader import load_plants
-from environment.utilities.random_plant_position_helper import get_random_multi_plant_models
+from environment.utilities.random_plant_position_helper import get_random_multi_plant_models, \
+    get_random_number_of_plants
 from environment.utilities.randomize_camera_position import randomize_camera_position
 from environment.utilities.save_observation_map_helper import save_observation_map
 
@@ -83,11 +84,11 @@ class FieldP3D:
         self.randomize_plant_position = self.env_config["randomize_plant_position"]
         self.randomize_sensor_position = self.env_config["randomize_sensor_position"]
         self.randomize_world_size = self.env_config["randomize_world_size"]
+        self.random_plant_number = self.env_config["random_plant_number"]
 
         self.thresh = self.env_config["thresh"]
         self.plant_position_margin = self.env_config["plant_position_margin"]
         self.sensor_position_margin = self.env_config["sensor_position_margin"]
-
         self.action_space = action_space
         self.reset_count = 0
 
@@ -125,13 +126,16 @@ class FieldP3D:
         self.visit_map = None
         self.map = None
         self.plant_bounding_boxes = None
+        self.plant_types = None
+        self.plants = None
 
         self.path_coords = []
 
         self.plant_models_dir = os.path.join(get_project_path(), "data", 'plant_models')
 
-        self.plants = load_plants(self.plant_models_dir, self.env_config["plant_types"],
-                                  self.env_config["roi_neighbors"], self.env_config["resolution"])
+        self.all_plant_types = self.env_config["plant_types"]
+        self.all_plants = load_plants(self.plant_models_dir, self.env_config["plant_types"],
+                                      self.env_config["roi_neighbors"], self.env_config["resolution"])
 
         self.initialize()
 
@@ -161,6 +165,13 @@ class FieldP3D:
 
         self.world_bound = get_world_bound(self.shape)
         self.sensor_position_bound = get_sensor_position_bound(self.world_bound, self.sensor_position_margin)
+
+        self.plant_types = self.all_plant_types
+        self.plants = self.all_plants
+        if self.random_plant_number:
+            self.plant_types, self.plants = get_random_number_of_plants(self.env_config["plant_num_range"],
+                                                                        self.all_plant_types, self.all_plants)
+        print("Plants number : {} ".format(len(self.plants)))
 
         # insert the plants randomly into the ground
         if self.randomize_plant_position:
@@ -427,7 +438,7 @@ class FieldP3D:
                  weight["occ_weight"] * found_occ + \
                  weight["roi_weight"] * found_roi + \
                  weight["collision_weight"] * max(self.collision_count - 1, 0)
-        # print(self.step_count, "collision:{};reward:{}".format(collision, reward))
+        # print(self.step_count, "collision:{}; reward:{}".format(collision, reward))
 
         if reward == 0:
             self.stuck_count += 1
