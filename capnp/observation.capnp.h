@@ -35,7 +35,7 @@ struct Observation {
   struct Map;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(d3d920ef8fc94d08, 5, 6)
+    CAPNP_DECLARE_STRUCT_HEADER(d3d920ef8fc94d08, 6, 6)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -57,7 +57,7 @@ struct Observation::Map {
   struct CountMap;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(f8aa7bb7b3aafd0c, 5, 6)
+    CAPNP_DECLARE_STRUCT_HEADER(f8aa7bb7b3aafd0c, 6, 6)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -72,7 +72,7 @@ struct Observation::Map::CountMap {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(d37a82c6120ef713, 5, 6)
+    CAPNP_DECLARE_STRUCT_HEADER(d37a82c6120ef713, 6, 6)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -113,6 +113,12 @@ public:
   inline  ::uint32_t getTotalRoiCells() const;
 
   inline double getEvalTotalTrajectoryDuration() const;
+
+  inline  ::uint32_t getFoundFree() const;
+
+  inline  ::uint32_t getFoundOcc() const;
+
+  inline bool getHasMoved() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -171,6 +177,15 @@ public:
 
   inline double getEvalTotalTrajectoryDuration();
   inline void setEvalTotalTrajectoryDuration(double value);
+
+  inline  ::uint32_t getFoundFree();
+  inline void setFoundFree( ::uint32_t value);
+
+  inline  ::uint32_t getFoundOcc();
+  inline void setFoundOcc( ::uint32_t value);
+
+  inline bool getHasMoved();
+  inline void setHasMoved(bool value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -601,6 +616,48 @@ inline double Observation::Builder::getEvalTotalTrajectoryDuration() {
 inline void Observation::Builder::setEvalTotalTrajectoryDuration(double value) {
   _builder.setDataField<double>(
       ::capnp::bounded<4>() * ::capnp::ELEMENTS, value);
+}
+
+inline  ::uint32_t Observation::Reader::getFoundFree() const {
+  return _reader.getDataField< ::uint32_t>(
+      ::capnp::bounded<10>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint32_t Observation::Builder::getFoundFree() {
+  return _builder.getDataField< ::uint32_t>(
+      ::capnp::bounded<10>() * ::capnp::ELEMENTS);
+}
+inline void Observation::Builder::setFoundFree( ::uint32_t value) {
+  _builder.setDataField< ::uint32_t>(
+      ::capnp::bounded<10>() * ::capnp::ELEMENTS, value);
+}
+
+inline  ::uint32_t Observation::Reader::getFoundOcc() const {
+  return _reader.getDataField< ::uint32_t>(
+      ::capnp::bounded<11>() * ::capnp::ELEMENTS);
+}
+
+inline  ::uint32_t Observation::Builder::getFoundOcc() {
+  return _builder.getDataField< ::uint32_t>(
+      ::capnp::bounded<11>() * ::capnp::ELEMENTS);
+}
+inline void Observation::Builder::setFoundOcc( ::uint32_t value) {
+  _builder.setDataField< ::uint32_t>(
+      ::capnp::bounded<11>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool Observation::Reader::getHasMoved() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<240>() * ::capnp::ELEMENTS);
+}
+
+inline bool Observation::Builder::getHasMoved() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<240>() * ::capnp::ELEMENTS);
+}
+inline void Observation::Builder::setHasMoved(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<240>() * ::capnp::ELEMENTS, value);
 }
 
 inline  ::vpp_msg::Observation::Map::Which Observation::Map::Reader::which() const {

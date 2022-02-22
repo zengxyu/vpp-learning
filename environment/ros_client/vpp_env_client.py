@@ -54,7 +54,7 @@ class EnvironmentClient:
             foundFree = obs_msg.foundFree
             foundOcc = obs_msg.foundOcc
             foundRois = obs_msg.foundRois
-
+        hasMove = obs_msg.hasMoved
         which = obs_msg.map.which()
         if which == 'countMap':
             shape = (obs_msg.map.countMap.layers, obs_msg.map.countMap.height, obs_msg.map.countMap.width)
@@ -63,7 +63,7 @@ class EnvironmentClient:
             occupiedCount = np.reshape(np.array(obs_msg.map.countMap.occupiedCount), shape)
             roiCount = np.reshape(np.array(obs_msg.map.countMap.roiCount), shape)
 
-            return unknownCount, freeCount, occupiedCount, roiCount, robotPose, foundRois, foundOcc, foundFree
+            return unknownCount, freeCount, occupiedCount, roiCount, robotPose, foundRois, foundOcc, foundFree, hasMove
 
         elif which == 'pointcloud':
             reward = 0
