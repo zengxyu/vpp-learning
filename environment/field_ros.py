@@ -138,13 +138,13 @@ class FieldRos:
                  weight["collision_weight"] * max(self.collision_count - 1, 0)
         print(self.step_count, "collision:{}; reward:{}".format(collision, reward))
 
-        if reward == 0:
-            self.stuck_count += 1
-        else:
-            self.stuck_count = 0
-
-        reward += weight["stuck_weight"] * max(self.stuck_count - 5, 0)
-        print(self.step_count, "after add stuck penalty:{}".format(reward))
+        # if reward == 0:
+        #     self.stuck_count += 1
+        # else:
+        #     self.stuck_count = 0
+        #
+        # reward += weight["stuck_weight"] * max(self.stuck_count - 5, 0)
+        # print(self.step_count, "after add stuck penalty:{}".format(reward))
 
         return reward
 
