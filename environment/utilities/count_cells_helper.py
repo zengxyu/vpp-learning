@@ -12,7 +12,7 @@
 import numpy as np
 
 
-def count_observable_cells(env_config, plants):
+def count_observable_cells(env_config, plant_types, plants):
     """
     calculate observable roi cells, observable occ cells
     """
@@ -21,7 +21,7 @@ def count_observable_cells(env_config, plants):
     observable_roi_total = 0
     observable_occ_total = 0
 
-    for plant, type in zip(plants, env_config["plant_types"]):
+    for plant, type in zip(plants, plant_types):
         observable_roi_total += np.sum(plant == 2) * plant_observable_roi_ratios[type]
         observable_occ_total += np.sum(plant == 1) * plant_observable_occ_ratios[type]
     return observable_roi_total, observable_occ_total

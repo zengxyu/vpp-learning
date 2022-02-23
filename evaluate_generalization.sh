@@ -1,2 +1,0 @@
-python3 run_p3d_discrete.py --in_folder=fixed_wsize_action10_sensor300_smallobs200 --in_model_index=700 --out_folder=evaluate_action10_sensor300_smallobs_maxsteps400_300x300x150_4plants --num_episodes=30;
-python3 run_p3d_discrete.py --in_folder=fixed_wsize_action10_sensor300_smallobs200 --in_model_index=700 --out_folder=evaluate_action10_sensor300_smallobs_maxsteps400_300x300x150_6plants --num_episodes=30;
