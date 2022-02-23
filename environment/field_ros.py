@@ -129,7 +129,7 @@ class FieldRos:
         inputs = self.get_inputs()
         reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
 
-        done = self.step_count >= self.max_steps or self.zero_rois_count == 10
+        done = self.step_count >= self.max_steps or self.zero_rois_count == 15
 
         info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
                 "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate, "collision": collision}
