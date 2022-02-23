@@ -26,7 +26,7 @@ rewards:
   visit_gain_weight: 100
   collision_weight: 0
 #  ros -50
-  stuck_weight: -50
+  stuck_weight: 0
   #  free_weight: 0
   #  occ_weight: 0
   #  roi_weight: 200
