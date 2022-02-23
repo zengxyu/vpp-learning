@@ -133,6 +133,8 @@ class FieldRos:
         info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
                 "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate, "collision": collision}
         print("robot pos : {}; robot rotation : {}".format(self.robot_pos, self.robot_rot.as_euler("xyz")))
+        print("self.zero_rois_count:{}".format(self.zero_rois_count))
+
         return inputs, reward, done, info
 
     def get_reward(self, visit_gain, found_free, found_occ, found_roi, collision):
