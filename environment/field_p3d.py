@@ -169,26 +169,26 @@ class FieldP3D:
         self.plant_types = self.all_plant_types
         self.plants = self.all_plants
         if self.random_plant_number:
-            self.plant_types, self.plants = get_random_number_of_plants(self.env_config["plant_num_range"],
+            self.plant_types, self.plants = get_random_number_of_plants(self.env_config["plant_num_choices"],
                                                                         self.all_plant_types, self.all_plants)
         print("Plants number : {} ".format(len(self.plants)))
+        print("Plants types : {} ".format(self.plant_types))
 
         # insert the plants randomly into the ground
         if self.randomize_plant_position:
             self.global_map, self.plant_bounding_boxes = get_random_multi_plant_models(self.global_map, self.plants,
                                                                                        self.thresh,
                                                                                        self.plant_position_margin)
-        self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
-        self.roi_total, self.occ_total, self.free_total = count_cells(self.global_map)
-        self.observable_roi_total, self.observable_occ_total = count_observable_cells(self.env_config, self.plants)
-
+        # randomize camera position if self.randomize_sensor_position True
         if self.randomize_sensor_position:
             self.robot_pos = randomize_camera_position(self.sensor_position_bound, self.plant_bounding_boxes)
 
-        if self.randomize_sensor_position:
-            self.robot_pos = np.random.randint(self.sensor_position_bound.lower_bound,
-                                               self.sensor_position_bound.upper_bound, size=(3,))
-            print("randomized sensor starting point = ", self.robot_pos)
+        print("Sensor start position : {}", self.robot_pos)
+
+        self.global_map += 1  # Shift: 1 - free, 2 - occupied/target
+        self.roi_total, self.occ_total, self.free_total = count_cells(self.global_map)
+        self.observable_roi_total, self.observable_occ_total = count_observable_cells(self.env_config, self.plant_types,
+                                                                                      self.plants)
 
         self.collision_count = 0
         self.stuck_count = 0
@@ -199,8 +199,13 @@ class FieldP3D:
 
         self.path_coords = [self.robot_pos]
 
-        print("#observable_roi/#roi = {}".format(self.observable_roi_total / self.roi_total))
-        print("#observable_occ/#occ = {}".format(self.observable_occ_total / self.occ_total))
+        print(
+            "#observable_roi = {}; #roi = {}; #observable_roi/#roi = {}".format(self.observable_roi_total,
+                                                                                self.roi_total,
+                                                                                self.observable_roi_total / self.roi_total))
+        print("##observable_occ = {}; #occ = {}; #observable_occ/#occ = {}".format(self.observable_occ_total,
+                                                                                   self.occ_total,
+                                                                                   self.observable_occ_total / self.occ_total))
 
         print("#roi = {}; #roi/#total = {}".format(self.roi_total, self.roi_total / (np.product(self.shape))))
         print("#occ = {}; #occ/#total = {}".format(self.occ_total, self.occ_total / (np.product(self.shape))))

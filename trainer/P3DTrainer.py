@@ -1,4 +1,5 @@
 import logging
+import random
 import time
 from typing import Dict, List
 
@@ -40,18 +41,19 @@ class P3DTrainer(object):
                 self.training()
                 if (i + 1) % 10 == 0:
                     print("\nTest Episode:{}".format(i))
-                    self.evaluating()
+                    self.evaluating(False)
                 self.scheduler.step()
                 print("Current learning rate : {}".format(self.agent.optimizer.state_dict()['param_groups'][0]['lr']))
         else:
             if head:
                 print("Start evaluating with head")
-                main_thread = threading.Thread(target=self.evaluate_n_times)
+                main_thread = threading.Thread(target=self.evaluate_n_times,
+                                               args=(True, 0.15, self.parser_args.training_config["num_episodes"]))
                 main_thread.start()
                 self.env.gui.run()
             else:
                 print("Start evaluating without head")
-                self.evaluate_n_times(self.parser_args.training_config["num_episodes"])
+                self.evaluate_n_times(True, 0.15, self.parser_args.training_config["num_episodes"])
 
     def training(self):
         phase = "Train"
@@ -82,7 +84,7 @@ class P3DTrainer(object):
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete training episode {}'.format(self.train_i_episode))
 
-    def evaluating(self):
+    def evaluating(self, with_epsilon=False, epsilon=0.15):
         phase = "ZEvaluation"
         start_time = time.time()
         self.test_i_episode += 1
@@ -94,6 +96,8 @@ class P3DTrainer(object):
         with self.agent.eval_mode():
             while not done:
                 action = self.agent.act(state)
+                if with_epsilon and random.random() < epsilon:
+                    action = np.random.randint(0, self.action_space.n)
                 state, reward, done, info = self.env.step(action)
                 self.agent.observe(obs=state, reward=reward, done=done, reset=False)
                 self.global_i_step += 1
@@ -109,7 +113,7 @@ class P3DTrainer(object):
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
-    def evaluate_n_times(self, n=10):
+    def evaluate_n_times(self, with_epsilon=False, epsilon=0.15, n=10):
         for i in range(n):
-            print("\nEpisode:{}".format(i))
-            self.evaluating()
+            print("\n=====================================Episode:{}=====================================".format(i))
+            self.evaluating(with_epsilon, epsilon)

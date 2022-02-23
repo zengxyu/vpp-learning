@@ -92,8 +92,10 @@ def process_args():
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--save_model_every_n", type=int)
     parser.add_argument("--num_episodes", type=int)
-
-    # parser.add_argument("--num_episodes", type=int)
+    parser.add_argument('--room_size', nargs='+', type=int)
+    parser.add_argument('--plant_num_choices', nargs='+', type=int)
+    parser.add_argument('--random_plant_number', type=bool)
+    parser.add_argument('--max_steps', type=int)
 
     parser_args = parser.parse_args()
 
@@ -130,14 +132,27 @@ def process_args():
     parser_args.training_config[
         "num_episodes"] = parser_args.num_episodes if parser_args.num_episodes is not None else \
         parser_args.training_config["num_episodes"]
-    # TODO add it here
-    # parser_args.env_config[
-    #     "upper_bound_range_x"] = parser_args.num_episodes if parser_args.num_episodes is not None else \
-    #     parser_args.training_config["num_episodes"]
 
-    # upper_bound_range_x: [300, 600]
-    # upper_bound_range_y: [300, 600]
-    # upper_bound_range_z: [150, 200]
+    room_size = parser_args.room_size
+    parser_args.env_config[
+        "upper_bound_range_x"][0] = room_size[0] if room_size is not None else parser_args.env_config[
+        "upper_bound_range_x"][0]
+    parser_args.env_config[
+        "upper_bound_range_y"][0] = room_size[1] if room_size is not None else parser_args.env_config[
+        "upper_bound_range_y"][0]
+    parser_args.env_config[
+        "upper_bound_range_z"][0] = room_size[2] if room_size is not None else parser_args.env_config[
+        "upper_bound_range_z"][0]
+    parser_args.env_config[
+        "plant_num_choices"] = parser_args.plant_num_choices if parser_args.plant_num_choices is not None else \
+        parser_args.env_config["plant_num_choices"]
+    parser_args.env_config[
+        "random_plant_number"] = parser_args.random_plant_number if parser_args.random_plant_number is not None else \
+        parser_args.env_config["random_plant_number"]
+    parser_args.env_config[
+        "max_steps"] = parser_args.max_steps if parser_args.max_steps is not None else parser_args.env_config[
+        "max_steps"]
+
     print("\nYaml env_config config:", parser_args.env_config)
     print("\nYaml agents_config config:", parser_args.agents_config)
     print("\nYaml training config:", parser_args.training_config)
