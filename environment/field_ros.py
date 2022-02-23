@@ -59,7 +59,7 @@ class FieldRos:
         self.map = None
         self.stuck_count = 0
         self.collision_count = 0
-
+        self.zero_rois_count = 0
         self.client = EnvironmentClient(self.handle_simulation, self.env_config["world_name"], self.env_config["base"],
                                         self.parser_args.head)
         if self.handle_simulation:
@@ -113,16 +113,22 @@ class FieldRos:
         self.found_free_sum += found_free
 
         self.step_count += 1
-        done = self.step_count >= self.max_steps
 
         self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
 
         collision = not has_move
+
         if collision:
             self.collision_count += 1
+        if found_roi == 0:
+            self.zero_rois_count += 1
+        else:
+            self.zero_rois_count = 0
 
         inputs = self.get_inputs()
         reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
+
+        done = self.step_count >= self.max_steps or self.zero_rois_count == 10
 
         info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
                 "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate, "collision": collision}
