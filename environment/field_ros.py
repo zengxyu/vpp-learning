@@ -84,6 +84,7 @@ class FieldRos:
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
         self.stuck_count = 0
         self.collision_count = 0
+        self.zero_rois_count = 0
 
     def step(self, action):
         # actions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
