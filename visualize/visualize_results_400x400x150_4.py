@@ -84,10 +84,10 @@ def plot_coverage_by_time_step(data_dir, data, observable_roi_totals, observable
             xs,
             rate - std,
             rate + std,
-            color="b",
+            color=colors[i],
             alpha=0.1
         )
-        plt.plot(xs, rate, 'b')
+        plt.plot(xs, rate, colors[i])
 
         plt.ylabel(y_labels[i])
         plt.xlabel("Time step")

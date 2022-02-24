@@ -31,8 +31,8 @@ def save_image(name, image):
 
 
 def minmaxscaler(data):
-    min = torch.min(data)
-    max = torch.max(data)
+    min = np.min(data)
+    max = np.max(data)
     return (data - min) / (max - min)
 
 
@@ -66,6 +66,7 @@ def con_frame2(frame, title):
 def display_image(image, title):
     scale = 10
     image = cv2.resize(image, (image.shape[1] * scale, image.shape[0] * scale))
+    image = np.transpose(image, (1, 0))
     cv2.imshow(title, image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
@@ -97,6 +98,64 @@ def get_observation_map():
     pass
 
 
+color_map = {"unknown": None, "free": None, "occ": None, "roi": None}
+
+
+def get_observation_map_first_layer(observation_maps):
+    observation_maps = np.reshape(np.array(observation_maps), (-1, 4, 5, 36, 18))
+    observation_maps = np.transpose(observation_maps, (0, 2, 1, 3, 4))
+
+    max_roi_map = observation_maps[0][0]
+    max_occ_map = observation_maps[0][1]
+    max_free_map = observation_maps[0][2]
+    max_unknown_map = observation_maps[0][3]
+
+    max_roi_sum = 0
+    max_roi_index = 0
+    for i, observation_map in enumerate(observation_maps):
+        # 5 x 36 x 18 (1).73 2
+        observation_map_first_layer = observation_map[2].squeeze()
+
+        unknown_map = observation_map_first_layer[0]
+        free_map = observation_map_first_layer[1]
+        occ_map = observation_map_first_layer[2]
+        roi_map = observation_map_first_layer[3]
+
+        roi_sum = np.sum(roi_map)
+
+        print("roi sum : {}".format(roi_sum))
+
+        if roi_sum > max_roi_sum:
+            max_roi_sum = roi_sum
+            max_roi_index = i
+            max_roi_map = roi_map
+            max_occ_map = occ_map
+            max_free_map = free_map
+            max_unknown_map = unknown_map
+
+    roi_map = minmaxscaler(max_roi_map)
+    occ_map = minmaxscaler(max_occ_map)
+    free_map = minmaxscaler(max_free_map)
+    unknown_map = minmaxscaler(max_unknown_map)
+    print("max roi index:{}".format(max_roi_index))
+    print("max roi sum:{}".format(max_roi_sum))
+
+    next_roi_map = minmaxscaler(observation_maps[max_roi_index + 1][0])
+    next_occ_map = minmaxscaler(observation_maps[max_roi_index + 1][1])
+    next_free_map = observation_maps[max_roi_index + 1][2]
+    next_unknown_map = observation_maps[max_roi_index + 1][3]
+
+    display_image(unknown_map, "unknown map")
+    display_image(free_map, "free map")
+    display_image(occ_map, "occ map")
+    display_image(roi_map, "roi map")
+
+    display_image(next_unknown_map, "next unknown map")
+    display_image(next_free_map, "next free map")
+    display_image(next_occ_map, "next occ map")
+    display_image(next_roi_map, "next roi map")
+
+
 def compute_vecs():
     robot_rot = Rotation.from_quat([0, 0, 0, 1])
     axes = robot_rot.as_matrix().transpose()
@@ -116,6 +175,16 @@ def compute_vecs():
 
 
 if __name__ == '__main__':
+    observation_map_root_dir = os.path.join(get_project_path(), "output", "observation_map", "result_log",
+                                            "observation_map")
+    observation_map_paths = [os.path.join(observation_map_root_dir, name) for name in
+                             os.listdir(observation_map_root_dir)]
+    observation_maps = []
+    for observation_map_path in observation_map_paths:
+        step_count, reward, action, observation_map = load_observation_map(observation_map_path)
+        observation_maps.append(observation_map)
+
+    get_observation_map_first_layer(observation_maps)
     # get_observation_map()
     fig = plt.figure()
     ax = Axes3D(fig)

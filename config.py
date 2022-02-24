@@ -81,7 +81,7 @@ def setup_folder(parser_args):
             check_folders_exist([parser_args.in_folder, parser_args.in_model])
 
 
-def process_args():
+def process_args(env_name):
     parser = argparse.ArgumentParser()
     parser.add_argument("--out_folder", type=str, default="test_folder")
     parser.add_argument("--in_folder", type=str, default=None)
@@ -96,6 +96,8 @@ def process_args():
     parser.add_argument('--plant_num_choices', nargs='+', type=int)
     parser.add_argument('--random_plant_number', type=bool)
     parser.add_argument('--max_steps', type=int)
+    parser.add_argument('--save_obs', type=bool)
+
 
     parser_args = parser.parse_args()
 
@@ -123,7 +125,11 @@ def process_args():
     parser_args.env_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "env.yaml")
     parser_args.env_config_ros = read_yaml(os.path.join(parser_args.out_folder, "configs"), "env_ros.yaml")
     parser_args.agents_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "agents.yaml")
-    parser_args.training_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "training.yaml")
+
+    if env_name == "p3d":
+        parser_args.training_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "training.yaml")
+    elif env_name == "ros":
+        parser_args.training_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "training_ros.yaml")
 
     parser_args.training_config[
         "save_model_every_n"] = parser_args.save_model_every_n if parser_args.save_model_every_n is not None else \
@@ -152,6 +158,9 @@ def process_args():
     parser_args.env_config[
         "max_steps"] = parser_args.max_steps if parser_args.max_steps is not None else parser_args.env_config[
         "max_steps"]
+    parser_args.env_config[
+        "save_obs"] = parser_args.save_obs if parser_args.save_obs is not None else parser_args.env_config[
+        "save_obs"]
 
     print("\nYaml env_config config:", parser_args.env_config)
     print("\nYaml agents_config config:", parser_args.agents_config)

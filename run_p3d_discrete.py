@@ -10,7 +10,7 @@ from utilities.set_random_seed import set_random_seeds
 setup_logger()
 set_random_seeds(115)
 
-parser_args = process_args()
+parser_args = process_args("p3d")
 
 action_space = build_action_space(parser_args)
 

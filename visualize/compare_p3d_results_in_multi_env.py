@@ -60,6 +60,7 @@ def compute_occ_roi_rates(data_dir):
 if __name__ == '__main__':
     evaluation_root = os.path.join(get_project_path(), "output", "evaluation")
     evaluation_dirs = os.listdir(evaluation_root)
+    evaluation_dirs = sorted(evaluation_dirs)
     data_dir_paths = [os.path.join(evaluation_root, evaluation_dir) for evaluation_dir in evaluation_dirs]
 
     for data_dir_path in data_dir_paths:
