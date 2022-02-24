@@ -30,35 +30,38 @@ def read_data(data_dir):
 
     all_plants = load_plants(plant_models_dir, env_config["plant_types"], env_config["roi_neighbors"],
                              env_config["resolution"])
-    plant_dict = {}
-    for plant_type, plant in zip(env_config["plant_types"], all_plants):
-        plant_dict[plant_type] = plant
-
-    observable_roi_total_list = []
-    observable_occ_total_list = []
-    for plant_types in plant_types_list:
+    roi_rates = []
+    occ_rates = []
+    for i, plant_types in enumerate(plant_types_list):
         plants = [all_plants[env_config["plant_types"].index(plant_type)] for plant_type in plant_types]
         observable_roi_total, observable_occ_total = count_observable_cells(env_config, plant_types, plants)
-        observable_roi_total_list.append(observable_roi_total)
-        observable_occ_total_list.append(observable_occ_total)
+        roi_sum = np.sum(data['new_found_rois'][i][:300]) + 1e-08
+        occ_sum = np.sum(data['new_occupied_cells'][i][:300]) + 1e-08
 
-    return data, observable_roi_total_list, observable_occ_total_list
+        roi_rate = roi_sum / observable_roi_total
+        occ_rate = occ_sum / observable_occ_total
+        roi_rates.append(roi_rate)
+        occ_rates.append(occ_rate)
+        # print("i:{};plant_types:{};observable_roi_total:{};"
+        #       "observable_occ_total:{}; rois sum:{}; occ sum:{}".format(i, plant_types, observable_roi_total,
+        #                                                                 observable_occ_total, roi_sum, occ_sum))
+
+    return data, np.array(roi_rates), np.array(occ_rates)
 
 
 def compute_occ_roi_rates(data_dir):
-    data, observable_roi_total, observable_occ_total = read_data(data_dir)
-    occupied_cells = np.array(data['new_occupied_cells'])
-    rois_cells = np.array(data["new_found_rois"])
-    occupied_rate = np.mean(np.sum(occupied_cells[:, :300], axis=1)) / observable_occ_total
-    rois_rate = np.mean(np.sum(rois_cells[:, :300], axis=1)) / observable_roi_total
-    return occupied_rate, rois_rate
+    data, roi_rates, occ_rates = read_data(data_dir)
+    occ_rates = np.mean(occ_rates)
+    roi_rates = np.mean(roi_rates)
+
+    return occ_rates, roi_rates
 
 
 if __name__ == '__main__':
-    evaluation_root = os.path.join(get_project_path(), "output", "evaluation2")
+    evaluation_root = os.path.join(get_project_path(), "output", "evaluation")
     evaluation_dirs = os.listdir(evaluation_root)
     data_dir_paths = [os.path.join(evaluation_root, evaluation_dir) for evaluation_dir in evaluation_dirs]
 
     for data_dir_path in data_dir_paths:
         occupied_rate, rois_rate = compute_occ_roi_rates(data_dir_path)
-        print("{}: occupied_rate : {}; rois_rate : {}".format(data_dir_path, occupied_rate, rois_rate))
+        print("{}:\n occupied_rate : {};\n rois_rate : {}".format(data_dir_path, occupied_rate, rois_rate))
