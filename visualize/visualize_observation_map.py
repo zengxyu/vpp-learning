@@ -1,19 +1,13 @@
+import colorsys
 import pickle
 import argparse
 import cv2
-import torch
 import os
 import os.path
 
-import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-
-from scipy.spatial.transform import Rotation
 
 from utilities.util import get_project_path
-
-vec_apply = np.vectorize(Rotation.apply, otypes=[np.ndarray], excluded=['vectors', 'inverse'])
 
 
 def get_parser_args():
@@ -25,51 +19,46 @@ def get_parser_args():
     return parser_args
 
 
-def save_image(name, image):
-    image_path = os.path.join(save_path, name)
-    cv2.imwrite(image_path, image * 256)
-
-
 def minmaxscaler(data):
     min = np.min(data)
     max = np.max(data)
     return (data - min) / (max - min)
 
 
-def con_frame(frame):
-    con_frames = frame[0]
-    for i in range(1, 15, 1):
-        br = np.ones((frame[i].shape[0], 2))
-        con_frames = np.hstack([con_frames, br, frame[i]])
-
-    return con_frames
-
-
-def con_frame2(frame, title):
-    "将一个observation map合成彩色图像"
-    results = None
-    for i in range(5):
-        a = [frame[0 + i]]
-        a.append(frame[5 + i])
-        a.append(frame[10 + i])
-        a = np.array(a)
-        a = a.transpose((1, 2, 0))
-        if results is None:
-            results = [a]
-        else:
-            results.append(a)
-        save_image(title + "_{}.png".format(i), a)
-    results = np.hstack(results)
-    return results
-
-
-def display_image(image, title):
-    scale = 10
-    image = cv2.resize(image, (image.shape[1] * scale, image.shape[0] * scale))
-    image = np.transpose(image, (1, 0))
+def display_image(title: str, image: np.array):
     cv2.imshow(title, image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+
+def colorize_image(image: np.array, hue: float):
+    scale = 10
+    image = cv2.resize(image, (image.shape[1] * scale, image.shape[0] * scale))
+    # image = np.transpose(image, (1, 0))
+    image_shape = image.shape
+    new_image = np.zeros((image_shape[0], image_shape[1], 3)).astype(np.uint8)
+    image = minmaxscaler(image)
+    for i in range(len(image)):
+        for j in range(len(image[i])):
+            p = image[i][j]
+
+            h = hue
+            l = 0.3
+            s = p * 1.5
+            if s > 1:
+                s = 1
+            v = 1
+            # rgb = colorsys.hls_to_rgb(h, l, s)
+            rgb = colorsys.hsv_to_rgb(h, s, v)
+            pr, pg, pb = [int(x * 255) for x in rgb]
+            new_image[i, j, 0] = pb
+            new_image[i, j, 1] = pg
+            new_image[i, j, 2] = pr
+    return new_image
+
+
+def save_image(save_dir, name, image):
+    cv2.imwrite(os.path.join(save_dir, name + ".png"), image)
 
 
 def load_observation_map(path):
@@ -98,7 +87,7 @@ def get_observation_map():
     pass
 
 
-color_map = {"unknown": None, "free": None, "occ": None, "roi": None}
+hue_map = {"unknown": 0.1, "free": 0.4, "occ": 0.6, "roi": 0.95}
 
 
 def get_observation_map_first_layer(observation_maps):
@@ -140,43 +129,27 @@ def get_observation_map_first_layer(observation_maps):
     print("max roi index:{}".format(max_roi_index))
     print("max roi sum:{}".format(max_roi_sum))
 
-    next_roi_map = minmaxscaler(observation_maps[max_roi_index + 1][0])
-    next_occ_map = minmaxscaler(observation_maps[max_roi_index + 1][1])
-    next_free_map = observation_maps[max_roi_index + 1][2]
-    next_unknown_map = observation_maps[max_roi_index + 1][3]
+    next_roi_map = minmaxscaler(observation_maps[max_roi_index + 1][2].squeeze()[0])
+    next_occ_map = minmaxscaler(observation_maps[max_roi_index + 1][2].squeeze()[1])
+    next_free_map = observation_maps[max_roi_index + 1][2].squeeze()[2]
+    next_unknown_map = observation_maps[max_roi_index + 1][2].squeeze()[3]
+    result = {}
+    result["unknown_map"] = colorize_image(unknown_map, hue_map["unknown"])
+    result["free_map"] = colorize_image(free_map, hue_map["free"])
+    result["occ_map"] = colorize_image(occ_map, hue_map["occ"])
+    result["roi_map"] = colorize_image(roi_map, hue_map["roi"])
 
-    display_image(unknown_map, "unknown map")
-    display_image(free_map, "free map")
-    display_image(occ_map, "occ map")
-    display_image(roi_map, "roi map")
+    result["unknown_map_next"] = colorize_image(next_unknown_map, hue_map["unknown"])
+    result["free_map_next"] = colorize_image(next_free_map, hue_map["free"])
+    result["occ_map_next"] = colorize_image(next_occ_map, hue_map["occ"])
+    result["roi_map_next"] = colorize_image(next_roi_map, hue_map["roi"])
 
-    display_image(next_unknown_map, "next unknown map")
-    display_image(next_free_map, "next free map")
-    display_image(next_occ_map, "next occ map")
-    display_image(next_roi_map, "next roi map")
-
-
-def compute_vecs():
-    robot_rot = Rotation.from_quat([0, 0, 0, 1])
-    axes = robot_rot.as_matrix().transpose()
-    rh = np.radians(np.linspace(-180, 180, 36))
-    rv = np.radians(np.linspace(0, 180, 18))
-    rots_x = Rotation.from_rotvec(np.outer(rh, axes[2]))
-    rots_y = Rotation.from_rotvec(np.outer(rv, axes[1]))
-
-    rots = vec_apply(np.outer(rots_x, rots_y), vectors=axes[0])
-    rots = np.reshape(np.array(rots), (-1,))
-
-    rots2 = []
-    for rot in rots:
-        rots2.append([rot[0], rot[1], rot[2]])
-    rots2 = np.array(rots2)
-    return rots2
+    return result
 
 
 if __name__ == '__main__':
-    observation_map_root_dir = os.path.join(get_project_path(), "output", "observation_map", "result_log",
-                                            "observation_map")
+    result_dir = os.path.join(get_project_path(), "output", "observation_map", "result_log")
+    observation_map_root_dir = os.path.join(result_dir, "observation_map")
     observation_map_paths = [os.path.join(observation_map_root_dir, name) for name in
                              os.listdir(observation_map_root_dir)]
     observation_maps = []
@@ -184,54 +157,7 @@ if __name__ == '__main__':
         step_count, reward, action, observation_map = load_observation_map(observation_map_path)
         observation_maps.append(observation_map)
 
-    get_observation_map_first_layer(observation_maps)
-    # get_observation_map()
-    fig = plt.figure()
-    ax = Axes3D(fig)
+    result = get_observation_map_first_layer(observation_maps)
 
-    rots = compute_vecs()
-    rots = np.reshape(np.array(rots), (-1, 3))
-    rot_num = np.linalg.norm(rots[0])
-    depth = 5
-    frac = rot_num / depth
-    points = []
-    for direction in rots:
-        for i in range(depth):
-            points.append(i * frac * direction)
-
-    points = np.array(points) * 5
-    x = np.array(points[:, 0], np.float)
-    y = np.array(points[:, 1], np.float)
-    z = np.array(points[:, 2], np.float)
-    ax.scatter(x, y, z)
-    # ax.stem(x, y, z)
-    plt.show()
-
-    # # build up the numpy logo
-    # n_voxels = np.zeros((4, 7, 4), dtype=bool)
-    # n_voxels[0, 0, :] = True
-    # n_voxels[-1, 0, :] = True
-    # n_voxels[1, 0, 2] = True
-    # n_voxels[2, 0, 1] = True
-    # facecolors = np.where(n_voxels, '#FFD65D00', '#7A88CCFF')
-    # edgecolors = np.where(n_voxels, '#BFAB6E', '#7D84A6')
-    # filled = np.ones(n_voxels.shape)
-    #
-    # # upscale the above voxel image, leaving gaps
-    # filled_2 = explode(filled)
-    # fcolors_2 = explode(facecolors)
-    # ecolors_2 = explode(edgecolors)
-    #
-    # # Shrink the gaps
-    # x, y, z = np.indices(np.array(filled_2.shape) + 1).astype(float) // 2
-    # x[0::2, :, :] += 0.05
-    # y[:, 0::2, :] += 0.05
-    # z[:, :, 0::2] += 0.05
-    # x[1::2, :, :] += 0.95
-    # y[:, 1::2, :] += 0.95
-    # z[:, :, 1::2] += 0.95
-    #
-    # ax = plt.figure().add_subplot(projection='3d')
-    # ax.voxels(x, y, z, filled_2, facecolors=fcolors_2, edgecolors=ecolors_2)
-    # plt.savefig(os.path.join(get_project_path(), "output", "matplot.png"))
-    # plt.show()
+    for key in result.keys():
+        save_image(result_dir, key, result[key])
