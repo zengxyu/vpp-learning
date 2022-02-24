@@ -3,7 +3,7 @@
 # gpu <0 : use cpu
 gpu: -1
 num_episodes: 10000000
-save_model_every_n: 100
+save_model_every_n: 25
 save_train_result_n: 100
 save_test_result_n: 10
 
