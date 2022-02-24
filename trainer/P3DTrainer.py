@@ -48,12 +48,12 @@ class P3DTrainer(object):
             if head:
                 print("Start evaluating with head")
                 main_thread = threading.Thread(target=self.evaluate_n_times,
-                                               args=(True, 0.15, self.parser_args.training_config["num_episodes"]))
+                                               args=(True, 0.1, self.parser_args.training_config["num_episodes"]))
                 main_thread.start()
                 self.env.gui.run()
             else:
                 print("Start evaluating without head")
-                self.evaluate_n_times(True, 0.15, self.parser_args.training_config["num_episodes"])
+                self.evaluate_n_times(True, 0.1, self.parser_args.training_config["num_episodes"])
 
     def training(self):
         phase = "Train"
@@ -84,7 +84,7 @@ class P3DTrainer(object):
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete training episode {}'.format(self.train_i_episode))
 
-    def evaluating(self, with_epsilon=False, epsilon=0.15):
+    def evaluating(self, with_epsilon=False, epsilon=0.1):
         phase = "ZEvaluation"
         start_time = time.time()
         self.test_i_episode += 1
@@ -114,7 +114,7 @@ class P3DTrainer(object):
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
-    def evaluate_n_times(self, with_epsilon=False, epsilon=0.15, n=10):
+    def evaluate_n_times(self, with_epsilon=False, epsilon=0.1, n=10):
         for i in range(n):
             print("\n=====================================Episode:{}=====================================".format(i))
             self.evaluating(with_epsilon, epsilon)
