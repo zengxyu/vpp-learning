@@ -165,10 +165,10 @@ class InfoCollector:
         result["visit_gain_sum"] = visit_gain_sum_smooth_n
         result["collision_sum"] = collision_sum_smooth_n
 
-        result["found_roi_rate_to_total"] = found_roi_cells_sum_smooth_n / env.roi_total
+        result["found_roi_rate_to_total"] = (found_roi_cells_sum_smooth_n + 0.00000001) / env.roi_total
         result["found_occ_rate_to_total"] = found_occ_cells_sum_smooth_n / env.occ_total
         result["found_free_rate_to_total"] = found_free_cells_sum_smooth_n / env.free_total
-        result["found_roi_rate_to_observable"] = found_roi_cells_sum_smooth_n / env.observable_roi_total
+        result["found_roi_rate_to_observable"] =(found_roi_cells_sum_smooth_n + 0.00000001)/ env.observable_roi_total
         result["found_occ_rate_to_observable"] = found_occ_cells_sum_smooth_n / env.observable_occ_total
         result["coverage_rate"] = coverage_rate_smooth_n
 
