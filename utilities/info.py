@@ -62,6 +62,7 @@ class InfoCollector:
 
     def __init__(self, smooth_n):
         self.episode_infos: Dict[List[List]] = {}
+        self.episode_plant_types: List[List[str]] = []
         self.smooth_n = smooth_n
         self.length = 0
 
@@ -79,6 +80,9 @@ class InfoCollector:
                     self.episode_infos[key].append([step_info[key]])
                 else:
                     self.episode_infos[key][-1].append(step_info[key])
+
+    def store_plant_types(self, plant_types: List[str]):
+        self.episode_plant_types.append(plant_types)
 
     def get_ros_smooth_statistic(self, agent_statistics):
         found_roi_cells_sum_latest = np.sum(np.array(self.episode_infos["new_found_rois"])[-1])
@@ -178,4 +182,4 @@ class InfoCollector:
         save_path = os.path.join(out_result, phase + "_log.pkl")
         if i_episode % save_n == 0:
             file = open(save_path, 'wb')
-            pickle.dump(self.episode_infos, file)
+            pickle.dump((self.episode_infos, self.episode_plant_types), file)

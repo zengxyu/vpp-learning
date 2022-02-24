@@ -35,7 +35,7 @@ def read_data(data_dir):
 
     plants = load_plants(plant_models_dir, env_config["plant_types"], env_config["roi_neighbors"],
                          env_config["resolution"])
-    observable_roi_total, observable_occ_total = count_observable_cells(env_config, plants)
+    observable_roi_total, observable_occ_total = count_observable_cells(env_config, env_config["plant_types"], plants)
 
     return pickle.load(file), observable_roi_total, observable_occ_total
 
