@@ -15,5 +15,5 @@ handle_simulation: True
 # choose from 0.01, 0.02, 0.005
 resolution: 0.01
 
-randomize: True
+randomize: False
 
