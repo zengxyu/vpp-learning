@@ -404,7 +404,7 @@ class FieldP3D:
 
         inputs = self.get_inputs()
 
-        save_observation_map(self.map, self.step_count, self.parser_args)
+        save_observation_map(self.map, self.step_count, self.parser_args, action, reward)
         return inputs, reward, done, info
 
     def generate_unknown_map_layer(self, cam_pos):

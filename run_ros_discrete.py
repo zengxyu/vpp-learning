@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.ERROR)
 # setup_logger()
 set_random_seeds(100)
 
-parser_args = process_args()
+parser_args = process_args("ros")
 
 action_space = build_action_space(parser_args)
 
