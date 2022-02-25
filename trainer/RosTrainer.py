@@ -98,7 +98,7 @@ class RosTrainer(object):
             self.env.reset_stuck_env()
 
     def check_stuck(self, rewards, collisions, visit_gains):
-        if np.sum(rewards) == 0 or np.std(visit_gains) == 0 or all(collisions):
+        if np.sum(rewards) == 0. or np.std(visit_gains) == 0. or all(collisions):
             return True
         return False
 
