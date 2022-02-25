@@ -147,14 +147,6 @@ class FieldRos:
                  weight["collision_weight"] * max(self.collision_count - 1, 0)
         print(self.step_count, "collision:{}; reward:{}".format(collision, reward))
 
-        # if reward == 0:
-        #     self.stuck_count += 1
-        # else:
-        #     self.stuck_count = 0
-        #
-        # reward += weight["stuck_weight"] * max(self.stuck_count - 5, 0)
-        # print(self.step_count, "after add stuck penalty:{}".format(reward))
-
         return reward
 
     def update_visit_map(self):
@@ -201,6 +193,7 @@ class FieldRos:
     def reset(self):
         print("-----------------------------------reset or randomize!-------------------------------------------")
         self.reset_count += 1
+
         self.initialize()
 
         # but the limitation from -1 to 1 was mainly for the static arm

@@ -68,6 +68,8 @@ class RosTrainer(object):
         done = False
         infos = []
         rewards = []
+        collisions = []
+        visit_gains = []
         i_step = 0
         while not done:
             action = self.agent.act(state)
@@ -77,6 +79,8 @@ class RosTrainer(object):
             i_step += 1
             infos.append(info)
             rewards.append(reward)
+            collisions.append(info["collision"])
+            visit_gains.append(info["visit_gain"])
             print_step_info(self.train_i_episode, i_step, info, self.train_step_collector)
 
         self.train_collector.add(infos)
@@ -90,8 +94,13 @@ class RosTrainer(object):
 
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete training episode {}'.format(self.train_i_episode))
-        if np.sum(rewards) == 0:
+        if self.check_stuck(rewards, collisions, visit_gains):
             self.env.reset_stuck_env()
+
+    def check_stuck(self, rewards, collisions, visit_gains):
+        if np.sum(rewards) == 0 or np.std(visit_gains) == 0 or all(collisions):
+            return True
+        return False
 
     def evaluating(self):
         phase = "ZEvaluation"
@@ -103,6 +112,8 @@ class RosTrainer(object):
         done = False
         infos = []
         rewards = []
+        collisions = []
+        visit_gains = []
         i_step = 0
         with self.agent.eval_mode():
             while not done:
@@ -113,6 +124,8 @@ class RosTrainer(object):
                 i_step += 1
                 infos.append(info)
                 rewards.append(reward)
+                collisions.append(info["collision"])
+                visit_gains.append(info["visit_gain"])
                 print_step_info(self.test_i_episode, i_step, info, self.test_step_collector)
 
         self.test_collector.add(infos)
@@ -123,7 +136,7 @@ class RosTrainer(object):
 
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
-        if np.sum(rewards) == 0:
+        if self.check_stuck(rewards, collisions, visit_gains):
             self.env.reset_stuck_env()
 
     def evaluate_n_times(self, n=10):
