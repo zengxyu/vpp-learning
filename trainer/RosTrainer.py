@@ -68,6 +68,7 @@ class RosTrainer(object):
         done = False
         infos = []
         i_step = 0
+        rewards = []
         while not done:
             action = self.agent.act(state)
             state, reward, done, info = self.env.step(action)
@@ -75,6 +76,7 @@ class RosTrainer(object):
             self.global_i_step += 1
             i_step += 1
             infos.append(info)
+            rewards.append(reward)
             print_step_info(self.train_i_episode, i_step, info, self.train_step_collector)
 
         self.train_collector.add(infos)
@@ -89,6 +91,9 @@ class RosTrainer(object):
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete training episode {}'.format(self.train_i_episode))
 
+        if np.sum(rewards) == 0:
+            self.env.reset_stuck_env()
+
     def evaluating(self):
         phase = "ZEvaluation"
         start_time = time.time()
@@ -99,10 +104,12 @@ class RosTrainer(object):
         done = False
         infos = []
         i_step = 0
+        rewards = []
         with self.agent.eval_mode():
             while not done:
                 action = self.agent.act(state)
                 state, reward, done, info = self.env.step(action)
+                rewards.append(reward)
                 self.agent.observe(obs=state, reward=reward, done=done, reset=False)
                 self.global_i_step += 1
                 i_step += 1
@@ -117,6 +124,9 @@ class RosTrainer(object):
 
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
+
+        if np.sum(rewards) == 0:
+            self.env.reset_stuck_env()
 
     def evaluate_n_times(self, n=10):
         for i in range(n):
