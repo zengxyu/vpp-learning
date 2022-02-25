@@ -271,8 +271,8 @@ class FieldGUI(ShowBase):
     def draw_coord_line(self, coord_list):
         coord_list = np.array(coord_list) * self.scale
         lines = LineSegs()
-        MIN_COLOR = np.array([1, 0.6, 0, 1])
-        MAX_COLOR = np.array([1, 1, 0, 1])
+        MIN_COLOR = np.array([1, 0, 0, 1])
+        MAX_COLOR = np.array([0, 0, 1, 1])
 
         lines.moveTo(coord_list[0][0], coord_list[0][1], coord_list[0][2])
         for i in range(1, len(coord_list)):
