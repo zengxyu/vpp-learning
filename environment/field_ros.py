@@ -1,4 +1,5 @@
 #!/usr/bin/environment python
+import os
 
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -102,6 +103,8 @@ class FieldRos:
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
         found_roi, found_occ, found_free, has_move = self.client.sendRelativePose(relative_pose)
         if self.process_died() or has_move is None:
+            print(
+                "+++++++++++++++++++++++++++++++++++++NOTICE gazebo Crashed++++++++++++++++++++++++++++++++++++++++++++++")
             return None, None, None, None
         else:
             robot_pos = np.array(robot_pose[:3]) / self.resolution
@@ -206,22 +209,34 @@ class FieldRos:
         # but the limitation from -1 to 1 was mainly for the static arm
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, new_roi_cells, new_occupied_cells, new_free_cells, has_move = self.client.sendReset(
             randomize=self.randomize, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
-        self.robot_pos = np.array(robot_pose[:3]) / self.resolution
-        self.robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
-        self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
-        inputs = self.get_inputs()
+        if self.process_died() or has_move is None:
+            print(
+                "+++++++++++++++++++++++++++++++++++++NOTICE gazebo Crashed++++++++++++++++++++++++++++++++++++++++++++++")
+            return None, None
+        else:
+            self.robot_pos = np.array(robot_pose[:3]) / self.resolution
+            self.robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
+            self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
+            inputs = self.get_inputs()
 
-        return inputs, {}
+            return inputs, {}
 
     def reset_stuck_env(self):
         if self.handle_simulation:
+            self.client.socket.close()
             self.shutdown_environment()
+            os.system("killall -9 gzserver")
+            os.system("killall -9 gzclient")
+            self.client = EnvironmentClient(self.handle_simulation, self.env_config["world_name"],
+                                            self.env_config["base"],
+                                            self.parser_args.head)
+
             self.start_environment()
 
     def shutdown_environment(self):
-        print('-----------------------------------SHUTDOWN--------------------------------')
+        print('-----------------------------------------------------SHUTDOWN-----------------------------------------')
         self.client.shutdownSimulation()
 
     def start_environment(self):
-        print('-----------------------------------RESTART---------------------------------')
+        print('-------------------------------------------------RESTART----------------------------------------------')
         self.client.startSimulation()
