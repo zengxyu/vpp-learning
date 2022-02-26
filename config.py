@@ -6,6 +6,7 @@ import sys
 
 import yaml
 
+from utilities.basic_logger import setup_logger
 from utilities.util import get_project_path
 
 
@@ -123,6 +124,16 @@ def process_args(env_name):
         copy_configs_to_folder(parser_args.in_folder, parser_args.out_folder)
 
     setup_folder(parser_args)
+    if parser_args.train:
+        setup_logger(filename=os.path.join(parser_args.out_folder, "train.log"), use_console_log=True,
+                     use_file_log=True)
+    else:
+        if parser_args.resume:
+            setup_logger(filename=os.path.join(parser_args.out_folder, "resume.log"), use_console_log=True,
+                         use_file_log=True)
+        else:
+            setup_logger(filename=os.path.join(parser_args.out_folder, "test.log"), use_console_log=True,
+                         use_file_log=True)
 
     # load some yaml files
     parser_args.env_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "env.yaml")

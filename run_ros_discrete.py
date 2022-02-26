@@ -8,8 +8,7 @@ from rl_agents.pfrl_agents.network_builder import build_network
 from trainer.RosTrainer import RosTrainer
 from utilities.set_random_seed import set_random_seeds
 
-logging.basicConfig(level=logging.ERROR)
-# setup_logger()
+# logging.basicConfig(level=logging.ERROR)
 set_random_seeds(100)
 
 parser_args = process_args("ros")
