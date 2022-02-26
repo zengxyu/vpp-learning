@@ -10,6 +10,7 @@
 ===========================================
 """
 import logging
+import random
 import time
 from typing import Dict, List
 
@@ -125,6 +126,8 @@ class RosTrainer(object):
         with self.agent.eval_mode():
             while (not done) and (not stuck):
                 action = self.agent.act(state)
+                if with_epsilon and random.random() < epsilon:
+                    action = np.random.randint(0, self.action_space.n)
                 state, reward, done, info = self.env.step(action)
                 if state is not None:
                     self.agent.observe(obs=state, reward=reward, done=done, reset=False)
