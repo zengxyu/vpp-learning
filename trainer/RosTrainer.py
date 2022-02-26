@@ -53,10 +53,10 @@ class RosTrainer(object):
                 self.training()
                 if (i + 1) % 10 == 0:
                     print("\nTest Episode:{}".format(i))
-                    self.evaluating()
+                    self.evaluating(with_epsilon=False, check_stuck=True)
         else:
             print("Start evaluating without head")
-            self.evaluate_n_times(n=self.parser_args.training_config["num_episodes"])
+            self.evaluate_n_times(True, 0.15, self.parser_args.training_config["num_episodes"], check_stuck=False)
 
     def training(self):
         phase = "Train"
@@ -109,7 +109,7 @@ class RosTrainer(object):
             return True
         return False
 
-    def evaluating(self):
+    def evaluating(self, with_epsilon=False, epsilon=0.15, check_stuck=True):
         phase = "ZEvaluation"
         start_time = time.time()
         self.test_i_episode += 1
@@ -147,13 +147,14 @@ class RosTrainer(object):
 
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
-        if self.check_stuck(rewards, collisions, visit_gains) or stuck:
-            self.env.reset_stuck_env()
+        if check_stuck:
+            if self.check_stuck(rewards, collisions, visit_gains) or stuck:
+                self.env.reset_stuck_env()
 
-    def evaluate_n_times(self, n=10):
+    def evaluate_n_times(self, with_epsilon=False, epsilon=0.15, n=10, check_stuck=True):
         for i in range(n):
-            print("\nEpisode:{}".format(i))
-            self.evaluating()
+            print("\n=====================================Episode:{}=====================================".format(i))
+            self.evaluating(with_epsilon, epsilon, check_stuck=check_stuck)
 
 
 def print_step_info(episode: int, step: int, info: Dict, step_collector: Dict):
