@@ -5,6 +5,7 @@ import os
 import time
 import zmq
 import capnp
+from roslaunch.pmon import ProcessListener
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..", "capnp"))
 import action_capnp
@@ -16,13 +17,26 @@ from timeit import default_timer as timer
 logging.basicConfig(level=logging.ERROR)
 
 
+class SubProcessListener(ProcessListener):
+    def __init__(self):
+        self.died = False
+        self.died_program = ""
+
+    def process_died(self, process_name, exit_code):
+        print(
+            "=============================process {} died========================================".format(process_name))
+        if process_name == "gzserver":
+            self.died = True
+            self.died_program = process_name
+
+
 class EnvironmentClient:
     def __init__(self, handle_simulation=False, world_name="world19", base="retractable", gui=False):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.RCVTIMEO = 1000  # in milliseconds
         self.socket.bind("tcp://*:5555")
-
+        self.process_listener = SubProcessListener()
         if handle_simulation:
             self.uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
             roslaunch.configure_logging(self.uuid)
@@ -31,8 +45,14 @@ class EnvironmentClient:
             self.launch_files = [(self.launch_file[0], self.launch_args)]
             signal.signal(signal.SIGINT, self.sigint_handler)
 
+    def process_died(self):
+        return self.process_listener.died
+
     def startSimulation(self):
-        self.parent = roslaunch.parent.ROSLaunchParent(self.uuid, self.launch_files)
+        self.process_listener.died = False
+        self.process_listener.died_program = ""
+        self.parent = roslaunch.parent.ROSLaunchParent(self.uuid, self.launch_files,
+                                                       process_listeners=self.process_listener)
         self.parent.start()
 
     def spinSimulationEventLoop(self):
@@ -104,27 +124,44 @@ class EnvironmentClient:
         action_msg.init("resetAndRandomize")
 
     def sendAction(self, action_msg):
+        start_time = time.time()
+        send_success = False
+        receive_success = False
         while True:
-            # print('Sending message')
+            print('Sending message')
             try:
                 self.socket.send(action_msg.to_bytes(), flags=zmq.NOBLOCK)
+                send_success = True
             except zmq.ZMQError:
-                # print('Could not send message, trying again in 1s...')
+                print('Could not send message, trying again in 1s...')
                 time.sleep(1)
+                if time.time() - start_time > 30:
+                    print("++++++++++++++++++++++++++Over the time limit 30 sec++++++++++++++++++++++++++")
+                    break
                 continue
             break
 
-        while True:
-            #  Get the reply.
-            # print('Receiving message')
-            try:
-                message = self.socket.recv()
-            except zmq.ZMQError:
-                # print('No response received, trying again...')
-                continue
-            break
-        obs_msg = observation_capnp.Observation.from_bytes(message)
-        return self.decodeObservation(obs_msg)
+        if send_success:
+            start_time = time.time()
+            while True:
+                #  Get the reply.
+                print('Receiving message')
+                try:
+                    message = self.socket.recv()
+                    receive_success = True
+                except zmq.ZMQError:
+                    print('No response received, trying again...')
+                    if time.time() - start_time > 30:
+                        print("++++++++++++++++++++++++++Over the time limit 30 sec++++++++++++++++++++++++++")
+                        break
+                    continue
+                break
+
+        if send_success and receive_success:
+            obs_msg = observation_capnp.Observation.from_bytes(message)
+            return self.decodeObservation(obs_msg)
+        else:
+            return None, None, None, None, None, None, None, None, None
 
     def sendRelativeJointTarget(self, joint_values):
         action_msg = action_capnp.Action.new_message()
