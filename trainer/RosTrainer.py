@@ -66,7 +66,8 @@ class RosTrainer(object):
         state, _ = self.env.reset()
 
         done = False
-        stuck = False
+        stuck = state is None
+
         infos = []
         rewards = []
         collisions = []
@@ -114,9 +115,8 @@ class RosTrainer(object):
         self.test_i_episode += 1
         self.test_step_collector = {}
         state, _ = self.env.reset()
-
+        stuck = state is None
         done = False
-        stuck = False
         infos = []
         rewards = []
         collisions = []

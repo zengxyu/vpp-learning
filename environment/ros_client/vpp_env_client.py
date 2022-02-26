@@ -25,7 +25,7 @@ class SubProcessListener(ProcessListener):
     def process_died(self, process_name, exit_code):
         print(
             "=============================process {} died========================================".format(process_name))
-        if process_name == "gzserver":
+        if str(process_name).__contains__("gazebo-"):
             self.died = True
             self.died_program = process_name
 
@@ -52,7 +52,7 @@ class EnvironmentClient:
         self.process_listener.died = False
         self.process_listener.died_program = ""
         self.parent = roslaunch.parent.ROSLaunchParent(self.uuid, self.launch_files,
-                                                       process_listeners=self.process_listener)
+                                                       process_listeners=[self.process_listener])
         self.parent.start()
 
     def spinSimulationEventLoop(self):
@@ -124,18 +124,22 @@ class EnvironmentClient:
         action_msg.init("resetAndRandomize")
 
     def sendAction(self, action_msg):
+        send_time_limit = 60
+        receive_time_limit = 60
         start_time = time.time()
         send_success = False
         receive_success = False
         while True:
             print('Sending message')
+            if self.process_died():
+                break
             try:
                 self.socket.send(action_msg.to_bytes(), flags=zmq.NOBLOCK)
                 send_success = True
             except zmq.ZMQError:
                 print('Could not send message, trying again in 1s...')
                 time.sleep(1)
-                if time.time() - start_time > 30:
+                if time.time() - start_time > send_time_limit:
                     print("++++++++++++++++++++++++++Over the time limit 30 sec++++++++++++++++++++++++++")
                     break
                 continue
@@ -146,12 +150,14 @@ class EnvironmentClient:
             while True:
                 #  Get the reply.
                 print('Receiving message')
+                if self.process_died():
+                    break
                 try:
                     message = self.socket.recv()
                     receive_success = True
                 except zmq.ZMQError:
                     print('No response received, trying again...')
-                    if time.time() - start_time > 30:
+                    if time.time() - start_time > receive_time_limit:
                         print("++++++++++++++++++++++++++Over the time limit 30 sec++++++++++++++++++++++++++")
                         break
                     continue
