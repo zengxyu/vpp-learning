@@ -56,7 +56,7 @@ class RosTrainer(object):
                     self.evaluating()
         else:
             print("Start evaluating without head")
-            self.evaluate_n_times()
+            self.evaluate_n_times(n=self.parser_args.training_config["num_episodes"])
 
     def training(self):
         phase = "Train"
@@ -66,35 +66,41 @@ class RosTrainer(object):
         state, _ = self.env.reset()
 
         done = False
+        stuck = False
         infos = []
         rewards = []
         collisions = []
         visit_gains = []
         i_step = 0
-        while not done:
+        while (not done) and (not stuck):
             action = self.agent.act(state)
-            state, reward, done, info = self.env.step(action)
-            self.agent.observe(obs=state, reward=reward, done=done, reset=False)
-            self.global_i_step += 1
-            i_step += 1
-            infos.append(info)
-            rewards.append(reward)
-            collisions.append(info["collision"])
-            visit_gains.append(info["visit_gain"])
-            print_step_info(self.train_i_episode, i_step, info, self.train_step_collector)
 
-        self.train_collector.add(infos)
-        smooth_results = self.train_collector.get_ros_smooth_statistic(self.agent.get_statistics())
-        self.train_collector.save_infos(phase, self.train_i_episode, self.parser_args.out_result,
-                                        self.training_config["save_train_result_n"])
-        add_scalar(self.writer, phase, smooth_results, self.train_i_episode)
+            state, reward, done, info = self.env.step(action)
+            if state is not None:
+                self.agent.observe(obs=state, reward=reward, done=done, reset=False)
+                self.global_i_step += 1
+                i_step += 1
+                infos.append(info)
+                rewards.append(reward)
+                collisions.append(info["collision"])
+                visit_gains.append(info["visit_gain"])
+                print_step_info(self.train_i_episode, i_step, info, self.train_step_collector)
+            else:
+                stuck = True
+
+        if not stuck:
+            self.train_collector.add(infos)
+            smooth_results = self.train_collector.get_ros_smooth_statistic(self.agent.get_statistics())
+            self.train_collector.save_infos(phase, self.train_i_episode, self.parser_args.out_result,
+                                            self.training_config["save_train_result_n"])
+            add_scalar(self.writer, phase, smooth_results, self.train_i_episode)
 
         if self.train_i_episode % self.training_config["save_model_every_n"] == 0:
             self.agent.save("{}/model_epi_{}".format(self.parser_args.out_model, self.train_i_episode))
 
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete training episode {}'.format(self.train_i_episode))
-        if self.check_stuck(rewards, collisions, visit_gains):
+        if self.check_stuck(rewards, collisions, visit_gains) or stuck:
             self.env.reset_stuck_env()
 
     def check_stuck(self, rewards, collisions, visit_gains):
@@ -110,33 +116,38 @@ class RosTrainer(object):
         state, _ = self.env.reset()
 
         done = False
+        stuck = False
         infos = []
         rewards = []
         collisions = []
         visit_gains = []
         i_step = 0
         with self.agent.eval_mode():
-            while not done:
+            while (not done) and (not stuck):
                 action = self.agent.act(state)
                 state, reward, done, info = self.env.step(action)
-                self.agent.observe(obs=state, reward=reward, done=done, reset=False)
-                self.global_i_step += 1
-                i_step += 1
-                infos.append(info)
-                rewards.append(reward)
-                collisions.append(info["collision"])
-                visit_gains.append(info["visit_gain"])
-                print_step_info(self.test_i_episode, i_step, info, self.test_step_collector)
+                if state is not None:
+                    self.agent.observe(obs=state, reward=reward, done=done, reset=False)
+                    self.global_i_step += 1
+                    i_step += 1
+                    infos.append(info)
+                    rewards.append(reward)
+                    collisions.append(info["collision"])
+                    visit_gains.append(info["visit_gain"])
+                    print_step_info(self.test_i_episode, i_step, info, self.test_step_collector)
+                else:
+                    stuck = True
 
-        self.test_collector.add(infos)
-        smooth_results = self.test_collector.get_ros_smooth_statistic(self.agent.get_statistics())
-        self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
-                                       self.training_config["save_test_result_n"])
-        add_scalar(self.writer, phase, smooth_results, self.test_i_episode)
+        if not stuck:
+            self.test_collector.add(infos)
+            smooth_results = self.test_collector.get_ros_smooth_statistic(self.agent.get_statistics())
+            self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
+                                           self.training_config["save_test_result_n"])
+            add_scalar(self.writer, phase, smooth_results, self.test_i_episode)
 
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
-        if self.check_stuck(rewards, collisions, visit_gains):
+        if self.check_stuck(rewards, collisions, visit_gains) or stuck:
             self.env.reset_stuck_env()
 
     def evaluate_n_times(self, n=10):

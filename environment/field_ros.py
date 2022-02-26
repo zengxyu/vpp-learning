@@ -69,6 +69,9 @@ class FieldRos:
         print("move step:", self.MOVE_STEP)
         print("rot step:", self.ROT_STEP)
 
+    def process_died(self):
+        return self.client.process_died()
+
     def initialize(self):
 
         self.relative_position = np.array([0., 0., 0.])
@@ -95,48 +98,52 @@ class FieldRos:
                                                                               self.ROT_STEP)
         # relative_move_ros =
         relative_pose = np.append(relative_move * self.resolution, relative_rot.as_quat()).tolist()
+
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
         found_roi, found_occ, found_free, has_move = self.client.sendRelativePose(relative_pose)
-
-        robot_pos = np.array(robot_pose[:3]) / self.resolution
-        robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
-
-        self.relative_position = robot_pos - self.robot_pos
-        self.relative_rotation = get_rotation_between_rotations(self.robot_rot, robot_rot)
-
-        self.robot_pos = robot_pos
-        self.robot_rot = robot_rot
-
-        visit_gain, coverage_rate = self.update_visit_map()
-
-        self.found_roi_sum += found_roi
-        self.found_occ_sum += found_occ
-        self.found_free_sum += found_free
-
-        self.step_count += 1
-
-        self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
-
-        collision = not has_move
-
-        if collision:
-            self.collision_count += 1
-        if found_roi == 0:
-            self.zero_rois_count += 1
+        if self.process_died() or has_move is None:
+            return None, None, None, None
         else:
-            self.zero_rois_count = 0
+            robot_pos = np.array(robot_pose[:3]) / self.resolution
+            robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
 
-        inputs = self.get_inputs()
-        reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
+            self.relative_position = robot_pos - self.robot_pos
+            self.relative_rotation = get_rotation_between_rotations(self.robot_rot, robot_rot)
 
-        done = self.step_count >= self.max_steps or self.zero_rois_count >= 15
+            self.robot_pos = robot_pos
+            self.robot_rot = robot_rot
 
-        info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
-                "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate, "collision": collision}
-        print("robot pos : {}; robot rotation : {}".format(self.robot_pos, self.robot_rot.as_euler("xyz")))
-        print("self.zero_rois_count:{}".format(self.zero_rois_count))
+            visit_gain, coverage_rate = self.update_visit_map()
 
-        return inputs, reward, done, info
+            self.found_roi_sum += found_roi
+            self.found_occ_sum += found_occ
+            self.found_free_sum += found_free
+
+            self.step_count += 1
+
+            self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
+
+            collision = not has_move
+
+            if collision:
+                self.collision_count += 1
+            if found_roi == 0:
+                self.zero_rois_count += 1
+            else:
+                self.zero_rois_count = 0
+
+            inputs = self.get_inputs()
+            reward = self.get_reward(visit_gain, found_free, found_occ, found_roi, collision)
+
+            done = self.step_count >= self.max_steps or self.zero_rois_count >= 15
+
+            info = {"visit_gain": visit_gain, "new_free_cells": found_free, "new_occupied_cells": found_occ,
+                    "new_found_rois": found_roi, "reward": reward, "coverage_rate": coverage_rate,
+                    "collision": collision}
+            print("robot pos : {}; robot rotation : {}".format(self.robot_pos, self.robot_rot.as_euler("xyz")))
+            print("self.zero_rois_count:{}".format(self.zero_rois_count))
+
+            return inputs, reward, done, info
 
     def get_reward(self, visit_gain, found_free, found_occ, found_roi, collision):
         weight = self.training_config["rewards"]
@@ -207,8 +214,9 @@ class FieldRos:
         return inputs, {}
 
     def reset_stuck_env(self):
-        self.shutdown_environment()
-        self.start_environment()
+        if self.handle_simulation:
+            self.shutdown_environment()
+            self.start_environment()
 
     def shutdown_environment(self):
         print('-----------------------------------SHUTDOWN--------------------------------')

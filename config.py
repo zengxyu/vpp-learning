@@ -94,10 +94,13 @@ def process_args(env_name):
     parser.add_argument("--num_episodes", type=int)
     parser.add_argument('--room_size', nargs='+', type=int)
     parser.add_argument('--plant_num_choices', nargs='+', type=int)
-    parser.add_argument('--random_plant_number', type=bool)
+    parser.add_argument('--random_plant_number', type=int)
     parser.add_argument('--max_steps', type=int)
-    parser.add_argument('--save_obs', type=bool)
-
+    parser.add_argument('--save_obs', type=int)
+    parser.add_argument('--world_name', type=str)
+    parser.add_argument('--base', type=str)
+    parser.add_argument('--handle_simulation', type=int)
+    parser.add_argument('--randomize', type=int)
 
     parser_args = parser.parse_args()
 
@@ -126,6 +129,8 @@ def process_args(env_name):
     parser_args.env_config_ros = read_yaml(os.path.join(parser_args.out_folder, "configs"), "env_ros.yaml")
     parser_args.agents_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "agents.yaml")
 
+    # use the parser argument to change config file
+    # for training_config
     if env_name == "p3d":
         parser_args.training_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "training.yaml")
     elif env_name == "ros":
@@ -139,6 +144,7 @@ def process_args(env_name):
         "num_episodes"] = parser_args.num_episodes if parser_args.num_episodes is not None else \
         parser_args.training_config["num_episodes"]
 
+    # for env_config
     room_size = parser_args.room_size
     parser_args.env_config[
         "upper_bound_range_x"][0] = room_size[0] if room_size is not None else parser_args.env_config[
@@ -161,7 +167,22 @@ def process_args(env_name):
     parser_args.env_config[
         "save_obs"] = parser_args.save_obs if parser_args.save_obs is not None else parser_args.env_config[
         "save_obs"]
-
+    # parser.add_argument('--world_name', type=str)
+    #     parser.add_argument('--base', type=str)
+    #     parser.add_argument('--handle_simulation', type=bool)
+    #     parser.add_argument('--randomize', type=bool)
+    # for env_config_ros
+    parser_args.env_config_ros[
+        "world_name"] = parser_args.world_name if parser_args.world_name is not None else parser_args.env_config_ros[
+        "world_name"]
+    parser_args.env_config_ros[
+        "base"] = parser_args.base if parser_args.base is not None else parser_args.env_config_ros["base"]
+    parser_args.env_config_ros[
+        "handle_simulation"] = parser_args.handle_simulation if parser_args.handle_simulation is not None else \
+        parser_args.env_config_ros["handle_simulation"]
+    parser_args.env_config_ros[
+        "randomize"] = parser_args.randomize if parser_args.randomize is not None else parser_args.env_config_ros[
+        "randomize"]
     print("\nYaml env_config config:", parser_args.env_config)
     print("\nYaml agents_config config:", parser_args.agents_config)
     print("\nYaml training config:", parser_args.training_config)
