@@ -57,7 +57,7 @@ class RosTrainer(object):
                     self.evaluating(with_epsilon=False, check_stuck=True)
         else:
             print("Start evaluating without head")
-            self.evaluate_n_times(True, 0.15, self.parser_args.training_config["num_episodes"], check_stuck=False)
+            self.evaluate_n_times(True, 0.1, self.parser_args.training_config["num_episodes"], check_stuck=False)
 
     def training(self):
         phase = "Train"
@@ -90,7 +90,9 @@ class RosTrainer(object):
             else:
                 stuck = True
 
-        if not stuck:
+        if self.check_stuck(rewards, collisions, visit_gains) or stuck:
+            self.env.reset_stuck_env()
+        else:
             self.train_collector.add(infos)
             smooth_results = self.train_collector.get_ros_smooth_statistic(self.agent.get_statistics())
             self.train_collector.save_infos(phase, self.train_i_episode, self.parser_args.out_result,
@@ -102,8 +104,7 @@ class RosTrainer(object):
 
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete training episode {}'.format(self.train_i_episode))
-        if self.check_stuck(rewards, collisions, visit_gains) or stuck:
-            self.env.reset_stuck_env()
+
 
     def check_stuck(self, rewards, collisions, visit_gains):
         if np.sum(rewards) == 0. or np.std(visit_gains) == 0. or all(collisions):
@@ -128,6 +129,7 @@ class RosTrainer(object):
                 action = self.agent.act(state)
                 if with_epsilon and random.random() < epsilon:
                     action = np.random.randint(0, self.action_space.n)
+
                 state, reward, done, info = self.env.step(action)
                 if state is not None:
                     self.agent.observe(obs=state, reward=reward, done=done, reset=False)
