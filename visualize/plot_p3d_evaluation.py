@@ -21,7 +21,6 @@ from environment.utilities.count_cells_helper import count_observable_cells
 from environment.utilities.plant_models_loader import load_plants
 from utilities.util import get_project_path
 from visualize.compare_p3d_results_in_multi_env import read_data
-from visualize.plot_format import init_plt, set_plt_format
 
 font_size = 14
 colors = ["#ff6666", "#6666ff", "#009999", "#ff9933", "#669900"]

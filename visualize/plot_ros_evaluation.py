@@ -118,41 +118,22 @@ def generateResultsFile(plot_names, results, out_folder):
                 final_results[j].append(result[-1])
 
 
-## Parameters
+parent_dir = "/home/zeng/catkin_ws"
+input_folder1 = os.path.join(parent_dir, "evaluation_ddqn_world14_staic")
 
-# out_folder = "plots_w14"
-# out_folder_old = out_folder + "_old"
+input_folder2 = os.path.join(parent_dir, "exp_results_global_m2s", "world14_m2s")
+input_folder3 = os.path.join(parent_dir, "exp_results_global_m2s", "world14")
 
-# input_folders = ['world14', 'world14_m2s', 'w14_learned_policy', 'w14_learned_policy_36x18', 'w14_dueling_dqn']
-# labels = ['Global planner only', 'With M2S', 'Learn2ed Policy', 'Learned Policy (36x18)', 'Dualing DQN']
-# input_ranges = [range(0, 20), range(0, 20), range(1, 21), range(1, 21), range(2, 22)]
-# input_folder1 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world19")
-# input_folder2 = os.path.join(get_project_path(), "evaluation_results", "exp_results_global_m2s", "world19_m2s")
-
-parent_dir = "/media/zeng/Workspace/results_paper/out_ros_final/evaluation"
-input_folder1 = os.path.join(parent_dir, "evaluation_lstm2")
-input_folder2 = os.path.join(parent_dir, "evaluation_ddqn")
-input_folder3 = os.path.join(parent_dir, "evaluation_dueling_dqn_w36_h18",
-                             "evaluation_dueling_dqn")
-
-input_folder4 = os.path.join(parent_dir, "exp_results_global_m2s", "world14_m2s")
-input_folder5 = os.path.join(parent_dir, "exp_results_global_m2s", "world14")
-
-out_folder = os.path.join(get_project_path(), "plot", "ros_evaluation_plot", "plots_w14")
-out_folder_old = os.path.join(get_project_path(), "plot", "ros_evaluation_plot", "plots_w14_old")
+out_folder = os.path.join(get_project_path(), "output", "evaluate_world14_static", "plots_w14")
+out_folder_old = os.path.join(get_project_path(), "output", "evaluate_world14_static", "plots_w14_old")
 if not os.path.exists(input_folder1):
     print("{} directory not exist".format(input_folder1))
-if not os.path.exists(input_folder2):
-    print("{} directory not exist".format(input_folder2))
 if not os.path.exists(out_folder):
     os.makedirs(out_folder)
     os.makedirs(out_folder_old)
-input_folders = [input_folder1, input_folder2, input_folder3, input_folder4, input_folder5]
-labels = ['DDQN with SOT', 'DDQN with SO', 'Dueling DQN with SO', 'Global planner only', 'With M2S']
-input_ranges = [range(1, 21), range(1, 21), range(2, 22), range(0, 20), range(0, 20)]
-# input_folders = [input_folder2, input_folder1]
-# labels = ['With M2S', 'Global planner only']
-# input_ranges = [range(0, 20), range(0, 20)]
+input_folders = [input_folder1, input_folder2, input_folder3]
+labels = ['Our RL-policy', 'Global planner only', 'With M2S']
+input_ranges = [range(1, 21), range(0, 20), range(0, 20)]
 
 time_column = 1
 columns = [3, 4, 5, 6, 7, 8, 9]
