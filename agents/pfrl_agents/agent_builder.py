@@ -1,10 +1,10 @@
 import torch
 from torch.nn import Module
 from pfrl.agents import DoubleDQN
-from rl_agents.pfrl_agents.explorer_builder import get_explorer_by_name
-from rl_agents.pfrl_agents.optimizer_builder import get_optimizer_by_name
-from rl_agents.pfrl_agents.replay_buffer_builder import get_replay_buffer_by_name
-from rl_agents.pfrl_agents.scheduler_builder import get_scheduler_by_name
+from agents.pfrl_agents.explorer_builder import get_explorer_by_name
+from agents.pfrl_agents.optimizer_builder import get_optimizer_by_name
+from agents.pfrl_agents.replay_buffer_builder import get_replay_buffer_by_name
+from agents.pfrl_agents.scheduler_builder import get_scheduler_by_name
 
 
 def build_ddqn_agent(parser_args, network: Module, action_space):

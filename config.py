@@ -6,6 +6,7 @@ import sys
 
 import yaml
 
+from agents.policies import Policies
 from utilities.basic_logger import setup_logger
 from utilities.util import get_project_path
 
@@ -95,7 +96,14 @@ def process_args(env_name):
     parser.add_argument("--num_episodes", type=int)
     parser.add_argument('--room_size', nargs='+', type=int)
     parser.add_argument('--plant_num_choices', nargs='+', type=int)
-    parser.add_argument('--random_plant_number', type=int)
+    parser.add_argument('--random_plant_number', type=bool)
+    parser.add_argument('--randomize_sensor_position', type=int)
+
+    parser.add_argument('--epsilon_greedy', action="store_true", default=False)
+    parser.add_argument('--epsilon', type=float)
+    parser.add_argument('policy', type=str, help='choose from "rl_policy", "random_policy"')
+
+    # for ros
     parser.add_argument('--max_steps', type=int)
     parser.add_argument('--save_obs', type=int)
     parser.add_argument('--world_name', type=str)
@@ -106,34 +114,42 @@ def process_args(env_name):
     parser_args = parser.parse_args()
 
     # set out_folder path and in_folder_path
-    if parser_args.train:
-        assert parser_args.out_folder
-        parser_args.out_folder = os.path.join(get_project_path(), "output", parser_args.out_folder)
+    parser_args.out_folder = os.path.join(get_project_path(), "output", parser_args.out_folder)
 
-    if not parser_args.train or parser_args.resume:
-        assert parser_args.in_folder and parser_args.in_model_index
-        parser_args.out_folder = os.path.join(get_project_path(), "output", parser_args.out_folder)
-        parser_args.in_folder = os.path.join(get_project_path(), "output", parser_args.in_folder)
+    eval = not parser_args.train
 
-    # config dir
-    if parser_args.train:
-        # copy configs dir from /project_path/configs to /project_path/output/out_folder/configs
-        copy_configs_to_folder(get_project_path(), parser_args.out_folder)
-    else:
-        # copy configs dir from /project_path/output/in_folder/configs to /project_path/output/out_folder/configs
-        copy_configs_to_folder(parser_args.in_folder, parser_args.out_folder)
+    # rl policy evaluation
+    if parser_args.policy == Policies.RL_Policy:
+        if eval or parser_args.resume:
+            assert parser_args.in_folder and parser_args.in_model_index
+            parser_args.in_folder = os.path.join(get_project_path(), "output", parser_args.in_folder)
 
-    setup_folder(parser_args)
-    if parser_args.train:
-        setup_logger(filename=os.path.join(parser_args.out_folder, "train.log"), use_console_log=True,
-                     use_file_log=True)
-    else:
-        if parser_args.resume:
-            setup_logger(filename=os.path.join(parser_args.out_folder, "resume.log"), use_console_log=True,
+        # config dir
+        if parser_args.train:
+            # copy configs dir from /project_path/configs to /project_path/output/out_folder/configs
+            copy_configs_to_folder(get_project_path(), parser_args.out_folder)
+        else:
+            # copy configs dir from /project_path/output/in_folder/configs to /project_path/output/out_folder/configs
+            copy_configs_to_folder(parser_args.in_folder, parser_args.out_folder)
+
+        if parser_args.epsilon_greedy:
+            assert parser_args.epsilon is not None
+
+        if parser_args.train:
+            setup_logger(filename=os.path.join(parser_args.out_folder, "train.log"), use_console_log=True,
                          use_file_log=True)
         else:
-            setup_logger(filename=os.path.join(parser_args.out_folder, "test.log"), use_console_log=True,
-                         use_file_log=True)
+            if parser_args.resume:
+                setup_logger(filename=os.path.join(parser_args.out_folder, "resume.log"), use_console_log=True,
+                             use_file_log=True)
+            else:
+                setup_logger(filename=os.path.join(parser_args.out_folder, "test.log"), use_console_log=True,
+                             use_file_log=True)
+
+    else:
+        copy_configs_to_folder(get_project_path(), parser_args.out_folder)
+
+    setup_folder(parser_args)
 
     # load some yaml files
     parser_args.env_config = read_yaml(os.path.join(parser_args.out_folder, "configs"), "env.yaml")
@@ -173,15 +189,15 @@ def process_args(env_name):
         "random_plant_number"] = parser_args.random_plant_number if parser_args.random_plant_number is not None else \
         parser_args.env_config["random_plant_number"]
     parser_args.env_config[
+        "randomize_sensor_position"] = parser_args.randomize_sensor_position if parser_args.randomize_sensor_position is not None else \
+        parser_args.env_config["randomize_sensor_position"]
+
+    parser_args.env_config[
         "max_steps"] = parser_args.max_steps if parser_args.max_steps is not None else parser_args.env_config[
         "max_steps"]
     parser_args.env_config[
         "save_obs"] = parser_args.save_obs if parser_args.save_obs is not None else parser_args.env_config[
         "save_obs"]
-    # parser.add_argument('--world_name', type=str)
-    #     parser.add_argument('--base', type=str)
-    #     parser.add_argument('--handle_simulation', type=bool)
-    #     parser.add_argument('--randomize', type=bool)
     # for env_config_ros
     parser_args.env_config_ros[
         "world_name"] = parser_args.world_name if parser_args.world_name is not None else parser_args.env_config_ros[
