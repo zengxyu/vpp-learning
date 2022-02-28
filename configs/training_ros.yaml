@@ -22,7 +22,7 @@ train: None
 rewards:
   #  ros
   free_weight: 0
-  occ_weight: 0.1
+  occ_weight: 0.01
   roi_weight: 200
   visit_gain_weight: 100
   collision_weight: 0
