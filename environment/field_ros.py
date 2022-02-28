@@ -215,6 +215,7 @@ class FieldRos:
             return None, None
         else:
             self.robot_pos = np.array(robot_pose[:3]) / self.resolution
+            print("======================initialized robot pose:{}====================".format(self.robot_pos))
             self.robot_rot = Rotation.from_quat(np.array(robot_pose[3:]))
             self.map = concat(unknown_map, known_free_map, known_occupied_map, known_roi_map, np.uint8)
             inputs = self.get_inputs()
