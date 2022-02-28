@@ -118,13 +118,18 @@ class P3DTrainer(object):
             i_step += 1
             infos.append(info)
 
-        self.test_collector.add(infos)
-        self.test_collector.store_plant_types(self.env.plant_types)
-        smooth_results = self.test_collector.get_p3d_smooth_statistic(self.env, self.agent.get_statistics())
-        add_scalar(self.writer, phase, smooth_results, self.test_i_episode)
-        self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
-                                       self.training_config["save_test_result_n"])
-
+        if self.parser_args.policy == Policies.RL_Policy:
+            self.test_collector.add(infos)
+            self.test_collector.store_plant_types(self.env.plant_types)
+            smooth_results = self.test_collector.get_p3d_smooth_statistic(self.env, self.agent.get_statistics())
+            add_scalar(self.writer, phase, smooth_results, self.test_i_episode)
+            self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
+                                           self.training_config["save_test_result_n"])
+        else:
+            self.test_collector.add(infos)
+            self.test_collector.store_plant_types(self.env.plant_types)
+            self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
+                                           self.training_config["save_test_result_n"])
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 

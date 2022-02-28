@@ -130,7 +130,7 @@ class FieldP3D:
         self.plants = None
 
         self.path_coords = []
-
+        self.rotation_list = []
         self.plant_models_dir = os.path.join(get_project_path(), "data", 'plant_models')
 
         self.all_plant_types = self.env_config["plant_types"]
@@ -179,6 +179,9 @@ class FieldP3D:
             self.global_map, self.plant_bounding_boxes = get_random_multi_plant_models(self.global_map, self.plants,
                                                                                        self.thresh,
                                                                                        self.plant_position_margin)
+
+        self.robot_pos = (self.world_bound.lower_bound + self.world_bound.upper_bound) / 2
+
         # randomize camera position if self.randomize_sensor_position True
         if self.randomize_sensor_position:
             self.robot_pos = randomize_camera_position(self.sensor_position_bound, self.plant_bounding_boxes)
@@ -198,7 +201,7 @@ class FieldP3D:
         self.visit_map = np.zeros(shape=self.visit_shape, dtype=np.uint8)
 
         self.path_coords = [self.robot_pos]
-
+        self.rotation_list = [self.robot_rot]
         print(
             "#observable_roi = {}; #roi = {}; #observable_roi/#roi = {}".format(self.observable_roi_total,
                                                                                 self.roi_total,
@@ -327,13 +330,14 @@ class FieldP3D:
         )
 
         self.path_coords.append(cam_pos)
+        self.rotation_list.append(self.robot_rot)
 
         if self.head:
             self.gui.messenger.send('update_fov_and_cells',
                                     [cam_pos, ep_left_down, ep_left_up, ep_right_down, ep_right_up,
                                      coords, values], 'default')
             self.gui.messenger.send('draw_coord_line',
-                                    [self.path_coords], 'default')
+                                    [self.path_coords, self.rotation_list], 'default')
 
             self.gui.gui_done.wait()
             self.gui.gui_done.clear()
@@ -371,7 +375,7 @@ class FieldP3D:
         # action = actions[self.step_count % 2]
         # if not self.parser_args.train:
         #     print("action:{}".format(action))
-        # print(self.step_count,":", action)
+        # print(self.step_count, ":", action)
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)

@@ -33,7 +33,7 @@ class FieldGUI(ShowBase):
         self.FOV_RIGHT_COLOR = (255 / 255, 215 / 255, 0 / 255, self.FOV_ALPHA)  # Gold
         self.FOV_FRONT_COLOR = (218 / 255, 112 / 255, 214 / 255, self.FOV_ALPHA)  # Orchid
 
-        self.OCCUPIED_UNSEEN_COLOR = (34 / 255, 139 / 255, 34 / 255, 1.0)  # ForestGreen
+        self.OCCUPIED_UNSEEN_COLOR = (0 / 255, 128 / 255, 0 / 255, 1.0)  # ForestGreen
         self.TARGET_UNSEEN_COLOR = (199 / 255, 21 / 255, 133 / 255, 1.0)  # MediumVioletRed
         self.FREE_SEEN_COLOR = (255 / 255, 215 / 255, 0 / 255, 1.0)  # Gold
         self.OCCUPIED_SEEN_COLOR = (0 / 255, 255 / 255, 255 / 255, 1.0)  # OrangeRed
@@ -46,8 +46,8 @@ class FieldGUI(ShowBase):
         self.voxgrid_node = GeomNode("voxgrid")
         self.fov_node = None
         self.fov_node_path = None
-        self.camera_node = None
-        self.camera_node_path = None
+        self.position_node = None
+        self.position_node_path = None
 
         self.colors = PTA_float(self.OCCUPIED_UNSEEN_COLOR + self.TARGET_UNSEEN_COLOR + self.FREE_SEEN_COLOR +
                                 self.OCCUPIED_SEEN_COLOR + self.TARGET_SEEN_COLOR + self.VISIT_COLOR)
@@ -66,7 +66,7 @@ class FieldGUI(ShowBase):
 
     def reset(self):
         self.voxgrid = VoxelGrid(self.env.global_map.shape, self.colors, self.scale)
-        self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
+        # self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
         self.reset_fields()
 
         gui_map = self.env.global_map - 1  # GUI map is shifted by one for unseen cells
@@ -80,7 +80,7 @@ class FieldGUI(ShowBase):
         if self.fields:
             for field in self.fields:
                 field.removeNode()
-        self.fields.append(self.render.attachNewNode(self.field_border))
+        # self.fields.append(self.render.attachNewNode(self.field_border))
         self.fields.append(self.render.attachNewNode(self.voxgrid_node))
 
         # reset voxgrid
@@ -261,18 +261,19 @@ class FieldGUI(ShowBase):
         self.voxgrid.updateValues(coords, values)
         self.gui_done.set()
 
-    def updateCameraPathLine(self, coord_list):
-        if self.camera_node_path:
-            self.camera_node_path.removeNode()
-        self.camera_node = self.draw_coord_line(coord_list)
-        self.camera_node_path = self.render.attachNewNode(self.camera_node)
+    def updateCameraPathLine(self, coord_list, rotation_list):
+        if self.position_node_path:
+            self.position_node_path.removeNode()
+        self.position_node = self.draw_coord_line(coord_list, rotation_list)
+        self.position_node_path = self.render.attachNewNode(self.position_node)
+
         self.gui_done.set()
 
-    def draw_coord_line(self, coord_list):
+    def draw_coord_line(self, coord_list, rotation_list):
         coord_list = np.array(coord_list) * self.scale
         lines = LineSegs()
         MIN_COLOR = np.array([1, 0, 0, 1])
-        MAX_COLOR = np.array([0, 0, 1, 1])
+        MAX_COLOR = np.array([1, 1, 1, 1])
 
         lines.moveTo(coord_list[0][0], coord_list[0][1], coord_list[0][2])
         for i in range(1, len(coord_list)):
@@ -281,6 +282,19 @@ class FieldGUI(ShowBase):
             color = tuple(color)
             lines.setColor(color)
             lines.drawTo(coord_list[i][0], coord_list[i][1], coord_list[i][2])
+
+
+        for i in range(len(rotation_list)):
+            ratio = i / len(rotation_list)
+            start_coord = np.array([coord_list[i][0], coord_list[i][1], coord_list[i][2]])
+            rotation_matrix = rotation_list[i].as_matrix()
+            direction = np.array([rotation_matrix[0][0], rotation_matrix[1][0], rotation_matrix[2][0]])
+            end_coord = start_coord + direction
+            lines.moveTo(start_coord[0], start_coord[1], start_coord[2])
+            color = MIN_COLOR * ratio + MAX_COLOR * (1 - ratio)
+            color = tuple(color)
+            lines.setColor(color)
+            lines.drawTo(end_coord[0], end_coord[1], end_coord[2])
 
         lines.setThickness(4)
         node = lines.create()
