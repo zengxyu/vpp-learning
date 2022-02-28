@@ -9,7 +9,7 @@
         
 ===========================================
 """
-from rl_agents.action_space.action_space import ActionMoRo10, ActionMoRo20, ActionMoRo30
+from agents.action_space.action_space import ActionMoRo10, ActionMoRo20, ActionMoRo30
 
 
 def build_action_space(parser_args):

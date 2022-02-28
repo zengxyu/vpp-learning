@@ -10,17 +10,17 @@
 ===========================================
 """
 
-from rl_agents.network.network_obs import NetworkObs
-from rl_agents.network.network_obs_lstm import NetworkObsLstm
-from rl_agents.network.network_obs_move_lstm import NetworkObsMoveLstm
-from rl_agents.network.network_obs_move_lstm_deeper_obs import NetworkObsMoveLstmDeeperObs
-from rl_agents.network.network_obs_move_lstm_deeper_obs_48_24_8 import NetworkObsMoveLstmDeeperObs_48_24_8
-from rl_agents.network.network_obs_move_lstm_lstm import NetworkObsMoveLstmLstm
-from rl_agents.network.network_obs_visit import NetworkObsVisit
-from rl_agents.network.network_obs_visit_lstm import NetworkObsVisitLstm
-from rl_agents.network.network_visit import NetworkVisit
-from rl_agents.network.network_visit_lstm import NetworkVisitLstm
-from rl_agents.network.network_attention import SpatialAttentionModel
+from agents.network.network_obs import NetworkObs
+from agents.network.network_obs_lstm import NetworkObsLstm
+from agents.network.network_obs_move_lstm import NetworkObsMoveLstm
+from agents.network.network_obs_move_lstm_deeper_obs import NetworkObsMoveLstmDeeperObs
+from agents.network.network_obs_move_lstm_deeper_obs_48_24_8 import NetworkObsMoveLstmDeeperObs_48_24_8
+from agents.network.network_obs_move_lstm_lstm import NetworkObsMoveLstmLstm
+from agents.network.network_obs_visit import NetworkObsVisit
+from agents.network.network_obs_visit_lstm import NetworkObsVisitLstm
+from agents.network.network_visit import NetworkVisit
+from agents.network.network_visit_lstm import NetworkVisitLstm
+from agents.network.network_attention import SpatialAttentionModel
 
 
 def build_network(parser_args, action_size):

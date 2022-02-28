@@ -92,6 +92,7 @@ class RosTrainer(object):
 
         if self.check_stuck(rewards, collisions, visit_gains) or stuck:
             self.env.reset_stuck_env()
+            self.train_i_episode -= 1
         else:
             self.train_collector.add(infos)
             smooth_results = self.train_collector.get_ros_smooth_statistic(self.agent.get_statistics())

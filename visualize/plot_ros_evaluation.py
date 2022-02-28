@@ -119,13 +119,13 @@ def generateResultsFile(plot_names, results, out_folder):
 
 
 parent_dir = "/home/zeng/catkin_ws"
-input_folder1 = os.path.join(parent_dir, "evaluation_ddqn_world14_staic")
+input_folder1 = os.path.join(parent_dir, "evaluation_ddqn_world14_static_model350")
 
 input_folder2 = os.path.join(parent_dir, "exp_results_global_m2s", "world14_m2s")
 input_folder3 = os.path.join(parent_dir, "exp_results_global_m2s", "world14")
 
-out_folder = os.path.join(get_project_path(), "output", "evaluate_world14_static", "plots_w14")
-out_folder_old = os.path.join(get_project_path(), "output", "evaluate_world14_static", "plots_w14_old")
+out_folder = os.path.join(get_project_path(), "output", "evaluate_world14_static_model350", "plots_w14")
+out_folder_old = os.path.join(get_project_path(), "output", "evaluate_world14_static_model350", "plots_w14_old")
 if not os.path.exists(input_folder1):
     print("{} directory not exist".format(input_folder1))
 if not os.path.exists(out_folder):

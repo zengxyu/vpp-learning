@@ -6,6 +6,7 @@ from typing import Dict, List
 import numpy as np
 from direct.stdpy import threading
 
+from agents.policies import Policies
 from trainer.trainer_helper import add_scalar
 from utilities.info import EpisodeInfo, InfoCollector
 from torch.utils.tensorboard import SummaryWriter
@@ -26,36 +27,40 @@ class P3DTrainer(object):
         self.global_i_step = 0
         self.train_collector = InfoCollector(self.training_config["train_smooth_n"])
         self.test_collector = InfoCollector(self.training_config["test_smooth_n"])
-        # discrete
-        if not parser_args.train or parser_args.resume:
-            logging.info("load model from {} {}".format(self.parser_args.in_model, parser_args.in_model_index))
-            self.agent.load("{}/model_epi_{}".format(self.parser_args.in_model, parser_args.in_model_index))
+        self.eval = not parser_args.train
 
     def run(self):
         print("========================================Start running========================================")
+        # discrete
+        if self.parser_args.policy == Policies.RL_Policy and (self.eval or self.parser_args.resume):
+            logging.info("load model from {} {}".format(self.parser_args.in_model, self.parser_args.in_model_index))
+            self.agent.load("{}/model_epi_{}".format(self.parser_args.in_model, self.parser_args.in_model_index))
+
         head = self.parser_args.head
         if self.parser_args.train and not head:
             print("Start training")
             for i in range(self.training_config["num_episodes"]):
                 print("\nEpisode:{}".format(i))
-                self.training()
+                self.train_once()
                 if (i + 1) % 10 == 0:
                     print("\nTest Episode:{}".format(i))
-                    self.evaluating(False)
+                    self.evaluate_once()
                 self.scheduler.step()
                 print("Current learning rate : {}".format(self.agent.optimizer.state_dict()['param_groups'][0]['lr']))
         else:
             if head:
                 print("Start evaluating with head")
                 main_thread = threading.Thread(target=self.evaluate_n_times,
-                                               args=(True, 0.15, self.parser_args.training_config["num_episodes"]))
+                                               args=(self.parser_args.epsilon_greedy, self.parser_args.epsilon,
+                                                     self.parser_args.training_config["num_episodes"]))
                 main_thread.start()
                 self.env.gui.run()
             else:
                 print("Start evaluating without head")
-                self.evaluate_n_times(True, 0.15, self.parser_args.training_config["num_episodes"])
+                self.evaluate_n_times(self.parser_args.epsilon_greedy, self.parser_args.epsilon,
+                                      self.parser_args.training_config["num_episodes"])
 
-    def training(self):
+    def train_once(self):
         phase = "Train"
         start_time = time.time()
 
@@ -84,7 +89,7 @@ class P3DTrainer(object):
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete training episode {}'.format(self.train_i_episode))
 
-    def evaluating(self, with_epsilon=False, epsilon=0.15):
+    def evaluate_once(self, epsilon_greedy=False, epsilon=0.15):
         phase = "ZEvaluation"
         start_time = time.time()
         self.test_i_episode += 1
@@ -93,16 +98,25 @@ class P3DTrainer(object):
         done = False
         infos = []
         i_step = 0
-        with self.agent.eval_mode():
-            while not done:
-                action = self.agent.act(state)
-                if with_epsilon and random.random() < epsilon:
-                    action = np.random.randint(0, self.action_space.n)
+        while not done:
+            # choose the policy
+            if self.parser_args.policy == Policies.RL_Policy:
+                with self.agent.eval_mode():
+                    if epsilon_greedy and random.random() < epsilon:
+                        action = np.random.randint(0, self.action_space.n)
+                    else:
+                        action = self.agent.act(state)
+
+                    state, reward, done, info = self.env.step(action)
+                    self.agent.observe(obs=state, reward=reward, done=done, reset=False)
+
+            else:
+                action = self.agent.act()
                 state, reward, done, info = self.env.step(action)
-                self.agent.observe(obs=state, reward=reward, done=done, reset=False)
-                self.global_i_step += 1
-                i_step += 1
-                infos.append(info)
+
+            self.global_i_step += 1
+            i_step += 1
+            infos.append(info)
 
         self.test_collector.add(infos)
         self.test_collector.store_plant_types(self.env.plant_types)
@@ -114,7 +128,7 @@ class P3DTrainer(object):
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete evaluation episode {}'.format(self.test_i_episode))
 
-    def evaluate_n_times(self, with_epsilon=False, epsilon=0.15, n=10):
+    def evaluate_n_times(self, epsilon_greedy=False, epsilon=0.15, n=10):
         for i in range(n):
             print("\n=====================================Episode:{}=====================================".format(i))
-            self.evaluating(with_epsilon, epsilon)
+            self.evaluate_once(epsilon_greedy, epsilon)
