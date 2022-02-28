@@ -25,7 +25,7 @@ class CircularMotionAgent:
         self.shape = upper_bound_from
         self.plant_position_margin = self.env_config["plant_position_margin"]
         self.step_count = 0
-        self.actions = [0, 8]
+        self.actions = [3, 3, 3, 3, 8]
 
     def act(self):
         self.step_count += 1
