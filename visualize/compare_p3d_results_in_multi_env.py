@@ -37,8 +37,8 @@ def read_data(data_dir):
     for i, plant_types in enumerate(plant_types_list):
         plants = [all_plants[env_config["plant_types"].index(plant_type)] for plant_type in plant_types]
         observable_roi_total, observable_occ_total = count_observable_cells(env_config, plant_types, plants)
-        roi_sum = np.sum(data['new_found_rois'][i][:300])
-        occ_sum = np.sum(data['new_occupied_cells'][i][:300])
+        roi_sum = np.sum(data['new_found_rois'][i][:400])
+        occ_sum = np.sum(data['new_occupied_cells'][i][:400])
 
         roi_rate = roi_sum / observable_roi_total
         occ_rate = occ_sum / observable_occ_total
@@ -67,7 +67,8 @@ if __name__ == '__main__':
     evaluation_dirs = os.listdir(evaluation_root)
     evaluation_dirs = sorted(evaluation_dirs)
     data_dir_paths = [os.path.join(evaluation_root, evaluation_dir) for evaluation_dir in evaluation_dirs]
-
+    data_dir_paths = [data_dir_path for data_dir_path in data_dir_paths if os.path.isdir(data_dir_path)]
     for data_dir_path in data_dir_paths:
         occupied_rate, rois_rate = compute_occ_roi_rates(data_dir_path)
-        print("{}:\n occupied_rate : {};\n rois_rate : {}".format(data_dir_path, occupied_rate, rois_rate))
+        print("{}:\n occupied_rate : {};\n rois_rate : {}".format(data_dir_path, np.round(occupied_rate, 3),
+                                                                  np.round(rois_rate, 3)))
