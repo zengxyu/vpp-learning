@@ -32,25 +32,30 @@ def read_data(data_dir):
                              env_config["resolution"])
     roi_rates = []
     occ_rates = []
+    observable_roi_totals = []
+    observable_occ_totals = []
     for i, plant_types in enumerate(plant_types_list):
         plants = [all_plants[env_config["plant_types"].index(plant_type)] for plant_type in plant_types]
         observable_roi_total, observable_occ_total = count_observable_cells(env_config, plant_types, plants)
-        roi_sum = np.sum(data['new_found_rois'][i][:300]) + 1e-08
-        occ_sum = np.sum(data['new_occupied_cells'][i][:300]) + 1e-08
+        roi_sum = np.sum(data['new_found_rois'][i][:300])
+        occ_sum = np.sum(data['new_occupied_cells'][i][:300])
 
         roi_rate = roi_sum / observable_roi_total
         occ_rate = occ_sum / observable_occ_total
         roi_rates.append(roi_rate)
         occ_rates.append(occ_rate)
+        observable_roi_totals.append(observable_roi_total)
+        observable_occ_totals.append(observable_occ_total)
         # print("i:{};plant_types:{};observable_roi_total:{};"
         #       "observable_occ_total:{}; rois sum:{}; occ sum:{}".format(i, plant_types, observable_roi_total,
         #                                                                 observable_occ_total, roi_sum, occ_sum))
 
-    return data, np.array(roi_rates), np.array(occ_rates)
+    return data, np.array(roi_rates), np.array(occ_rates), np.array(observable_roi_totals), np.array(
+        observable_occ_totals)
 
 
 def compute_occ_roi_rates(data_dir):
-    data, roi_rates, occ_rates = read_data(data_dir)
+    data, roi_rates, occ_rates, observable_roi_totals, observable_occ_totals = read_data(data_dir)
     occ_rates = np.mean(occ_rates)
     roi_rates = np.mean(roi_rates)
 
@@ -58,7 +63,7 @@ def compute_occ_roi_rates(data_dir):
 
 
 if __name__ == '__main__':
-    evaluation_root = os.path.join(get_project_path(), "output", "evaluate_random_policy")
+    evaluation_root = os.path.join(get_project_path(), "output", "evaluation_p3d_0.15")
     evaluation_dirs = os.listdir(evaluation_root)
     evaluation_dirs = sorted(evaluation_dirs)
     data_dir_paths = [os.path.join(evaluation_root, evaluation_dir) for evaluation_dir in evaluation_dirs]
