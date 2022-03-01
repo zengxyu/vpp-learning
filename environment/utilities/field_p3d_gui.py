@@ -66,7 +66,7 @@ class FieldGUI(ShowBase):
 
     def reset(self):
         self.voxgrid = VoxelGrid(self.env.global_map.shape, self.colors, self.scale)
-        self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
+        # self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
         self.reset_fields()
 
         gui_map = self.env.global_map - 1  # GUI map is shifted by one for unseen cells
@@ -80,7 +80,7 @@ class FieldGUI(ShowBase):
         if self.fields:
             for field in self.fields:
                 field.removeNode()
-        self.fields.append(self.render.attachNewNode(self.field_border))
+        # self.fields.append(self.render.attachNewNode(self.field_border))
         self.fields.append(self.render.attachNewNode(self.voxgrid_node))
 
         # reset voxgrid
@@ -216,6 +216,8 @@ class FieldGUI(ShowBase):
         ep_right_down_scaled = np.asarray(ep_right_down) * self.scale
 
         lines = LineSegs()
+        lines.setColor((1, 1, 0, 1))
+
         lines.moveTo(tuple(cam_pos_scaled))
         lines.drawTo(tuple(ep_left_down_scaled))
         lines.draw_to(tuple(ep_left_up_scaled))
@@ -229,7 +231,6 @@ class FieldGUI(ShowBase):
 
         lines.move_to(tuple(ep_left_up_scaled))
         lines.draw_to(tuple(ep_right_up_scaled))
-
         lines.setThickness(4)
         node = lines.create()
         return node
@@ -282,7 +283,6 @@ class FieldGUI(ShowBase):
             color = tuple(color)
             lines.setColor(color)
             lines.drawTo(coord_list[i][0], coord_list[i][1], coord_list[i][2])
-
 
         for i in range(len(rotation_list)):
             ratio = i / len(rotation_list)

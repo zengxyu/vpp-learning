@@ -37,8 +37,8 @@ def plot_coverage_by_time_step(data_dir, num_time_step, data):
     ylims = [1, 1]
     y_labels = ["Coverage rate of ROI cells", "Coverage rate of Occupied cells"]
     names = ["p3d_rois_coverage_rate.png", "p3d_occ_coverage_rate.png"]
-    colors = ['b', 'r']
-    policy_labels = ["Random policy", "Our RL-policy"]
+    colors = ['b', 'g', 'r']
+    policy_labels = ["Random policy", "Circular policy", "Our RL-policy"]
     i = 0
 
     for item, label, name in zip(data, y_labels, names):
@@ -51,7 +51,7 @@ def plot_coverage_by_time_step(data_dir, num_time_step, data):
                 policy_rate - policy_std,
                 policy_rate + policy_std,
                 color=colors[count],
-                alpha=0.05
+                alpha=0.08
             )
             plt.plot(xs, policy_rate, colors[count], label=policy)
             count += 1
@@ -61,7 +61,7 @@ def plot_coverage_by_time_step(data_dir, num_time_step, data):
         plt.ylim(0, ylims[i])
 
         # plt.legend()
-        plt.savefig(os.path.join(data_dir, names[i]),bbox_inches = 'tight')
+        plt.savefig(os.path.join(data_dir, names[i]), bbox_inches='tight')
         plt.clf()
         plt.close()
         i += 1
@@ -87,11 +87,20 @@ if __name__ == '__main__':
     rois_rates_mean_rl, rois_rates_std_rl, occupied_rates_mean_rl, occupied_rates_std_rl = extract_rates_mean_std(
         data_dir_rl_policy)
 
-    output_rl_vs_random = os.path.join(get_project_path(), "output", "compare_rl_and_random")
+    data_dir_circular_policy = "evaluate_circular_policy/400x400x150_4plants"
+    data_dir_circular_policy = os.path.join(get_project_path(), "output", data_dir_circular_policy)
+    rois_rates_mean_circular, rois_rates_std_circular, occupied_rates_mean_circular, occupied_rates_std_circular = extract_rates_mean_std(
+        data_dir_circular_policy)
+
+    output_rl_vs_random = os.path.join(get_project_path(), "output", "compare_rl_circular_random")
     if not os.path.exists(output_rl_vs_random):
         os.makedirs(output_rl_vs_random)
     plot_coverage_by_time_step(output_rl_vs_random, len(rois_rates_mean_random),
-                               [[[rois_rates_mean_random, rois_rates_std_random],
-                                 [rois_rates_mean_rl, rois_rates_std_rl]],
-                                [[occupied_rates_mean_random, occupied_rates_std_random],
-                                 [occupied_rates_mean_rl, occupied_rates_std_rl]]])
+                                   [[[rois_rates_mean_random, rois_rates_std_random],
+                                     [rois_rates_mean_circular, rois_rates_std_circular],
+                                     [rois_rates_mean_rl, rois_rates_std_rl]
+                                     ],
+                                    [[occupied_rates_mean_random, occupied_rates_std_random],
+                                     [occupied_rates_mean_circular, occupied_rates_std_circular],
+                                     [occupied_rates_mean_rl, occupied_rates_std_rl]]
+                                    ])

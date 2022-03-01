@@ -376,7 +376,7 @@ class FieldP3D:
         # action = actions[self.step_count % 2]
         # if not self.parser_args.train:
         #     print("action:{}".format(action))
-        # print(self.step_count, ":", action)
+        print(self.step_count)
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
