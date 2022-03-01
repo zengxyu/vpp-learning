@@ -38,7 +38,7 @@ def plot_coverage_by_time_step(data_dir, num_time_step, data):
     y_labels = ["Coverage rate of ROI cells", "Coverage rate of Occupied cells"]
     names = ["p3d_rois_coverage_rate.png", "p3d_occ_coverage_rate.png"]
     colors = ['b', 'g', 'r']
-    policy_labels = ["Random policy", "Circular policy", "Our RL-policy"]
+    policy_labels = ["Random policy", "Perimeter policy", "Our RL-policy"]
     i = 0
 
     for item, label, name in zip(data, y_labels, names):
