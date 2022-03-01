@@ -153,7 +153,7 @@ class FieldP3D:
         self.known_map = np.zeros(self.shape).astype(int)
 
         self.robot_pos = np.array([0, 0, 0])
-        self.robot_rot = Rotation.from_quat([0, 0, 0, 1])
+        self.robot_rot = Rotation.from_quat([0, 0, 1, 1])
 
         self.relative_position = np.array([0., 0., 0.])
         self.relative_rotation = Rotation.from_quat([0, 0, 0, 1])
@@ -180,7 +180,8 @@ class FieldP3D:
                                                                                        self.thresh,
                                                                                        self.plant_position_margin)
 
-        self.robot_pos = (self.world_bound.lower_bound + self.world_bound.upper_bound) / 2
+        # self.robot_pos = (self.world_bound.lower_bound + self.world_bound.upper_bound) / 2
+        self.robot_pos = np.array([1, 1, (self.world_bound.lower_bound[2] + self.world_bound.upper_bound[2]) / 2])
 
         # randomize camera position if self.randomize_sensor_position True
         if self.randomize_sensor_position:

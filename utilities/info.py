@@ -172,7 +172,7 @@ class InfoCollector:
         result["found_occ_rate_to_observable"] = found_occ_cells_sum_smooth_n / env.observable_occ_total
         result["coverage_rate"] = coverage_rate_smooth_n
 
-        if not np.isnan(agent_statistics[0][1]):
+        if agent_statistics is not None and not np.isnan(agent_statistics[0][1]):
             result["average_q"] = agent_statistics[0][1]
             result["loss"] = agent_statistics[1][1]
 

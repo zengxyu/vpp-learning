@@ -132,7 +132,7 @@ if not os.path.exists(out_folder):
     os.makedirs(out_folder)
     os.makedirs(out_folder_old)
 input_folders = [input_folder1,  input_folder3]
-labels = ['Our RL-policy', 'Global planner only']
+labels = ['Our RL-policy', 'Global planner']
 input_ranges = [range(1, 21), range(0, 20)]
 
 time_column = 1
