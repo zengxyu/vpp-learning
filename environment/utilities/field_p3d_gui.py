@@ -66,7 +66,7 @@ class FieldGUI(ShowBase):
 
     def reset(self):
         self.voxgrid = VoxelGrid(self.env.global_map.shape, self.colors, self.scale)
-        # self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
+        self.field_border = self.create_edged_cube([0, 0, 0], np.asarray(self.env.global_map.shape) * self.scale)
         self.reset_fields()
 
         gui_map = self.env.global_map - 1  # GUI map is shifted by one for unseen cells
@@ -80,7 +80,7 @@ class FieldGUI(ShowBase):
         if self.fields:
             for field in self.fields:
                 field.removeNode()
-        # self.fields.append(self.render.attachNewNode(self.field_border))
+        self.fields.append(self.render.attachNewNode(self.field_border))
         self.fields.append(self.render.attachNewNode(self.voxgrid_node))
 
         # reset voxgrid

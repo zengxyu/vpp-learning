@@ -128,6 +128,8 @@ class P3DTrainer(object):
         else:
             self.test_collector.add(infos)
             self.test_collector.store_plant_types(self.env.plant_types)
+            smooth_results = self.test_collector.get_p3d_smooth_statistic(self.env, None)
+            add_scalar(self.writer, phase, smooth_results, self.test_i_episode)
             self.test_collector.save_infos(phase, self.test_i_episode, self.parser_args.out_result,
                                            self.training_config["save_test_result_n"])
         print("Episode takes time:{}".format(time.time() - start_time))
