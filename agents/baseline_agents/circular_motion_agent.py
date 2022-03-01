@@ -67,9 +67,7 @@ class CircularMotionAgent:
 
     def act(self):
         self.step_count += 1
-
         action = self.actions[self.step_count % len(self.actions)]
-        print(self.step_count)
         if self.step_count >= self.env_config["max_steps"]:
             self.step_count = 0
         return action
