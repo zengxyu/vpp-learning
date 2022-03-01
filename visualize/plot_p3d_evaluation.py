@@ -88,7 +88,7 @@ def plot_coverage_by_time_step(data_dir, data, observable_roi_totals, observable
 
 
 if __name__ == '__main__':
-    data_dir = "evaluate_random_policy/400x400x150_4plants"
+    data_dir = "evaluation_p3d_0.0_2/400x400x150_4plants"
     data_dir = os.path.join(get_project_path(), "output", data_dir)
     data, roi_rates, occ_rates, observable_roi_totals, observable_occ_totals= read_data(data_dir)
     plot_coverage_by_time_step(data_dir, data, observable_roi_totals, observable_occ_totals)
