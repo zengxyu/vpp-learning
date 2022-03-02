@@ -1,0 +1,65 @@
+dqn:
+  discount_rate: 0.99
+  tau: 0.01
+  replay_start_size: 64
+  batch_size: 32
+  update_interval: 1
+  # target_update_interval(step)
+  target_update_interval: 20
+  target_update_method: soft
+  optimizer: Adam
+  # valid only in pfrl
+  explorer: LinearDecayEpsilonGreedy
+  #  EpisodicReplayBuffer, ReplayBuffer, PrioritizedReplayBuffer, PrioritizedEpisodicReplayBuffer
+  replay_buffer: PrioritizedEpisodicReplayBuffer
+  # sequence length
+  episodic_update_len: 5
+  recurrent: True
+  scheduler: MultiStepLR
+
+ddpg:
+  critic:
+    tau: 0.01
+    gradient_clipping_norm: 0
+  actor:
+    tau: 0.01
+    gradient_clipping_norm: 0
+  discount_rate: 0.99
+  tau: 0.01
+  replay_start_size: 120
+  update_interval: 1
+  target_update_interval: 20
+  target_update_method: soft
+  optimizer: Adam
+  replay_buffer: replay_buffer
+
+td3:
+  critic:
+    tau: 0.05
+    gradient_clipping_norm: 0.5
+  actor:
+    tau: 0.05
+    gradient_clipping_norm: 0.5
+  discount_rate: 0.99
+  tau: 0.05
+  replay_start_size: 10000
+  update_interval: 1
+  target_update_interval: 20
+  target_update_method: soft
+  optimizer: Adam
+  replay_buffer: replay_buffer
+
+sac:
+  critic:
+    tau: 0.01
+    gradient_clipping_norm: 0
+  actor:
+    tau: 0.01
+    gradient_clipping_norm: 0
+  discount_rate: 0.99
+  tau: 0.01
+  replay_start_size: 120
+  update_interval: 1
+  optimizer: adam
+  replay_buffer: replay_buffer
+  temperature_optimizer_lr: 0.0003

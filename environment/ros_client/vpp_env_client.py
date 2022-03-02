@@ -1,0 +1,265 @@
+import logging
+import sys
+import signal
+import os
+import time
+import zmq
+import capnp
+from roslaunch.pmon import ProcessListener
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..", "capnp"))
+import action_capnp
+import observation_capnp
+import numpy as np
+import roslaunch
+from timeit import default_timer as timer
+
+logging.basicConfig(level=logging.ERROR)
+
+
+class SubProcessListener(ProcessListener):
+    def __init__(self):
+        self.died = False
+        self.died_program = ""
+
+    def process_died(self, process_name, exit_code):
+        print(
+            "=============================process {} died========================================".format(process_name))
+        if str(process_name).__contains__("gazebo-"):
+            self.died = True
+            self.died_program = process_name
+
+
+class EnvironmentClient:
+    def __init__(self, handle_simulation=False, world_name="world19", base="retractable", gui=False):
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.REQ)
+        self.socket.RCVTIMEO = 1000  # in milliseconds
+        self.socket.bind("tcp://*:5555")
+        self.process_listener = SubProcessListener()
+        if handle_simulation:
+            self.uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+            roslaunch.configure_logging(self.uuid)
+            self.launch_file = roslaunch.rlutil.resolve_launch_arguments(['vpp_learning_ros', 'ur_with_cam.launch'])
+            self.launch_args = ['world_name:=' + world_name, 'base:=' + base, 'gui:=' + str(gui)]
+            self.launch_files = [(self.launch_file[0], self.launch_args)]
+            signal.signal(signal.SIGINT, self.sigint_handler)
+
+    def process_died(self):
+        return self.process_listener.died
+
+    def startSimulation(self):
+        self.process_listener.died = False
+        self.process_listener.died_program = ""
+        self.parent = roslaunch.parent.ROSLaunchParent(self.uuid, self.launch_files,
+                                                       process_listeners=[self.process_listener])
+        self.parent.start()
+
+    def spinSimulationEventLoop(self):
+        self.parent.spin_once()
+
+    def shutdownSimulation(self):
+        print('Shutting down')
+        self.parent.shutdown()
+        print('Shutdown complete')
+
+    def decodeObservation(self, obs_msg):
+        robotPose = self.poseToNumpyArray(obs_msg.robotPose)
+        robotJoints = np.array(obs_msg.robotJoints)
+        foundFree = 0
+        foundOcc = 0
+        foundRois = 0
+        if obs_msg.planningTime > 0:
+            # reward = obs_msg.foundRois / obs_msg.planningTime
+            foundFree = obs_msg.foundFree
+            foundOcc = obs_msg.foundOcc
+            foundRois = obs_msg.foundRois
+        hasMove = obs_msg.hasMoved
+        which = obs_msg.map.which()
+        if which == 'countMap':
+            shape = (obs_msg.map.countMap.layers, obs_msg.map.countMap.height, obs_msg.map.countMap.width)
+            unknownCount = np.reshape(np.array(obs_msg.map.countMap.unknownCount), shape)
+            freeCount = np.reshape(np.array(obs_msg.map.countMap.freeCount), shape)
+            occupiedCount = np.reshape(np.array(obs_msg.map.countMap.occupiedCount), shape)
+            roiCount = np.reshape(np.array(obs_msg.map.countMap.roiCount), shape)
+
+            return unknownCount, freeCount, occupiedCount, roiCount, robotPose, foundRois, foundOcc, foundFree, hasMove
+
+        elif which == 'pointcloud':
+            reward = 0
+            print('Converting pointcloud...')
+            start = timer()
+            points = np.asarray(obs_msg.map.pointcloud.points)
+            labels = np.asarray(obs_msg.map.pointcloud.labels)
+            points = points.reshape((len(labels), 3))
+            end = timer()
+            print('Converting pointcloud took', end - start, 's')
+            return points, labels, robotPose, robotJoints, reward
+
+    def poseToNumpyArray(self, pose):
+        return np.array([pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y,
+                         pose.orientation.z, pose.orientation.w])
+
+    def encodeGoalPose(self, action_msg, data):
+        action_msg.init("goalPose")
+        action_msg.goalPose.position.x = data[0]
+        action_msg.goalPose.position.y = data[1]
+        action_msg.goalPose.position.z = data[2]
+        action_msg.goalPose.orientation.x = data[3]
+        action_msg.goalPose.orientation.y = data[4]
+        action_msg.goalPose.orientation.z = data[5]
+        action_msg.goalPose.orientation.w = data[6]
+
+    def encodeRelativePose(self, action_msg, data):
+        action_msg.init("relativePose")
+        action_msg.relativePose.position.x = data[0]
+        action_msg.relativePose.position.y = data[1]
+        action_msg.relativePose.position.z = data[2]
+        action_msg.relativePose.orientation.x = data[3]
+        action_msg.relativePose.orientation.y = data[4]
+        action_msg.relativePose.orientation.z = data[5]
+        action_msg.relativePose.orientation.w = data[6]
+
+    def encodeRandomizationParameters(self, action_msg, min_point, max_point, min_dist):
+        action_msg.init("resetAndRandomize")
+
+    def sendAction(self, action_msg):
+        send_time_limit = 60
+        receive_time_limit = 60
+        start_time = time.time()
+        send_success = False
+        receive_success = False
+        while True:
+            print('Sending message')
+            if self.process_died():
+                break
+            try:
+                self.socket.send(action_msg.to_bytes(), flags=zmq.NOBLOCK)
+                send_success = True
+            except zmq.ZMQError:
+                print('Could not send message, trying again in 1s...')
+                time.sleep(1)
+                if time.time() - start_time > send_time_limit:
+                    print("++++++++++++++++++++++++++Over the time limit 30 sec++++++++++++++++++++++++++")
+                    break
+                continue
+            break
+
+        if send_success:
+            start_time = time.time()
+            while True:
+                #  Get the reply.
+                print('Receiving message')
+                if self.process_died():
+                    break
+                try:
+                    message = self.socket.recv()
+                    receive_success = True
+                except zmq.ZMQError:
+                    print('No response received, trying again...')
+                    if time.time() - start_time > receive_time_limit:
+                        print("++++++++++++++++++++++++++Over the time limit 30 sec++++++++++++++++++++++++++")
+                        break
+                    continue
+                break
+
+        if send_success and receive_success:
+            obs_msg = observation_capnp.Observation.from_bytes(message)
+            return self.decodeObservation(obs_msg)
+        else:
+            return None, None, None, None, None, None, None, None, None
+
+    def sendRelativeJointTarget(self, joint_values):
+        action_msg = action_capnp.Action.new_message()
+        action_msg.relativeJointTarget = joint_values
+        return self.sendAction(action_msg)
+
+    def sendAbsoluteJointTarget(self, joint_values):
+        action_msg = action_capnp.Action.new_message()
+        action_msg.absoluteJointTarget = joint_values
+        return self.sendAction(action_msg)
+
+    def sendGoalPose(self, goal_pose):
+        action_msg = action_capnp.Action.new_message()
+        self.encodeGoalPose(action_msg, goal_pose)
+        return self.sendAction(action_msg)
+
+    def sendRelativePose(self, relative_pose):
+        action_msg = action_capnp.Action.new_message()
+        self.encodeRelativePose(action_msg, relative_pose)
+        return self.sendAction(action_msg)
+
+    def sendReset(self, randomize=False, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4,
+                  map_type='unchanged'):
+        action_msg = action_capnp.Action.new_message()
+        action_msg.init("reset")
+        if randomize:
+            action_msg.reset.randomize = True
+            action_msg.reset.randomizationParameters.min.x = min_point[0]
+            action_msg.reset.randomizationParameters.min.y = min_point[1]
+            action_msg.reset.randomizationParameters.min.z = min_point[2]
+            action_msg.reset.randomizationParameters.max.x = max_point[0]
+            action_msg.reset.randomizationParameters.max.y = max_point[1]
+            action_msg.reset.randomizationParameters.max.z = max_point[2]
+            action_msg.reset.randomizationParameters.minDist = min_dist
+
+        action_msg.reset.mapType = map_type
+        return self.sendAction(action_msg)
+
+    def sigint_handler(self, sig, frame):
+        print('SIGINT received')
+        self.shutdownSimulation()
+        self.socket.close()
+        sys.exit(0)
+
+
+def main(args):
+    # client = EnvironmentClient()
+    # unknownCount, freeCount, occupiedCount, roiCount, robotPose, robotJoints, reward = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0]) # client.sendRelativePose([0.1, 0, 0, 0, 0, 0, 1])
+    # print("unknownCount")
+    # print(unknownCount)
+    # print("freeCount")
+    # print(freeCount)
+    # print("occupiedCount")
+    # print(occupiedCount)
+    # print("roiCount")
+    # print(roiCount)
+    # print("robotPose")
+    # print(robotPose)
+    # print("robotJoints")
+    # print(robotJoints)
+    # print("Reward", reward)
+    # client.sendReset(randomize=True, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
+
+    client = EnvironmentClient(handle_simulation=True)
+    client.startSimulation()
+    print('SEND_RESET_1')
+    unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \
+    found_roi, found_occ, found_free = client.sendReset(randomize=True, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1],
+                                                        min_dist=0.4)
+    print("robot_pose:{}".format(robot_pose))
+    unknown_map, known_free_map, known_occupied_map, known_roi_map, new_robot_pose, \
+    found_roi, found_occ, found_free = client.sendRelativePose([0, 1, 0, 0, 0, 0, 1])
+    print("relative robot pose:{}".format(new_robot_pose - robot_pose))
+    print("new_robot_pose:{}".format(new_robot_pose))
+
+    # print('SEND_MOVE1_1')
+    # observation = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0])
+    # print('SEND_MOVE2_1')
+    # observation = client.sendRelativeJointTarget([0, 0.1, 0, 0, 0, 0])
+    # print('SHUTDOWN_1')
+    # client.shutdownSimulation()
+    # print('RESTART')
+    # client.startSimulation()
+    # print('SEND_RESET_2')
+    # observation = client.sendReset(randomize=True, min_point=[-1, -1, -0.1], max_point=[1, 1, 0.1], min_dist=0.4)
+    # print('SEND_MOVE1_2')
+    # observation = client.sendRelativeJointTarget([-0.1, 0, 0, 0, 0, 0])
+    # print('SEND_MOVE2_2')
+    # observation = client.sendRelativeJointTarget([0, 0.1, 0, 0, 0, 0])
+    # print('SHUTDOWN_2')
+    # client.shutdownSimulation()
+
+
+if __name__ == '__main__':
+    main(sys.argv)

@@ -1,0 +1,19 @@
+shape_x_range: [ -150, 150 ]
+shape_y_range: [ -150, 150 ]
+shape_z_range: [ 0, 150 ]
+
+scale: 0.05
+max_steps: 200
+move_step: 20.0
+rot_step: 20.0
+
+world_name: world19
+base: retractable
+# handle_simulation
+handle_simulation: True
+
+# choose from 0.01, 0.02, 0.005
+resolution: 0.01
+
+randomize: True
+

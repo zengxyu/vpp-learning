@@ -1,0 +1,25 @@
+ReplayBuffer:
+  capacity : 40000
+  num_steps : 3
+
+PrioritizedReplayBuffer:
+  capacity : 40000
+  num_steps : 3
+  alpha : 0.6
+  beta0 : 0.4
+  # Anneal beta from beta0 to 1 throughout training
+  betasteps : 200000
+  normalize_by_max : memory
+
+EpisodicReplayBuffer:
+  capacity: 40000
+
+PrioritizedEpisodicReplayBuffer:
+  capacity : 40000
+  alpha : 0.6
+  beta0 : 0.4
+  # Anneal beta from beta0 to 1 throughout training
+  betasteps : 200000
+  normalize_by_max : memory
+  return_sample_weights: False
+  wait_priority_after_sampling: False
