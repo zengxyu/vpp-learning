@@ -1,0 +1,66 @@
+# train
+# gpu >=0 : use gpu;
+# gpu <0 : use cpu
+gpu: -1
+num_episodes: 10000000
+save_model_every_n: 100
+save_train_result_n: 100
+save_test_result_n: 10
+
+bl_console_logging_level: WARNING
+bl_file_logging_level: WARNING
+train_smooth_n: 100
+test_smooth_n: 10
+
+# choose from [NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL]
+logging_level: WARNING
+
+train: None
+# parameters (out_folder, in_folder, in_model_index, train) are given by  argparse
+
+# p3d reward weight
+rewards:
+  free_weight: 0
+  occ_weight: 1
+  roi_weight: 200
+  visit_gain_weight: 100
+  collision_weight: 0
+  stuck_weight: 0
+  #  free_weight: 0
+  #  occ_weight: 0
+  #  roi_weight: 200
+  #  visit_gain_weight: 0
+  #  ros
+#  free_weight: 0
+#  occ_weight: 0.001
+#  roi_weight: 200
+#  visit_gain_weight: 25
+#  collision_weight: 0
+#  stuck_weight: 0
+
+
+# 1 : true; 0: false
+input:
+  observation_map: 1
+  visit_map: 0
+  relative_movement: 1
+  absolute_movement: 0
+
+network:
+  NetworkObs: 0
+  NetworkVisit: 0
+  NetworkVisitLstm: 0
+  NetworkObsLstm: 0
+  NetworkObsVisit: 0
+  NetworkObsVisitLstm: 0
+  NetworkObsMoveLstm: 1
+  NetworkObsMoveLstmDeeperObs: 0
+  NetworkObsMoveLstmDeeperObs_48_24_8: 0
+  NetworkObsMoveLstmLstm: 0
+  SpatialAttentionModel: 0
+
+action:
+  ActionMoRo10: 1
+  ActionMoRo20: 0
+  ActionMoRo30: 0
+

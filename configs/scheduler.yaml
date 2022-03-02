@@ -1,0 +1,8 @@
+StepLR:
+  step_size: 200
+  gamma: 0.5
+
+MultiStepLR:
+  milestones: [500, 1000]
+  gamma: 0.5
+
