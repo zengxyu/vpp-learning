@@ -97,7 +97,6 @@ class FieldRos:
         axes = self.robot_rot.as_matrix().transpose()
         relative_move, relative_rot = self.action_space.get_relative_move_rot(axes, action, self.MOVE_STEP,
                                                                               self.ROT_STEP)
-        # relative_move_ros =
         relative_pose = np.append(relative_move * self.resolution, relative_rot.as_quat()).tolist()
 
         unknown_map, known_free_map, known_occupied_map, known_roi_map, robot_pose, \

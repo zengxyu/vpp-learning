@@ -124,23 +124,23 @@ class EnvironmentClient:
         action_msg.init("resetAndRandomize")
 
     def sendAction(self, action_msg):
-        send_time_limit = 60
-        receive_time_limit = 60
+        send_time_limit = 200
+        receive_time_limit = 200
         start_time = time.time()
         send_success = False
         receive_success = False
         while True:
-            print('Sending message')
+            # print('Sending message')
             if self.process_died():
                 break
             try:
                 self.socket.send(action_msg.to_bytes(), flags=zmq.NOBLOCK)
                 send_success = True
             except zmq.ZMQError:
-                print('Could not send message, trying again in 1s...')
+                # print('Could not send message, trying again in 1s...')
                 time.sleep(1)
                 if time.time() - start_time > send_time_limit:
-                    print("++++++++++++++++++++++++++Over the time limit 30 sec++++++++++++++++++++++++++")
+                    print("++++++++++++++++Over the time limit {} sec++++++++++++++++".format(send_time_limit))
                     break
                 continue
             break
@@ -149,16 +149,17 @@ class EnvironmentClient:
             start_time = time.time()
             while True:
                 #  Get the reply.
-                print('Receiving message')
+                # print('Receiving message')
                 if self.process_died():
                     break
                 try:
                     message = self.socket.recv()
                     receive_success = True
                 except zmq.ZMQError:
-                    print('No response received, trying again...')
+                    # print('No response received, trying again...')
                     if time.time() - start_time > receive_time_limit:
-                        print("++++++++++++++++++++++++++Over the time limit 30 sec++++++++++++++++++++++++++")
+                        print(
+                            "++++++++++++++Over the time limit {} sec+++++++++++++++".format(receive_time_limit))
                         break
                     continue
                 break

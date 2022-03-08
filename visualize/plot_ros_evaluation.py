@@ -94,7 +94,7 @@ def generatePlots(plot_names, times, results_avg, out_folder):
         plt.ylabel(plot_names[i])
         plt.xlim((0, times[-1]))
         if (plot_names[i] == 'Detected ROI cluster'):
-            plt.ylim((0, 14))
+            plt.ylim((0, 30))
         elif (plot_names[i] == 'Volume accuracy' or plot_names[i] == 'Covered ROI volume'):
             plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
             plt.ylim((0, 1))
@@ -119,20 +119,20 @@ def generateResultsFile(plot_names, results, out_folder):
 
 
 parent_dir = "/home/zeng/catkin_ws"
-input_folder1 = os.path.join(parent_dir, "evaluation_lstm2")
+input_folder1 = os.path.join(parent_dir, "evaluation_ddqn_world19_random")
 
-input_folder2 = os.path.join(parent_dir, "exp_results_global_m2s", "world14_m2s")
-input_folder3 = os.path.join(parent_dir, "exp_results_global_m2s", "world14")
+# input_folder2 = os.path.join(parent_dir, "exp_results_global_m2s", "world19_m2s")
+input_folder3 = os.path.join(parent_dir, "exp_results_global_m2s", "world19")
 
-out_folder = os.path.join(get_project_path(), "output", "old_alg_ros_evaluation_plot", "plots_w14")
-out_folder_old = os.path.join(get_project_path(), "output", "old_alg_ros_evaluation_plot", "plots_w14_old")
-if not os.path.exists(input_folder1):
-    print("{} directory not exist".format(input_folder1))
+out_folder = os.path.join(get_project_path(), "output", "old_alg_ros_evaluation_plot", "plots_w19")
+out_folder_old = os.path.join(get_project_path(), "output", "old_alg_ros_evaluation_plot", "plots_w19_old")
+# if not os.path.exists(input_folder1):
+#     print("{} directory not exist".format(input_folder1))
 if not os.path.exists(out_folder):
     os.makedirs(out_folder)
     os.makedirs(out_folder_old)
-input_folders = [input_folder1,  input_folder3]
-labels = ['Our RL-policy', 'Global planner']
+input_folders = [input_folder1, input_folder3]
+labels = ['Our rl policy', "Global planner"]
 input_ranges = [range(1, 21), range(0, 20)]
 
 time_column = 1

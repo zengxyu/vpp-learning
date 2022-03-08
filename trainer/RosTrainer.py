@@ -51,15 +51,16 @@ class RosTrainer(object):
             print("Start training")
             for i in range(self.training_config["num_episodes"]):
                 print("\nEpisode:{}".format(i))
-                self.training()
+                self.train_once()
                 if (i + 1) % 10 == 0:
                     print("\nTest Episode:{}".format(i))
-                    self.evaluating(with_epsilon=False, check_stuck=True)
+                    self.evaluate_once(with_epsilon=False, check_stuck=True)
         else:
             print("Start evaluating without head")
-            self.evaluate_n_times(True, 0.1, self.parser_args.training_config["num_episodes"], check_stuck=False)
+            self.evaluate_n_times(self.parser_args.epsilon_greedy, self.parser_args.epsilon,
+                                  self.parser_args.training_config["num_episodes"], check_stuck=False)
 
-    def training(self):
+    def train_once(self):
         phase = "Train"
         start_time = time.time()
         self.train_i_episode += 1
@@ -106,13 +107,12 @@ class RosTrainer(object):
         print("Episode takes time:{}".format(time.time() - start_time))
         print('Complete training episode {}'.format(self.train_i_episode))
 
-
     def check_stuck(self, rewards, collisions, visit_gains):
         if np.sum(rewards) == 0. or np.std(visit_gains) == 0. or all(collisions):
             return True
         return False
 
-    def evaluating(self, with_epsilon=False, epsilon=0.15, check_stuck=True):
+    def evaluate_once(self, with_epsilon=False, epsilon=0.15, check_stuck=True):
         phase = "ZEvaluation"
         start_time = time.time()
         self.test_i_episode += 1
@@ -127,9 +127,10 @@ class RosTrainer(object):
         i_step = 0
         with self.agent.eval_mode():
             while (not done) and (not stuck):
-                action = self.agent.act(state)
                 if with_epsilon and random.random() < epsilon:
                     action = np.random.randint(0, self.action_space.n)
+                else:
+                    action = self.agent.act(state)
 
                 state, reward, done, info = self.env.step(action)
                 if state is not None:
@@ -160,7 +161,7 @@ class RosTrainer(object):
     def evaluate_n_times(self, with_epsilon=False, epsilon=0.15, n=10, check_stuck=True):
         for i in range(n):
             print("\n=====================================Episode:{}=====================================".format(i))
-            self.evaluating(with_epsilon, epsilon, check_stuck=check_stuck)
+            self.evaluate_once(with_epsilon, epsilon, check_stuck=check_stuck)
 
 
 def print_step_info(episode: int, step: int, info: Dict, step_collector: Dict):
