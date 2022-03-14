@@ -11,10 +11,10 @@ dqn:
   # valid only in pfrl
   explorer: LinearDecayEpsilonGreedy
   #  EpisodicReplayBuffer, ReplayBuffer, PrioritizedReplayBuffer, PrioritizedEpisodicReplayBuffer
-  replay_buffer: PrioritizedEpisodicReplayBuffer
+  replay_buffer: PrioritizedReplayBuffer
   # sequence length
   episodic_update_len: 5
-  recurrent: True
+  recurrent: False
   scheduler: MultiStepLR
 
 ddpg:

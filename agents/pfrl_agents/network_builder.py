@@ -51,5 +51,5 @@ def build_network(parser_args, action_size):
         network = SpatialAttentionModel(action_size)
     else:
         raise NotImplementedError("Action : {} has not been implemented!")
-
+    print("Network structure:{}".format(network))
     return network
