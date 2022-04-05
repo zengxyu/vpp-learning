@@ -51,17 +51,21 @@ for the environment with fixed size 400x400x150
 ...
 ### ROS environment
 
-Required arguments:
+[comment]: <> (Required arguments:)
 
-| Parameter     | Default      | Description     |
-| ------------- | ------------- | -------- |
-| policy        | rl_policy     |  ... |
+[comment]: <> (| Parameter     | Default      | Description     |)
 
-Optional arguments:
+[comment]: <> (| ------------- | ------------- | -------- |)
 
-| Parameter     | Default      | Description     |
-| ------------- | ------------- | -------- |
-| --out_folder        | rl_policy     |  Specify your "out_folder", it will be automatically created in a folder named "output" |
+[comment]: <> (| policy        | rl_policy     |  ... |)
+
+[comment]: <> (Optional arguments:)
+
+[comment]: <> (| Parameter     | Default      | Description     |)
+
+[comment]: <> (| ------------- | ------------- | -------- |)
+
+[comment]: <> (| --out_folder        | rl_policy     |  Specify your "out_folder", it will be automatically created in a folder named "output" |)
 
 The reinforcement learning lib from https://github.com/pfnet/pfrl.git
 
