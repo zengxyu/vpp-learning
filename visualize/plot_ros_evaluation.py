@@ -120,7 +120,7 @@ def generateResultsFile(plot_names, results, out_folder):
 
 parent_dir = "/home/zeng/catkin_ws"
 # input_folder1 = os.path.join(parent_dir, "evaluation_ddqn_world19_random")
-input_folder2 = os.path.join(parent_dir, "world19_random")
+input_folder2 = os.path.join(parent_dir, "evaluate_random5")
 
 # input_folder2 = os.path.join(parent_dir, "exp_results_global_m2s", "world19_m2s")
 input_folder3 = os.path.join(parent_dir, "exp_results_global_m2s", "world19_random")
@@ -134,7 +134,7 @@ if not os.path.exists(out_folder):
     os.makedirs(out_folder_old)
 input_folders = [input_folder2, input_folder3]
 labels = ['Our rl policy', "Global planner"]
-input_ranges = [range(1, 21), range(0, 20)]
+input_ranges = [range(1, 31), range(0, 20)]
 
 time_column = 1
 columns = [3, 4, 5, 6, 7, 8, 9]

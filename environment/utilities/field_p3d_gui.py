@@ -62,7 +62,7 @@ class FieldGUI(ShowBase):
         self.accept('update_cell', self.updateSeenCell)
         self.accept('update_fov', self.updateFov)
         self.accept('update_fov_and_cells', self.updateFovAndCells)
-        self.accept('draw_coord_line', self.updateCameraPathLine)
+        # self.accept('draw_coord_line', self.updateCameraPathLine)
 
     def reset(self):
         self.voxgrid = VoxelGrid(self.env.global_map.shape, self.colors, self.scale)

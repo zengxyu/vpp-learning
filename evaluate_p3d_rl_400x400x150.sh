@@ -1,1 +1,1 @@
-python3 run_p3d_discrete.py rl_policy --in_folder=fixed_wsize_action10_sensor300_smallobs200 --in_model_index=700 --out_folder=evaluation_p3d_0.0_2/400x400x150_4plants --room_size 400 400 150 --plant_num_choices 4 --num_episodes=30 --max_steps=400
+python3 run_p3d_discrete.py rl_policy --in_folder=fixed_wsize_action10_sensor300_smallobs200 --in_model_index=700 --out_folder=evaluation_p3d_0.0_2/400x400x150_4plants --room_size 400 400 150 --plant_num_choices 4 --num_episodes=30 --max_steps=400 --epsilon_greedy --epsilon=0.15
