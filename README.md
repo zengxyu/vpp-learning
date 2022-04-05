@@ -12,7 +12,7 @@ takes as input the encoded 3D observation map and the temporal sequence of camer
 most promising camera movement direction. Our experimental results show an improved ROI targeted exploration performance
 resulting from our learned network in comparison to a state-of-the-art method.
 
-<img height="180" src="introduction.png" width="240"/>
+![](introduction.png)
 
 ## Experiments
 
@@ -90,5 +90,3 @@ roi_viewpoint_planner: https://github.com/Eruvae/roi_viewpoint_planner
 roi_viewpoint_planner_msgs: https://github.com/Eruvae/roi_viewpoint_planner_msgs
 
 ur_msgs: https://github.com/ros-industrial/ur_msgs
-
-rviz_polygon_tool: https://github.com/Eruvae/rviz_polygon_tool.git
