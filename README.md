@@ -68,17 +68,27 @@ The reinforcement learning lib from https://github.com/pfnet/pfrl.git
 ### Other repositories
 
 vpp_learning_ros : https://github.com/Eruvae/vpp_learning_ros.git
+
 ur_with_cam_gazebo: https://github.com/Eruvae/ur_with_cam_gazebo
+
 universal_robot:https://github.com/fmauch/universal_robot/tree/calibration_devel  
+
 pointcloud_roi: https://github.com/Eruvae/pointcloud_roi
+
 pointcloud_roi_msgs: https://github.com/Eruvae/pointcloud_roi_msgs
+
 octomap_vpp: https://github.com/Eruvae/octomap_vpp
+
 vpp_learning_ros: https://gitlab.igg.uni-bonn.de/tzaenker/vpp_learning_ros
+
 yolact_ros_msgs: https://github.com/Eruvae/yolact_ros_msgs
+
 octomap_vpp_rviz_plugin: https://github.com/Eruvae/octomap_vpp_rviz_plugin
 
 roi_viewpoint_planner: https://github.com/Eruvae/roi_viewpoint_planner
+
 roi_viewpoint_planner_msgs: https://github.com/Eruvae/roi_viewpoint_planner_msgs
 
 ur_msgs: https://github.com/ros-industrial/ur_msgs
+
 rviz_polygon_tool: https://github.com/Eruvae/rviz_polygon_tool.git
