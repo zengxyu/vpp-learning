@@ -12,7 +12,7 @@ takes as input the encoded 3D observation map and the temporal sequence of camer
 most promising camera movement direction. Our experimental results show an improved ROI targeted exploration performance
 resulting from our learned network in comparison to a state-of-the-art method.
 
-![](introduction.png)
+<img height="180" src="introduction.png" width="240"/>
 
 ## Experiments
 
